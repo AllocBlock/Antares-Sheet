@@ -1,0 +1,190 @@
+:root
+{
+    --sheet-theme-color: black;
+    --sheet-font-size: 18px;
+    --sheet-underline-color: var(--sheet-theme-color);
+    --sheet-line-height: calc(var(--sheet-font-size) + 20px);
+    --sheet-line-thickness: calc(var(--sheet-font-size) * 0.05); /* 各种下划线的粗细 */
+}
+
+/* 占位标记 */
+placeholder
+{
+    display: inline-block;
+    border-bottom: var(--sheet-line-thickness) solid var(--sheet-theme-color);
+    width: var(--sheet-font-size);
+}
+
+/* 和弦 */
+chord
+{
+    color: var(--sheet-theme-color);
+    user-select: none;
+    position: relative;
+    cursor: default;
+    text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.3);
+    white-space: pre;
+}
+chord:before
+{
+    content: ' ';
+    position: relative;
+    display: inline-block;
+    margin-top: var(--sheet-line-height);
+    height: 0;
+    width: 0;
+}
+chord::after
+{
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: calc(-8px - var(--sheet-font-size));
+    right: -10px;
+    bottom: -2px;
+    border: 2px solid transparent;
+    transition: 0.3s ease-out;
+    border-radius: 5px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+chord:hover::after, chord_pure:hover::after
+{
+    border: 2px solid var(--sheet-theme-color);
+    box-shadow: 0 0 5px 2px black;
+}
+
+/* 和弦名称 */
+chord_name
+{
+    color: var(--sheet-theme-color);
+    position: absolute;
+    user-select: none;
+    transition: 0.5s ease-out;
+    text-align: center;
+    text-shadow: none;
+    width: fit-content;
+    
+    left: 50%;
+    transform: translateX(-50%);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 100%;
+}
+
+/* 同行和弦 */
+chord_pure
+{
+    color: var(--sheet-theme-color);
+    user-select: none;
+    position: relative;
+    cursor: default;
+    transition: 0.5s ease-out;
+}
+chord_pure::after
+{
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: -2px;
+    right: -10px;
+    bottom: -2px;
+    border: 2px solid transparent;
+    transition: 0.3s ease-out;
+    border-radius: 5px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* 标记信息 */
+info
+{
+    padding: 3px 8px;
+    border-radius: 5px;
+    background-color: var(--sheet-theme-color);
+    color: white;
+    user-select: none;
+    margin: 10px 5px;
+    line-height: calc(var(--sheet-font-size) * 2);
+}
+
+/* 下划线 */
+underline
+{
+    border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);
+}
+
+underline>underline
+{
+    border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);
+    padding-top: calc(var(--sheet-line-thickness) * 3);
+}
+
+underline>underline>underline
+{
+    border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);
+    padding-top: calc(var(--sheet-line-thickness) * 6);
+}
+
+underline>underline>underline>underline
+{
+    border-top: none;
+}
+
+/* 同行下划线 */
+underline_pure
+{
+    border-bottom: var(--sheet-line-thickness) solid var(--sheet-underline-color);
+}
+
+underline_pure>underline_pure
+{
+    border-bottom: var(--sheet-line-thickness) solid var(--sheet-underline-color);
+    padding-bottom: calc(var(--sheet-line-thickness) * 3);
+}
+
+underline_pure>underline_pure>underline_pure
+{
+    border-bottom: var(--sheet-line-thickness) solid var(--sheet-underline-color);
+    padding-bottom: calc(var(--sheet-line-thickness) * 6);
+}
+
+underline_pure>underline_pure>underline_pure>underline_pure
+{
+    border-bottom: none;
+}
+
+newline::after {
+    content: "\D\A";
+}
+
+.sheet_box
+{
+    word-wrap: break-word;
+    user-select: none;
+    letter-spacing: 1px;
+    white-space: pre-wrap;
+    white-space: break-spaces; /* 优先，如果不支持则退回pre-wrap */
+    position: relative;
+
+    font-family:Tahoma,Verdana,Arial,Microsoft YaHei,sans-serif;
+    color: white;
+}
+
+.sheet_box chord
+{
+    letter-spacing: 1px;
+}
+
+.sheet_box chord_name
+{
+    letter-spacing: 0px;
+}
+
+.sheet_box chord_pure
+{
+    letter-spacing: 0px;
+}

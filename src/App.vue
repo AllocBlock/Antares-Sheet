@@ -1,26 +1,29 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <Chord style="width: 300px; height: 400px" :chord="chord" />
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import Chord from '@/components/chord'
+import ChordManager from '@/utils/chordManager'
+
+const g_ChordManager = new ChordManager()
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    Chord
+  },
+  data() {
+    return {
+      chord: {
+        name: 'Test#b7'
+      },
+    }
+  },
+  mounted() {
+    this.chord = g_ChordManager.getChord("Cm")
+    console.log(this.chord)
   }
 }
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>

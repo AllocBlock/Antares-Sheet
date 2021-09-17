@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "startBackend",
+			"type": "npm",
+			"script": "serve",
+			"problemMatcher": [],
+			"detail": "vue-cli-service serve",
+			"options": {
+				"env": {
+					"port": "8080"
+				}
+			},
+		},
+		{
+			"label": "stopBackend",
+			"type": "process",
+            "command":[
+                "${command:workbench.action.tasks.terminate}",
+             ]
+		},
+	]
+}

@@ -1,0 +1,73 @@
+:root {
+    --tip-basic-z-index: 100;
+    --tip-text-background-color: #220d5a;
+    --tip-button-background-color: seagreen;
+}
+
+.tip_cover{
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: var(--tip-basic-z-index);
+}
+.tip_background{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    z-index: var(--tip-basic-z-index);
+
+    pointer-events: none;
+}
+
+.tip_text{
+    position: absolute;
+    background-color: var(--tip-text-background-color);
+    border-radius: 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px -10px black;
+    padding: 10px 20px;
+    white-space: pre-wrap;
+    user-select: none;
+
+    z-index: calc(var(--tip-basic-z-index) + 1);
+}
+
+.tip_button_row{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -70px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.tip_button_col{
+    position: absolute;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.tip_button{
+    background-color: var(--tip-button-background-color);
+    color: white;
+    height: 40px;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 0 20px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+
+    transition: background-color 0.2s ease-out;
+}
+.tip_button:hover{
+    background-color: rgb(87, 172, 124);
+}

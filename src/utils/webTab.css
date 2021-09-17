@@ -1,0 +1,386 @@
+
+:root {
+    --string-num: 4;
+    --fret-font-size: 16px;
+    --row-split-width: 3px;
+    --bar-split-width: 1px;
+    --row-height: 60px;
+    --row-margin-top: 30px;
+    --stem-margin: 70px;
+}
+
+@font-face {
+    font-family: MusicNotation;
+    src: url(../resources/fonts/Aruvarb.ttf);
+}
+
+tab-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    color: white;
+    user-select: none;
+}
+
+tab-box[state=disabled]>*{
+    filter: blur(4px);
+}
+
+tab-box[state=disabled]:before{
+    content: "";
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    top: -8px;
+    bottom: -8px;
+    background: rgba(255, 255, 255, 0.603);
+    filter: blur(4px);
+    z-index: 2;
+}
+
+tab-box[state=disabled]:after{
+    content: "指法谱不可用";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    color: rgb(243, 53, 132);
+    font-size: 60px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    z-index: 3;
+}
+
+tab-box svg{
+    fill: white;
+}
+
+tab-box row {
+    position: relative;
+    width: 100%;
+    height: var(--row-height);
+    margin-top: var(--row-margin-top);
+    margin-bottom: var(--stem-margin);
+
+    background-color: rgb(0, 6, 40);
+    display: flex;
+    align-items: center;
+}
+    tab-box row>* {
+        z-index: 1;
+    }
+    tab-box bg-lines {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+        tab-box bg-line {
+            position: relative;
+            z-index: 0;
+            width: 100%;
+            height: 0;
+        }
+        tab-box bg-line:after {
+            position: absolute;
+            content: "";
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #aaa;
+            transform: translateY(-50%);
+        }
+    tab-box row-split {
+        flex-shrink: 0;
+        width: var(--row-split-width);
+        height: 100%;
+        background-color: #fff;
+    }
+        tab-box row-split[type=start] {
+            margin-right: var(--row-split-width);
+        }
+        tab-box row-split[type=end] {
+            margin-left: var(--row-split-width);
+        }
+    tab-box tab-symbol{
+        margin: 0 4px;
+        width: 20px;
+        height: 90%;
+    
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+    }
+        tab-box tab-symbol div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        
+            width: 100%;
+            height: 0;
+            flex-shrink: 1;
+            font-size: 16px;
+        }
+    tab-box time-signature {
+        font-family: MusicNotation, Arial, Helvetica, sans-serif;
+        margin: 0 8px;
+        width: 30px;
+        height: 80%;
+    
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+    }
+        tab-box time-signature div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        
+            width: 100%;
+            height: 0;
+            flex-shrink: 1;
+            font-size: 30px;
+        }
+    tab-box bar {
+        position: relative;
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        flex-grow: 1;
+    }
+        tab-box bar-number {
+            position: absolute;
+            bottom: calc(100% + 5px);
+            left: 8px;
+            font-size: var(--fret-font-size);
+            color: #aaa;
+        }
+        tab-box bar-split {
+            flex-shrink: 0;
+            width: var(--bar-split-width);
+            height: 100%;
+            margin: 5px;
+            background-color: #fff;
+        }
+            tab-box bar-split[type=start] {
+                margin-right: 10px;
+            }
+            tab-box bar-split[type=end] {
+                margin-left: 10px;
+            }
+        tab-box note {
+            position: relative;
+            width: 100%;
+            height: 100%;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+            tab-box note-element {
+                position: relative;
+                width: 100%;
+                height: 0;
+                flex-shrink: 1;
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+                tab-box note-element>* {
+                    position: absolute;
+                }
+                    tab-box note-fret{
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        
+                        font-size: var(--fret-font-size);
+                        width: fit-content;
+                        padding: 0 2px;
+                        height: 3px;
+                        background-color: rgb(0, 6, 40);
+                    }
+                    tab-box note-fret-empty{
+                        width: 12px;
+                    }
+                    tab-box note-fret-stem{
+                        position: relative;
+                        height: calc(1 / (var(--string-num) - 1) * var(--row-height)) ;
+                        width: 12px;
+                    }
+                        tab-box note-fret-stem:after{
+                            position: absolute;
+                            content: "";
+                            top: 0;
+                            left: calc(50% - 1px);
+                            height: 100%;
+                            width: 2px;
+                            background-color: #fff;
+                            border-radius: 2px;
+                        }
+                        tab-box note-fret-stem[type=end]:after{
+                            height: calc(50% + var(--stem-margin));
+                        }
+                    tab-box note-stum {
+                        position: absolute;
+                        width: 10px;
+                        height: 100%;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                        tab-box note-stum[direction=up] {
+                            transform: scaleY(-1);
+                        }
+                        tab-box note-stum svg{
+                            width: 100%;
+                        }
+            tab-box note-link {
+                position: absolute;
+                width: 100%;
+                left: 50%;
+                transform: translateY(-100%);
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+                tab-box note-link svg{
+                    width: 100%;
+                    height: calc(1 / (var(--string-num) - 1) * var(--row-height) * 0.4) ;
+                }
+
+                tab-box note-link-text{
+                    position: absolute;
+                    font-size: 12px;
+                    transform: translateY(-100%);
+                }
+            tab-box note-stem {
+                position: absolute;
+                background-color: #fff;
+                width: 2px;
+                border-radius: 2px;
+            }
+            tab-box note-stem[type=complete] {
+                height: 42px;
+                bottom: calc(-1 * var(--stem-margin));
+            }
+            tab-box note-stem[type=half] {
+                height: 20px;
+                width: 2px;
+                bottom: calc(-1 * var(--stem-margin));
+            }
+            tab-box note-stem, tab-box note-stem[type=none] {
+
+            }
+            tab-box note-flag {
+                position: absolute;
+                width: 100%;
+                bottom: calc(-1 * var(--stem-margin));
+                height: calc(var(--stem-margin) - 5px);
+                padding-top: 5px;
+
+                display: flex;
+                flex-direction: column-reverse;
+            }
+                tab-box note-flag-connect{
+                    height: 4px;
+                    margin-top: 5px;
+                    background-color: #fff;
+                }
+                tab-box note-flag-connect, tab-box note-flag-connect[type=none]{
+                    width: 0;
+                }
+                tab-box note-flag-connect[type=left]{
+                    width: 50%;
+                    align-self: flex-start;
+                }
+                tab-box note-flag-connect[type=right]{
+                    width: 50%;
+                    align-self: flex-end;
+                }
+                tab-box note-flag-connect[type=both]{
+                    width: 100%;
+                    align-self: center;
+                }
+            tab-box note-chord
+            {
+                position: absolute;
+                bottom: calc(100% + 20px);
+                
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+                tab-box note-chord-name
+                {
+                    font-size: 24px;
+                    color: white;
+                }
+                tab-box note-chord-graph
+                {
+                    margin-bottom: 5px;
+                    height: calc(var(--row-height) * 1.5);
+                    width: calc(var(--row-height) * 1.5 * 0.75);
+                    color: black;
+                }
+tab-box .note-stum-arrow {
+    position: absolute;
+    top: 0;
+    transform: translateY(calc(-85% - 6px));
+}
+
+tab-box .note-stum-head {
+    position: absolute;
+    top: 0;
+    height: 6px;
+    transform: translateY(-100%);
+}
+
+tab-box .note-stum-body {
+    top: 0;
+    flex-grow: 1;
+}
+
+tab-box .note-stum-tail {
+    position: absolute;
+    bottom: 0;
+    height: 10px;
+    transform: translateY(100%);
+}
+
+tab-box bar-start-padding{
+    margin-right: 10px;
+}
+
+tab-box bar-split>tab-box repeat[type=start] {
+    transform: scaleX(-1);
+}
+
+tab-box repeat {
+    height: 100%;
+}
+tab-box repeat[type=start] {
+    margin-right: 10px;
+}
+tab-box repeat[type=end] {
+    transform: scaleX(-1);
+    margin-left: 10px;
+}
+
+tab-box .repeat {
+    height: 100%;
+}

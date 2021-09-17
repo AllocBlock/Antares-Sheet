@@ -1,0 +1,176 @@
+:root {
+	--chord-renderer-title-ratio: 16%;
+	--chord-renderer-theme-color: black;
+	--chord-renderer-font-color: white;
+	--chord-renderer-root-string-color: red;
+}
+
+.chord-block{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	transform-origin: left top;
+	overflow: hidden;
+
+	-moz-user-select:none;
+    -webkit-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+}
+
+	.chord-name{
+		color: var(--chord-renderer-theme-color);
+		position: absolute;
+		width: 100%;
+		height: var(--chord-renderer-title-ratio);
+		top: 0;
+
+		text-align: center;
+		overflow: visible;
+		white-space: nowrap;
+
+		font-size: 40px;
+
+		background: none;  
+	}
+	.chord-graph{
+		position: absolute;
+		width: 100%;
+		height: calc(100% - var(--chord-renderer-title-ratio));
+		bottom: 0;
+	}
+		.chord-board{
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+		}
+			.chord-fingerings{
+				position: absolute;
+				left: 0;
+				right: 0;
+				width: 100%;
+				height: 100%;
+			}
+			.chord-fret{
+				position: absolute;
+				left: 0;
+				height: 1%;
+				min-height: 1px;
+				width: 101%;
+				background-color: var(--chord-renderer-theme-color);
+			}
+
+			.chord-fret-bold{
+				position: absolute;
+				left: 0;
+				height: 3%;
+				min-height: 3px;
+				width: 100%;
+				background-color: var(--chord-renderer-theme-color);
+			}
+
+			.chord-string{
+				position: absolute;
+				top: 0;
+				width: 1%;
+				min-width: 1px;
+				height: 100%;
+				background-color: var(--chord-renderer-theme-color);
+			}
+
+			.chord-string-root{
+				position: absolute;
+				top: 0;
+				width: 1%;
+				min-width: 1px;
+				height: 100%;
+				background-color: var(--chord-renderer-root-string-color);
+			}
+
+			.chord-fingering{
+				position: absolute;
+				width: 80px;
+				height: 80px;
+				border-radius: 40px;
+
+				display: flex;
+				align-items: center;
+
+				background-color: var(--chord-renderer-theme-color);
+				color: var(--chord-renderer-font-color);
+				font-weight: bold;
+			}
+
+			.chord-start-fret{
+				color: var(--chord-renderer-theme-color);
+				position: absolute;
+			}
+
+.chord-cross {
+	position: absolute;
+	width: 12px;
+	height: 2px;
+	transform: translateX(-50%);
+}
+.chord-cross:before {
+	position: absolute;
+	left: 0;
+	top: 0;
+	content:'';
+	width: 100%;
+	height: 100%;
+	background: var(--chord-renderer-theme-color);
+	transform: rotate(45deg);
+}
+.chord-cross:after {
+	position: absolute;
+	left: 0;
+	top: 0;
+	content:'';
+	width: 100%;
+	height: 100%;
+	background: var(--chord-renderer-theme-color);
+	transform: rotate(-45deg);
+}
+
+.flex-center{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+/* 未找到和弦时使用的样式 */
+.chord-block-text{
+	display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    white-space: pre-wrap;
+}
+
+.chord-block-error{
+	font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+	overflow: hidden;
+	color: rgba(255, 0, 0, 0.5);
+}
+.chord-block-not-found{
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+	.chord-block-not-found>*:first-child {
+		font-size: 100%;
+		color: tomato;
+	}
+	.chord-block-not-found>*:nth-child(2) {
+		font-size: 20%;
+		color: grey;
+	}
