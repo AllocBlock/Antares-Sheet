@@ -13,8 +13,8 @@
 {}括起来几个音符表示这几个音符符杆连接在一起
 */
 
-import { drawChord } from "./webChordRender.js"
-import { ChordManager } from "./webChordManager.js"
+// import { drawChord } from "./webChordRender.js"
+import ChordManager from "./chordManager.js"
 
 const g_chordManager = new ChordManager
 
@@ -656,7 +656,8 @@ function _createNoteConfigElementHTML(key, value) {
                 }
                 case "chordGraph": {
                     let $chordGraph = $("<note-chord-graph>")
-                    drawChord($chordGraph, g_chordManager.getChord(value))
+                    // TODO
+                    // drawChord($chordGraph, g_chordManager.getChord(value))
                     $chord.append($chordGraph)
                     g_ParseTempParam.useChordGraph = true
                     break;
@@ -755,4 +756,4 @@ function _tabFit($tab) {
     $chordGraphs.trigger("fit")
 }
 
-export {WebTab}
+export default WebTab

@@ -11,7 +11,7 @@
 
 @font-face {
     font-family: MusicNotation;
-    src: url(../resources/fonts/Aruvarb.ttf);
+    /* src: url(../resources/fonts/Aruvarb.ttf); */
 }
 
 tab-box {
@@ -19,7 +19,8 @@ tab-box {
     display: flex;
     flex-direction: column;
     width: 100%;
-    color: white;
+    /* color: white; */
+    color: black;
     user-select: none;
 }
 
@@ -66,8 +67,8 @@ tab-box row {
     height: var(--row-height);
     margin-top: var(--row-margin-top);
     margin-bottom: var(--stem-margin);
-
-    background-color: rgb(0, 6, 40);
+/* 
+    background-color: rgb(0, 6, 40); */
     display: flex;
     align-items: center;
 }
@@ -102,7 +103,8 @@ tab-box row {
         flex-shrink: 0;
         width: var(--row-split-width);
         height: 100%;
-        background-color: #fff;
+        /* background-color: #fff; */
+        background-color: black;
     }
         tab-box row-split[type=start] {
             margin-right: var(--row-split-width);
@@ -172,7 +174,8 @@ tab-box row {
             width: var(--bar-split-width);
             height: 100%;
             margin: 5px;
-            background-color: #fff;
+            /* background-color: #fff; */
+            background-color: black;
         }
             tab-box bar-split[type=start] {
                 margin-right: 10px;
@@ -212,7 +215,8 @@ tab-box row {
                         width: fit-content;
                         padding: 0 2px;
                         height: 3px;
-                        background-color: rgb(0, 6, 40);
+                        /* background-color: rgb(0, 6, 40); */
+                        background-color: white;
                     }
                     tab-box note-fret-empty{
                         width: 12px;
@@ -229,7 +233,8 @@ tab-box row {
                             left: calc(50% - 1px);
                             height: 100%;
                             width: 2px;
-                            background-color: #fff;
+                            /* background-color: #fff; */
+                            background-color: black;
                             border-radius: 2px;
                         }
                         tab-box note-fret-stem[type=end]:after{
@@ -270,7 +275,8 @@ tab-box row {
                 }
             tab-box note-stem {
                 position: absolute;
-                background-color: #fff;
+                /* background-color: #fff; */
+                background-color: black;
                 width: 2px;
                 border-radius: 2px;
             }
@@ -299,7 +305,8 @@ tab-box row {
                 tab-box note-flag-connect{
                     height: 4px;
                     margin-top: 5px;
-                    background-color: #fff;
+                    /* background-color: #fff; */
+                    background-color: black;
                 }
                 tab-box note-flag-connect, tab-box note-flag-connect[type=none]{
                     width: 0;
@@ -328,7 +335,8 @@ tab-box row {
                 tab-box note-chord-name
                 {
                     font-size: 24px;
-                    color: white;
+                    /* color: white; */
+                    color: black;
                 }
                 tab-box note-chord-graph
                 {
