@@ -37,8 +37,6 @@ export default {
 </script>
 
 <style scoped>
-
-
 /* 下划线 */
 .underline {
   border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);

@@ -110,8 +110,8 @@ export default {
 };
 
 
-function matchSplit(content, re, createNode) {
-  const match = content.match(re)
+function matchSplit(content, matcher, createNode) {
+  const match = (typeof matcher == "function") ? matcher(content) : content.match(matcher)
   if (!match) return false
   const newContent = match[0]
   let splitNodes = []
@@ -131,7 +131,7 @@ const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{wo
 const ReInfo = /!\(([^)]*)\)/ // !(content)
 const splitMethods = [
   {
-    re: RePlugin,
+    matcher: RePlugin,
     createNodeFunc: (match) => {
       let pluginNode = new SheetNode(ENodeType.PluginType)
       pluginNode.pluginType = match[1]
@@ -140,17 +140,47 @@ const splitMethods = [
     }
   },
   {
-    re: ReUnderline,
+    matcher: (content) => {
+      let index
+      let isPure = false
+      let depth = 0
+      for(let i = 0; i < content.length; ++i) {
+        if (content[i] == '{') {
+          if (depth == 0) {
+            if (i > 0 && content[i - 1] == '!') {
+              index = i - 1
+              isPure = true
+            }
+            else {
+              index = i
+            }
+          }
+          depth++
+        }
+        else if (content[i] == '}') {
+          depth--
+          if (depth == 0) {
+            let match = []
+            match.index = index
+            match[0] = content.substr(index, i - index + 1)
+            match.content = match[0].substr(isPure ? 2 : 1, match[0].length - (isPure ? 3 : 2))
+            match.isPure = isPure
+            return match
+          }
+        }
+      }
+      return null
+    },
     createNodeFunc: (match) => {
-      let type = match[1] ? ENodeType.UnderlinePure : ENodeType.Underline
+      let type = match.isPure ? ENodeType.UnderlinePure : ENodeType.Underline
       let underlineNode = new SheetNode(type)
-      let underlineContent = match[2]
+      let underlineContent = match.content
       parseNodes(underlineNode, underlineContent)
       return underlineNode
     }
   },
   {
-    re: ReChord, 
+    matcher: ReChord, 
     createNodeFunc: (match) => {
       let type = match[1] ? ENodeType.ChordPure : ENodeType.Chord
       let chordNode = new SheetNode(type)
@@ -160,7 +190,7 @@ const splitMethods = [
     }
   },
   {
-    re: ReInfo, 
+    matcher: ReInfo, 
     createNodeFunc: (match) => {
       let infoNode = new SheetNode(ENodeType.Info)
       infoNode.content = match[1]
@@ -179,7 +209,7 @@ function parseNodes(parentNode, str) {
 
     let hasMatch = false
     for(let splitMethod of splitMethods) {
-      let splitNodes = matchSplit(content, splitMethod.re, splitMethod.createNodeFunc)
+      let splitNodes = matchSplit(content, splitMethod.matcher, splitMethod.createNodeFunc)
       if (splitNodes) {
         nodes.splice(i, 1, ...splitNodes)
         hasMatch = true
