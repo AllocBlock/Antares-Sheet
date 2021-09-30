@@ -1,6 +1,8 @@
 <template>
   <div class="container" ref="container" :style="globalCssVar">
-    <span v-if="sheetHtml" v-html="sheetHtml" ref="sheet" />
+    <div v-if="sheetTree" ref="sheet">
+      <SheetNodeRoot :node="sheetTree" />
+    </div>
     <span v-else>曲谱加载中...</span>
   </div>
 </template>
@@ -9,15 +11,16 @@
 import $ from "jquery";
 import Chord from "@/components/chord"
 import WebTab from "@/utils/webTab"
+import { SheetNode, ENodeType, createUnknownNode } from "./sheetNode.js"
+import SheetNodeRoot from "./root"
 
 export default {
   name: "Sheet",
   components: {
-    Chord,
+    Chord, SheetNodeRoot
   },
   data() {
     return {
-      sheetHtml: "",
       globalCssVar: {
         // "--sheet-theme-color": "black",
         "--sheet-theme-color": "#e9266a",
@@ -25,7 +28,8 @@ export default {
         "--sheet-underline-color": "var(--sheet-theme-color)",
         "--sheet-line-height": "calc(var(--sheet-font-size) + 20px)",
         "--sheet-line-thickness": "calc(var(--sheet-font-size) * 0.05)" /* 各种下划线的粗细 */
-      }
+      },
+      sheetTree: null
     };
   },
   props: {
@@ -40,7 +44,8 @@ export default {
   },
   methods: {
     parseSheet() {
-      this.sheetHtml = "";
+      let rootNode = new SheetNode(ENodeType.Root)
+      let parentNode = rootNode
       let str = this.sheetText;
       if (!str) return;
       // 解析标签信息，标签信息具有通用性，可以自定义标签
@@ -77,157 +82,15 @@ export default {
 
           if (value.length == 1) value = value[0];
 
-          this[key] = value;
+          rootNode[key] = value;
         } else break;
       }
 
-      // 解析插件信息，目前只有指法谱插件，后续可能有别的（插入图片，快捷工具啥的？）
-      const RePlugin = /\*\[(.*)\]/;
-      let pluginElements = [];
-      let res;
-      let pluginIndex = 0;
-      while ((res = str.match(RePlugin))) {
-        const type = res[1];
-        const startIndex = str.indexOf(res[0]);
-        const pluginInfo = this.getPlugin(str, startIndex);
-        let pluginPlaceholderHTML = '<span>不支持的插件</span>'
-        switch (pluginInfo.type) {
-          case "tab": {
-            let tab = new WebTab();
-            let $tab = tab.create(pluginInfo.content);
-            pluginElements.push($tab);
-            pluginPlaceholderHTML = `<sheet-plugin index="${pluginIndex}"></sheet-plugin>`;
-            ++pluginIndex;
-            break;
-          }
-          default:
-            console.error(`不支持的插件类型：${type}`);
-        }
-        str = str.replace(pluginInfo.plugin, pluginPlaceholderHTML);
-      }
-
-      const UnderlineTagName = {
-        normal: "underline",
-        pure: "underline_pure",
-      };
-
-      // isStart 是否是起始标签，为真是起始标签，为假则是结束标签
-      // str 要替换的文本
-      // tag 替换成的标签
-      // pos 替换起始位置
-      // length 替换的长度
-      // 返回被替换的字符串，以及新的索引（位于替换字符串的末尾）
-      function replaceBracket(isStart, str, tag, pos, length = 1) {
-        let replacement = "<" + (isStart ? "" : "/") + tag + ">";
-        str = str.slice(0, pos) + replacement + str.slice(pos + length);
-        let newPos = pos + replacement.length - 1;
-        return [str, newPos];
-      }
-
-      let newlineMatchRes = str.substr(0, index).match(/\n/g);
+      
       let sheetBody = str.substr(index);
-      index = 0;
-      let typeStack = [];
-      let curDepth = -1;
-      let curLine = 1 + (newlineMatchRes ? newlineMatchRes.length : 0);
-      let curPos = 0;
-      while (index < sheetBody.length) {
-        if (sheetBody[index] == "{") {
-          curDepth++;
-          if (index > 0 && sheetBody[index - 1] == "!") {
-            typeStack.push("pure");
-            [sheetBody, index] = replaceBracket(
-              true,
-              sheetBody,
-              UnderlineTagName["pure"],
-              index - 1,
-              2
-            );
-          } else {
-            typeStack.push("normal");
-            [sheetBody, index] = replaceBracket(
-              true,
-              sheetBody,
-              UnderlineTagName["normal"],
-              index,
-              1
-            );
-          }
-        } else if (sheetBody[index] == "}") {
-          if (typeStack.length == 0) {
-            console.error(`解析曲谱：不应出现}，位于${curLine}行:${curPos}列`);
-            return null;
-          }
-          let type = typeStack.pop();
-          if (type == "pure" || type == "normal") {
-            [sheetBody, index] = replaceBracket(
-              false,
-              sheetBody,
-              UnderlineTagName[type],
-              index,
-              1
-            );
-          } else {
-            console.error("解析曲谱：未知类型错误");
-            return null;
-          }
-          curDepth--;
-        } else if (sheetBody[index] == "\n") {
-          curLine++;
-          curPos = 0;
-        }
-        curPos++;
-        index++;
-      }
-      if (curDepth >= 0) {
-        console.error("解析曲谱：下划线{}没有成对");
-        return null;
-      }
-      sheetBody = sheetBody.replace(
-        /\!\{([^\}]*)\}/g,
-        "<underline_pure>$1</underline_pure>"
-      );
-      sheetBody = sheetBody.replace(
-        /\{([^\}]*)\}/g,
-        "<underline>$1</underline>"
-      );
-      sheetBody = sheetBody.replace(/\!\(([^\)]*)\)/g, "<info>$1</info>"); // !(xxx)
-      sheetBody = sheetBody.replace(
-        /\!\[([^\]]*)\]/g,
-        "<chord_pure>$1</chord_pure>"
-      ); // ![xxx]
-      sheetBody = sheetBody.replace(
-        /\[([^\]]*)\]\(\_\)/g,
-        "<chord><placeholder /><chord_name>$1</chord_name></chord>"
-      ); // [xxx](_)
-      sheetBody = sheetBody.replace(
-        /\[([^\]]*)\]\_/g,
-        "<chord><placeholder /><chord_name>$1</chord_name></chord>"
-      ); // [xxx]_
-      sheetBody = sheetBody.replace(
-        /\[([^\]]*)\]\(([^\)]*)\)/g,
-        "<chord>$2<chord_name>$1</chord_name></chord>"
-      ); // [xxx](yyy)
-      sheetBody = sheetBody.replace(
-        /\[([^\]]*)\](.)/g,
-        "<chord>$2<chord_name>$1</chord_name></chord>"
-      ); // [xxx]y
-      sheetBody = sheetBody.replace(/(\r\n)|(\n)/g, "<newline></newline>"); // newline
-
-      // 生成元素
-      this.sheetHtml = sheetBody;
-      console.log(sheetBody)
-
-      // 替换插件
-      this.$nextTick(() => {
-        let $sheet = $(this.$refs['sheet'])
-        $sheet.find("sheet-plugin").each((i, e) => {
-          let $plugin = $(e)
-          let index = parseInt($plugin.attr("index"))
-          if (isNaN(index)) throw "解析遇到未知错误"
-          $plugin.replaceWith(pluginElements[index][0])
-        })
-      })
+      parseNodes(rootNode, sheetBody)
+      console.log(rootNode)
+      this.sheetTree = rootNode
     },
     getLine(str, offset) {
       if (offset > str) return [null, offset]
@@ -235,49 +98,6 @@ export default {
       let end = offset;
       while (end < str.length && str[end] != "\n") end++;
       return [str.substr(start, end), end + 1];
-    },
-    getPlugin(str, startIndex) {
-      let pluginInfo = {};
-
-      let i = startIndex;
-      if (str[i] != "*") throw "插件格式有误";
-      ++i;
-      if (str[i] != "[") throw "插件格式有误";
-      ++i;
-
-      let typeStartIndex = i;
-      while (true) {
-        if (i >= str.length) throw "插件格式有误，未找到插件类型的结束符号]";
-        else if (str[i] == "]") {
-          pluginInfo.type = str.slice(typeStartIndex, i);
-          ++i;
-          break;
-        }
-        ++i;
-      }
-
-      if (str[i] != "{") throw "插件格式有误";
-      ++i;
-      let contentStartIndex = i;
-      let depth = 0;
-      while (true) {
-        if (i >= str.length)
-          throw "插件格式有误，未找到插件内容的结束符号}或符号不匹配";
-
-        if (str[i] == "{") ++depth;
-        else if (str[i] == "}") {
-          if (depth == 0) {
-            pluginInfo.content = str.slice(contentStartIndex, i);
-            break;
-          } else --depth;
-        }
-        ++i;
-      }
-
-      let endIndex = i + 1;
-      pluginInfo.plugin = str.slice(startIndex, endIndex);
-
-      return pluginInfo;
     },
   },
   watch: {
@@ -288,6 +108,95 @@ export default {
     },
   },
 };
+
+
+function matchSplit(content, re, createNode) {
+  const match = content.match(re)
+  if (!match) return false
+  const newContent = match[0]
+  let splitNodes = []
+  if (match.index > 0) {
+    splitNodes.push(createUnknownNode(content.substr(0, match.index)))
+  }
+  splitNodes.push(createNode(match))
+  if (match.index + newContent.length < content.length) {
+    splitNodes.push(createUnknownNode(content.substr(match.index + newContent.length)))
+  }
+  return splitNodes
+}
+
+const RePlugin = /\*\[([^\]]*)\]\{\{([\S\s]*?)\}\}/ // *[type]{{content}}
+const ReUnderline = /(!?)\{([^\}]*)\}/ // !{content} | {content}
+const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{word}
+const ReInfo = /!\(([^)]*)\)/ // !(content)
+const splitMethods = [
+  {
+    re: RePlugin,
+    createNodeFunc: (match) => {
+      let pluginNode = new SheetNode(ENodeType.PluginType)
+      pluginNode.pluginType = match[1]
+      pluginNode.content = match[2]
+      return pluginNode
+    }
+  },
+  {
+    re: ReUnderline,
+    createNodeFunc: (match) => {
+      let type = match[1] ? ENodeType.UnderlinePure : ENodeType.Underline
+      let underlineNode = new SheetNode(type)
+      let underlineContent = match[2]
+      parseNodes(underlineNode, underlineContent)
+      return underlineNode
+    }
+  },
+  {
+    re: ReChord, 
+    createNodeFunc: (match) => {
+      let type = match[1] ? ENodeType.ChordPure : ENodeType.Chord
+      let chordNode = new SheetNode(type)
+      chordNode.chord = match[2]
+      chordNode.content = match[4] ?? match[3] 
+      return chordNode
+    }
+  },
+  {
+    re: ReInfo, 
+    createNodeFunc: (match) => {
+      let infoNode = new SheetNode(ENodeType.Info)
+      infoNode.content = match[1]
+      return infoNode
+    }
+  }
+]
+function parseNodes(parentNode, str) {
+  let nodes = [createUnknownNode(str)]
+  // 遍历
+  for(let i = 0; i < nodes.length; ++i) {
+    const node = nodes[i]
+    if (node.type != ENodeType.Unknown)
+      continue
+    const content = node.content
+
+    let hasMatch = false
+    for(let splitMethod of splitMethods) {
+      let splitNodes = matchSplit(content, splitMethod.re, splitMethod.createNodeFunc)
+      if (splitNodes) {
+        nodes.splice(i, 1, ...splitNodes)
+        hasMatch = true
+        break
+      }
+    }
+    if (hasMatch) {
+      --i
+      continue
+    }
+    else { // 都不匹配，说明是纯文本
+      node.type = ENodeType.Text
+    }
+  }
+  parentNode.children = nodes
+}
+
 </script>
 
 <style>

@@ -1,5 +1,5 @@
 <template>
-  <Chord style="width: 300px; height: 400px" :chord="chord" />
+  <!-- <Chord style="width: 300px; height: 400px" :chord="chord" /> -->
   <Sheet style="width: 100%; height: 600px" :sheet-text="sheetText" />
 </template>
 
@@ -29,7 +29,7 @@ $sheetKey D
 $chords D E Gm
 
 !(前奏)
-*[tab]{
+*[tab]{{
 $
 [stringNum:4]
 [showBarNumber:true]
@@ -39,7 +39,7 @@ $
 (2544)[chordGraph:Esus4][a:d]4 (xx--)4 (xx--)[chordGraph:E]4 {(xx--)16 (-2--)16 (-0--)8} |
 (1320)[chordGraph:Gm][a:d]4 (××--)4 (××--)4 (××--)4 |
 (0222)[chordGraph:D][a:d]4 (××--)4 (××--)4 (××--)4 [repeat:end]|
-}
+}}
 
 再[D]见 草莓甜[E]甜圈 街角咖[Gm]啡店 落下雨[D]_点
 再[D]见 黑白老[E]照片 回忆电[Gm]影院 埋进地[D]_面

@@ -1,0 +1,24 @@
+export const ENodeType = {
+  Unknown: "未知",
+  Root: "根",
+  Text: "文本",
+  Chord: "和弦",
+  ChordPure: "纯和弦",
+  Info: "标记",
+  Underline: "下划线",
+  UnderlinePure: "纯下划线",
+  PluginType: "插件"
+}
+
+export class SheetNode {
+  constructor(type) {
+    this.type = type
+    this.children = []
+  }
+}
+
+export var createUnknownNode = function(content) {
+  let node = new SheetNode(ENodeType.Unknown)
+  node.content = content
+  return node
+}
