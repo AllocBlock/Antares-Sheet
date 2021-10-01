@@ -4,21 +4,22 @@
 </template>
 
 <script>
-import Chord from '@/components/chord'
-import Sheet from '@/components/sheet'
-import ChordManager from '@/utils/chordManager'
+import Chord from "@/components/chord";
+import Sheet from "@/components/sheet";
+import ChordManager from "@/utils/chordManager";
 
-const g_ChordManager = new ChordManager()
+const g_ChordManager = new ChordManager();
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    Chord, Sheet
+    Chord,
+    Sheet,
   },
   data() {
     return {
       chord: {
-        name: 'Test'
+        name: "Test",
       },
       sheetText: `
 $title 诺亚方舟
@@ -72,8 +73,8 @@ $
 [D]让 诺亚[E]方舟 航向[Gm]了 海平[D]线  [D]让 诺亚[E]方舟 航向[Gm]了 换日[D]线
 [D]让 诺亚[E]方舟 航向[Gm]了 天际[D]线  [D]让 诺亚[E]方舟 航向[Gm]了 无[D]限
 
-!(尾奏) ![D] !{![Esus4] ![E]} ![Gm] ![D]`
-    }
+!(尾奏) ![D] !{![Esus4] ![E]} ![Gm] ![D]`,
+    };
   },
   mounted() {
     // this.chord = g_ChordManager.getChord("#Cm")
@@ -85,28 +86,28 @@ $
       rootString: null,
       disabledStrings: [5, 4],
       fingerings: [
-          {
-              finger: 1,
-              fret: 1,
-              startString: 1,
-              endString: 6
-          },
-          {
-              finger: 3,
-              fret: 3,
-              startString: 5,
-              endString: null
-          },
-          {
-              finger: 4,
-              fret: 3,
-              startString: 4,
-              endString: null
-          },
-      ]
-    }
+        {
+          finger: 1,
+          fret: 1,
+          startString: 1,
+          endString: 6,
+        },
+        {
+          finger: 3,
+          fret: 3,
+          startString: 5,
+          endString: null,
+        },
+        {
+          finger: 4,
+          fret: 3,
+          startString: 4,
+          endString: null,
+        },
+      ],
+    };
 
-    console.log(this.chord)
-  }
-}
+    console.log(this.chord);
+  },
+};
 </script>

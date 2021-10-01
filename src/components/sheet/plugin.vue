@@ -1,11 +1,16 @@
 <template>
-  <span>【插件{{node.pluginType}}】</span>
+  <SheetNodePluginTab :node="node" />
 </template>
 
 <script>
 import { SheetNode, ENodeType } from './sheetNode';
+import SheetNodePluginTab from './pluginTab/index';
+
 export default {
   name: "SheetNodePlugin",
+  components: {
+    SheetNodePluginTab
+  },
   props: {
     node: {
       type: SheetNode,

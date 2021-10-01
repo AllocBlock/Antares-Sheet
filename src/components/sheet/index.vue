@@ -253,4 +253,3 @@ function parseNodes(parentNode, str) {
   letter-spacing: 0px;
 }
 </style>
-<style src="@/utils/webTab.css"></style>

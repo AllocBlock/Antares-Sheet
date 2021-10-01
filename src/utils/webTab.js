@@ -158,30 +158,11 @@ class WebTab {
         this.config = new WebTabConfig
         this.bars = []
     }
-
-    create(strTab) {
-        let tab = _parseTab(strTab)
-        let $tab = _createTabHTML(tab)
-        $tab.on("fit", (e)=> {
-            if (e.target.tagName != "TAB-BOX") return;
-            _tabFit($(e.target))
-        })
-
-        return $tab
-    }
-
-    draw(element, strTab) {
-        let $tab = create(strTab)
-        
-        let $element = $(element)
-        $element.empty()
-        $element.append($tab)
-    }
 }
 
 let globalParseParam = {}
 
-function _parseTab(strTab) {
+export function parseTab(strTab) {
     globalParseParam = {}
 
     let tab = new WebTab
