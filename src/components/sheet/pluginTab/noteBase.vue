@@ -1,26 +1,31 @@
 <template>
-  <TabNoteBase 
-    v-if="note.type == 'single'" 
-    :note="note" 
-    :global-config="globalConfig"
-  />
-  <TabNoteConnect 
-    v-else 
-    :note="note" 
-    :global-config="globalConfig"
-  />
+  <!-- TODO: 配置项的元素 -->
+  <span v-if="isStum()" class="note"> ~ </span>
+  <span v-else-if="isFretVisible()" class="note">
+    <span
+      class="note_element"
+      v-for="(fret, fretIndex) in note.frets"
+      :key="fret"
+    >
+      <span v-if="fret == '-'">
+        <span
+          v-if="hasMiddleStem(fretIndex, note.frets)"
+          class="note_fret_stem"
+          type="normal"
+        />
+        <span v-else class="note_fret_empty" />
+      </span>
+      <span v-else>
+        <span class="note_fret">{{ fret }}</span>
+      </span>
+    </span>
+    <span class="note_stem" :type="note.getStemType()" />
+  </span>
 </template>
 
 <script>
-import TabNoteBase from "./noteBase";
-import TabNoteConnect from "./noteConnect";
-
 export default {
-  name: "TabNote",
-  components: {
-    TabNoteBase,
-    TabNoteConnect,
-  },
+  name: "TabNoteBase",
   props: {
     note: {
       type: Object,
@@ -29,6 +34,30 @@ export default {
     globalConfig: {
       type: Object,
       required: true,
+    },
+  },
+  created() {
+    if (this.note.type != "single") {
+      console.error("音符类型错误", this.note);
+      throw "音符类型错误";
+    }
+  },
+  methods: {
+    isStum() {
+      return this.note.config.a || this.note.config.s;
+    },
+    isFretVisible() {
+      if (!this.isStum()) return true;
+      let globalConfig = this.globalConfig.getBool("showStumFret") ?? true;
+      let localConfig = this.note.config.getBool("showStumFret");
+
+      return globalConfig && localConfig;
+    },
+    hasMiddleStem(fretIndex, frets) {
+      let globalHasMiddleStem = true;
+      let isBeforeAllEmpty =
+        frets.slice(0, fretIndex).filter((fret) => fret != "-") == 0;
+      return globalHasMiddleStem && !isBeforeAllEmpty;
     },
   },
 };
