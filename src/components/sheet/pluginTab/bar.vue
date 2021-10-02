@@ -7,7 +7,12 @@
     <TabRepeat v-if="hasRepeat('start')" type="start" />
     <TabTimeSignature v-if="hasTimeSignature()" :time-signature="getTimeSignature()" />
     <span class="notes">
-      <TabNote v-for="note in bar.notes" :key="note" :note="note" :globalConfig="globalConfig" />
+      <TabNote 
+        v-for="note in bar.notes" 
+        :key="note" 
+        :note="note" 
+        :global-config="globalConfig"
+      />
     </span>
     <TabRepeat v-if="hasRepeat('end')" type="end" />
   </span>

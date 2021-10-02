@@ -1,35 +1,51 @@
 <template>
   <!-- TODO: 配置项的元素 -->
-  <span v-if="isStum()" class="note"> ~ </span>
-  <span v-else-if="isFretVisible()" class="note">
-    <span
-      class="note_element"
-      v-for="(fret, fretIndex) in note.frets"
-      :key="fret"
-    >
-      <span v-if="fret == '-'">
-        <span
-          v-if="hasMiddleStem(fretIndex, note.frets)"
-          class="note_fret_stem"
-          type="normal"
-        />
-        <span v-else class="note_fret_empty" />
+  <span class="note">
+    <TabStum v-if="isStum()" :note="note" :global-config="globalConfig"/>
+    <template v-else-if="isFretVisible()">
+      <span
+        class="note_element"
+        v-for="(fret, fretIndex) in note.frets"
+        :key="fret"
+      >
+        <span v-if="fret == '-'">
+          <span
+            v-if="hasMiddleStem(fretIndex, note.frets)"
+            class="note_fret_stem"
+            type="normal"
+          />
+          <span v-else class="note_fret_empty" />
+        </span>
+        <span v-else>
+          <span class="note_fret">{{ fret }}</span>
+        </span>
       </span>
-      <span v-else>
-        <span class="note_fret">{{ fret }}</span>
-      </span>
-    </span>
+    </template>
     <span class="note_stem" :type="note.getStemType()" />
+    <span class="note_flag">
+      <span v-for="flagType in flags" :key="flagType" class="note_flag_connect" :type="flagType" />
+    </span>
   </span>
 </template>
 
 <script>
+import TabStum from './stum'
+
 export default {
   name: "TabNoteBase",
+  components: {
+    TabStum
+  },
   props: {
     note: {
       type: Object,
       required: true,
+    },
+    flags: { // TODO: 这样安排是否合理？connect传入flags列表，还是base获取前后flag信息生成列表?
+      type: Array,
+      default: function() {
+        return []
+      }
     },
     globalConfig: {
       type: Object,
@@ -121,19 +137,6 @@ export default {
 .note_fret_stem[type="end"]:after {
   height: calc(50% + var(--stem-margin));
 }
-.note_stum {
-  position: absolute;
-  width: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-.note_stum[direction="up"] {
-  transform: scaleY(-1);
-}
-.note_stum svg {
-  width: 100%;
-}
 .note_link {
   position: absolute;
   width: 100%;
@@ -183,25 +186,25 @@ export default {
   display: flex;
   flex-direction: column-reverse;
 }
-.note_flag-connect {
+.note_flag_connect {
   height: 4px;
   margin-top: 5px;
   /* background-color: #fff; */
   background-color: black;
 }
-.note_flag-connect,
-.note_flag-connect[type="none"] {
+.note_flag_connect,
+.note_flag_connect[type="none"] {
   width: 0;
 }
-.note_flag-connect[type="left"] {
+.note_flag_connect[type="left"] {
   width: 50%;
   align-self: flex-start;
 }
-.note_flag-connect[type="right"] {
+.note_flag_connect[type="right"] {
   width: 50%;
   align-self: flex-end;
 }
-.note_flag-connect[type="both"] {
+.note_flag_connect[type="both"] {
   width: 100%;
   align-self: center;
 }
@@ -223,29 +226,5 @@ export default {
   height: calc(var(--row-height) * 1.5);
   width: calc(var(--row-height) * 1.5 * 0.75);
   color: black;
-}
-.note_stum_arrow {
-  position: absolute;
-  top: 0;
-  transform: translateY(calc(-85% - 6px));
-}
-
-.note_stum_head {
-  position: absolute;
-  top: 0;
-  height: 6px;
-  transform: translateY(-100%);
-}
-
-.note_stum_body {
-  top: 0;
-  flex-grow: 1;
-}
-
-.note_stum_tail {
-  position: absolute;
-  bottom: 0;
-  height: 10px;
-  transform: translateY(100%);
 }
 </style>

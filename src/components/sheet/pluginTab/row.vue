@@ -69,6 +69,9 @@ export default {
   align-items: center;
 }
 .row > * {
+  z-index: 2;
+}
+.row > .bg_lines {
   z-index: 1;
 }
 .bg_lines {
