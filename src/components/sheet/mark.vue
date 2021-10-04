@@ -1,27 +1,22 @@
 <template>
-  <span class="info">{{node.content}}</span>
+  <mark>{{node.content}}</mark>
 </template>
 
 <script>
 import { SheetNode, ENodeType } from './sheetNode';
 export default {
-  name: "SheetNodeInfo",
+  name: "SheetNodeMark",
   props: {
     node: {
       type: SheetNode,
       required: true,
-      default: function() {
-        let node = new SheetNode(ENodeType.Text)
-        node.content = "未知节点"
-        return node
-      }
     },
   },
 };
 </script>
 
 <style scoped>
-.info {
+mark {
   padding: 3px 8px;
   border-radius: 5px;
   background-color: var(--sheet-theme-color);

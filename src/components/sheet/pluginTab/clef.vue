@@ -1,9 +1,9 @@
 <template>
-  <span class="clef">
+  <clef>
     <div>T</div>
     <div>A</div>
     <div>B</div>
-  </span>
+  </clef>
 </template>
 
 <script>
@@ -13,7 +13,7 @@ export default {
 </script>
 
 <style scoped>
-.clef {
+clef {
   margin: 0 4px;
   width: 20px;
   height: 90%;
@@ -23,7 +23,7 @@ export default {
   justify-content: space-around;
   align-items: center;
 }
-.clef div {
+clef div {
   display: flex;
   justify-content: center;
   align-items: center;

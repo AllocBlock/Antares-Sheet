@@ -1,10 +1,10 @@
 <template>
-  <span class="note_stum" :direction="direction" :style="getStumStyle()">
+  <note-stum :direction="direction" :style="getStumStyle()">
     <TabSvg class="note_stum_arrow flex_center" :svg-name="svgArrowName" />
     <TabSvg class="note_stum_head flex_center" :svg-name="svgHeadName" />
     <TabSvg class="note_stum_body flex_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)" :key="i" />
     <TabSvg class="note_stum_tail flex_center" :svg-name="svgTailName" />
-  </span>
+  </note-stum>
 </template>
 
 <script>
@@ -89,7 +89,6 @@ export default {
     getStumStyle() {
       let stringNum = this.globalConfig.getInt("stringNum")
       let stumBodyNum = this.range.end - this.range.start
-      console.log(this.range)
       return {
         top: `${(this.range.start / (stringNum - 1)) * 100}%`,
         height: `${(stumBodyNum / (stringNum - 1)) * 100}%`,
@@ -100,14 +99,14 @@ export default {
 </script>
 
 <style scoped>
-.note_stum {
+note-stum {
   position: absolute;
   width: 10px;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
-.note_stum[direction="up"] {
+note-stum[direction="up"] {
   transform: scaleY(-1);
 }
 

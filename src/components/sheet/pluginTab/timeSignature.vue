@@ -1,8 +1,8 @@
 <template>
-  <span class="time_signature">
+  <time-signature>
     <div>{{ tapPerBar }}</div>
     <div>{{ notePerTap }}</div>
-  </span>
+  </time-signature>
 </template>
 
 <script>
@@ -37,7 +37,7 @@ export default {
 </script>
 
 <style scoped>
-.time_signature {
+time-signature {
   font-family: MusicNotation, Arial, Helvetica, sans-serif;
   margin: 0 8px;
   width: 30px;
@@ -48,7 +48,7 @@ export default {
   justify-content: space-around;
   align-items: center;
 }
-.time_signature div {
+time-signature div {
   display: flex;
   justify-content: center;
   align-items: center;

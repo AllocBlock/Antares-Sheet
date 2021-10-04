@@ -1,21 +1,21 @@
 <template>
-  <span class="bar">
-    <span v-if="isBarNumberVisible()" class="bar_number">
+  <bar>
+    <bar-number v-if="isBarNumberVisible()">
       {{ bar.number }}
-    </span>
-    <span v-if="hasSplitLine()" class="bar_split" />
+    </bar-number>
+    <bar-split v-if="hasSplitLine()" />
     <TabRepeat v-if="hasRepeat('start')" type="start" />
     <TabTimeSignature v-if="hasTimeSignature()" :time-signature="getTimeSignature()" />
-    <span class="notes">
+    <notes>
       <TabNote 
         v-for="note in bar.notes" 
         :key="note" 
         :note="note" 
         :global-config="globalConfig"
       />
-    </span>
+    </notes>
     <TabRepeat v-if="hasRepeat('end')" type="end" />
-  </span>
+  </bar>
 </template>
 
 <script>
@@ -71,7 +71,7 @@ export default {
 </script>
 
 <style scoped>
-.bar {
+bar {
   position: relative;
   height: 100%;
   display: flex;
@@ -80,14 +80,14 @@ export default {
 
   flex-grow: 1;
 }
-.bar_number {
+bar-number {
   position: absolute;
   bottom: calc(100% + 5px);
   left: 8px;
   font-size: var(--fret-font-size);
   color: #aaa;
 }
-.bar_split {
+bar-split {
   flex-shrink: 0;
   width: var(--bar_split-width);
   height: 100%;
@@ -95,22 +95,18 @@ export default {
   /* background-color: #fff; */
   background-color: black;
 }
-.bar_split[type="start"] {
+bar-split[type="start"] {
   margin-right: 10px;
 }
-.bar_split[type="end"] {
+bar-split[type="end"] {
   margin-left: 10px;
 }
 
-.bar_start_padding {
+/* bar-start-padding {
   margin-right: 10px;
-}
+} */
 
-.bar_split > .repeat[type="start"] {
-  transform: scaleX(-1);
-}
-
-.notes {
+notes {
   height: 100%;
   width: 100%;
 

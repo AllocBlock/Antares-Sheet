@@ -2,7 +2,7 @@
   <SheetNodePlugin v-if="node.type == ENodeType.PluginType" :node="node" />
   <SheetNodeUnderline v-else-if="node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure" :node="node" />
   <SheetNodeChord v-else-if="node.type == ENodeType.Chord || node.type == ENodeType.ChordPure" :node="node" />
-  <SheetNodeInfo v-else-if="node.type == ENodeType.Info" :node="node" />
+  <SheetNodeMark v-else-if="node.type == ENodeType.Info" :node="node" />
   <SheetNodeText v-else-if="node.type == ENodeType.Text" :node="node" />
   <SheetNodeError v-else />
 </template>
@@ -11,7 +11,7 @@
 import { SheetNode, ENodeType } from './sheetNode';
 import SheetNodeError from './error';
 import SheetNodeChord from './chord';
-import SheetNodeInfo from './info';
+import SheetNodeMark from './mark';
 // const SheetNodeUnderline = () => import('./underline');
 import SheetNodePlugin from './plugin';
 import SheetNodeText from './text';
@@ -19,7 +19,7 @@ import SheetNodeText from './text';
 export default {
   name: "SheetNodeGeneral",
   components: {
-    SheetNodePlugin, SheetNodeChord, SheetNodeInfo, SheetNodeText, SheetNodeError
+    SheetNodePlugin, SheetNodeChord, SheetNodeMark, SheetNodeText, SheetNodeError
   },
   props: {
     node: {

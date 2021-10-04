@@ -1,7 +1,7 @@
 <template>
-  <span :class="getClass()">
+  <component :is="getTag()">
     <SheetNodeGeneral v-for="childNode in node.children" :key="childNode" :node="childNode" />
-  </span>
+  </component>
 </template>
 
 <script>
@@ -29,8 +29,8 @@ export default {
     this.ENodeType = ENodeType
   },
   methods: {
-    getClass() {
-      return this.node.type == ENodeType.Underline ? "underline" : "underline_pure"
+    getTag() {
+      return this.node.type == ENodeType.Underline ? "underline" : "underline-pure"
     },
   }
 };
@@ -38,40 +38,40 @@ export default {
 
 <style scoped>
 /* 下划线 */
-.underline {
+underline {
   border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);
 }
 
-.underline > .underline {
+underline > underline {
   border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);
-  padding-top: calc(var(--sheet-line-thickness) * 3);
+  padding-top: calc(var(--sheet-line-thickness) * 2);
 }
 
-.underline > .underline > .underline {
+underline > underline > underline {
   border-top: var(--sheet-line-thickness) solid var(--sheet-underline-color);
-  padding-top: calc(var(--sheet-line-thickness) * 6);
+  padding-top: calc(var(--sheet-line-thickness) * 4);
 }
 
-.underline > .underline > .underline > .underline {
+underline > underline > underline > underline {
   border-top: none;
 }
 
 /* 同行下划线 */
-.underline_pure {
+underline-pure {
   border-bottom: var(--sheet-line-thickness) solid var(--sheet-underline-color);
 }
 
-.underline_pure > .underline_pure {
+underline-pure > underline-pure {
   border-bottom: var(--sheet-line-thickness) solid var(--sheet-underline-color);
-  padding-bottom: calc(var(--sheet-line-thickness) * 3);
+  padding-bottom: calc(var(--sheet-line-thickness) * 2);
 }
 
-.underline_pure > .underline_pure > .underline_pure {
+underline-pure > underline-pure > underline-pure {
   border-bottom: var(--sheet-line-thickness) solid var(--sheet-underline-color);
-  padding-bottom: calc(var(--sheet-line-thickness) * 6);
+  padding-bottom: calc(var(--sheet-line-thickness) * 4);
 }
 
-.underline_pure > .underline_pure > .underline_pure > .underline_pure {
+underline-pure > underline-pure > underline-pure > underline-pure {
   border-bottom: none;
 }
 </style>

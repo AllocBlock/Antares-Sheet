@@ -1,5 +1,5 @@
 <template>
-  <div :style="globalCssVar" class="tab_box">
+  <tab-box :style="globalCssVar">
     <TabRow
       v-for="(row, rowIndex) in tabRows"
       :key="row"
@@ -8,12 +8,12 @@
       :first-bar-number="row[0].number"
       :global-config="tabConfig"
     />
-  </div>
+  </tab-box>
 </template>
 
 <script>
 import { SheetNode } from "../sheetNode";
-import { parseTab } from "@/utils/webTab";
+import { parseTab } from "./tabParser";
 import TabRow from "./row";
 
 export default {
@@ -59,16 +59,16 @@ export default {
       this.tabConfig = tab.config
       let row = []
       for (let i = 0; i < tab.bars.length; ++i) {
+        let bar = tab.bars[i] // TODO: 自定义class如何拷贝？
+        bar.number = i + 1
+        row.push(bar)
         if (
-          (i > 0 && i % 2 == 0) ||
+          ((i - 1) % 2 == 0) ||
           (i == tab.bars.length - 1 && row.length > 0)
         ) {
           this.tabRows.push(row)
           row = []
         }
-        let bar = tab.bars[i] // TODO: 自定义class如何拷贝？
-        bar.number = i + 1
-        row.push(bar)
       }
       console.log(this.tabRows)
     },
@@ -110,7 +110,7 @@ export default {
     src: url(~@/assets/fonts/Aruvarb.ttf);
 }
 
-.tab_box {
+tab-box {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -120,11 +120,11 @@ export default {
   user-select: none;
 }
 
-.tab_box[state="disabled"] > * {
+tab-box[state="disabled"] > * {
   filter: blur(4px);
 }
 
-.tab_box[state="disabled"]:before {
+tab-box[state="disabled"]:before {
   content: "";
   position: absolute;
   left: -8px;
@@ -136,7 +136,7 @@ export default {
   z-index: 2;
 }
 
-.tab_box[state="disabled"]:after {
+tab-box[state="disabled"]:after {
   content: "指法谱不可用";
   position: absolute;
   left: 0;

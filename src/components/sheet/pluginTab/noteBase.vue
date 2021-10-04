@@ -1,31 +1,29 @@
 <template>
   <!-- TODO: 配置项的元素 -->
-  <span class="note">
+  <note>
     <TabStum v-if="isStum()" :note="note" :global-config="globalConfig"/>
     <template v-else-if="isFretVisible()">
-      <span
-        class="note_element"
+      <note-element
         v-for="(fret, fretIndex) in note.frets"
         :key="fret"
       >
-        <span v-if="fret == '-'">
-          <span
+        <template v-if="fret == '-'">
+          <note-fret-stem
             v-if="hasMiddleStem(fretIndex, note.frets)"
-            class="note_fret_stem"
             type="normal"
           />
-          <span v-else class="note_fret_empty" />
-        </span>
-        <span v-else>
-          <span class="note_fret">{{ fret }}</span>
-        </span>
-      </span>
+          <note-fret-empty v-else />
+        </template>
+        <template v-else>
+          <note-fret>{{ fret }}</note-fret>
+        </template>
+      </note-element>
     </template>
-    <span class="note_stem" :type="note.getStemType()" />
-    <span class="note_flag">
-      <span v-for="flagType in flags" :key="flagType" class="note_flag_connect" :type="flagType" />
-    </span>
-  </span>
+    <note-stem :type="note.getStemType()" />
+    <note-flag>
+      <note-flag-connect v-for="flagType in flags" :key="flagType" :type="flagType" />
+    </note-flag>
+  </note>
 </template>
 
 <script>
@@ -80,7 +78,7 @@ export default {
 </script>
 
 <style scoped>
-.note {
+note {
   position: relative;
   width: 100%;
   height: 100%;
@@ -90,7 +88,7 @@ export default {
   align-items: center;
   justify-content: space-between;
 }
-.note_element {
+note-element {
   position: relative;
   width: 100%;
   height: 0;
@@ -100,10 +98,10 @@ export default {
   justify-content: center;
   align-items: center;
 }
-.note_element > * {
+note-element > * {
   position: absolute;
 }
-.note_fret {
+note-fret {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -115,15 +113,15 @@ export default {
   /* background-color: rgb(0, 6, 40); */
   background-color: white;
 }
-.note_fret_empty {
+note-fret-empty {
   width: 12px;
 }
-.note_fret_stem {
+note-fret-stem {
   position: relative;
   height: calc(1 / (var(--string-num) - 1) * var(--row-height));
   width: 12px;
 }
-.note_fret_stem:after {
+note-fret-stem:after {
   position: absolute;
   content: "";
   top: 0;
@@ -134,10 +132,10 @@ export default {
   background-color: black;
   border-radius: 2px;
 }
-.note_fret_stem[type="end"]:after {
+note-fret-stem[type="end"]:after {
   height: calc(50% + var(--stem-margin));
 }
-.note_link {
+note-link {
   position: absolute;
   width: 100%;
   left: 50%;
@@ -147,36 +145,36 @@ export default {
   justify-content: center;
   align-items: center;
 }
-.note_link svg {
+note-link svg {
   width: 100%;
   height: calc(1 / (var(--string-num) - 1) * var(--row-height) * 0.4);
 }
 
-.note_link-text {
+note-link-text {
   position: absolute;
   font-size: 12px;
   transform: translateY(-100%);
 }
-.note_stem {
+note-stem {
   position: absolute;
   /* background-color: #fff; */
   background-color: black;
   width: 2px;
   border-radius: 2px;
 }
-.note_stem[type="complete"] {
+note-stem[type="complete"] {
   height: 42px;
   bottom: calc(-1 * var(--stem-margin));
 }
-.note_stem[type="half"] {
+note-stem[type="half"] {
   height: 20px;
   width: 2px;
   bottom: calc(-1 * var(--stem-margin));
 }
-.note_stem,
-.note_stem[type="none"] {
+note-stem,
+note-stem[type="none"] {
 }
-.note_flag {
+note-flag {
   position: absolute;
   width: 100%;
   bottom: calc(-1 * var(--stem-margin));
@@ -186,29 +184,29 @@ export default {
   display: flex;
   flex-direction: column-reverse;
 }
-.note_flag_connect {
+note-flag-connect {
   height: 4px;
   margin-top: 5px;
   /* background-color: #fff; */
   background-color: black;
 }
-.note_flag_connect,
-.note_flag_connect[type="none"] {
+note-flag-connect,
+note-flag-connect[type="none"] {
   width: 0;
 }
-.note_flag_connect[type="left"] {
+note-flag-connect[type="left"] {
   width: 50%;
   align-self: flex-start;
 }
-.note_flag_connect[type="right"] {
+note-flag-connect[type="right"] {
   width: 50%;
   align-self: flex-end;
 }
-.note_flag_connect[type="both"] {
+note-flag-connect[type="both"] {
   width: 100%;
   align-self: center;
 }
-.note_chord {
+/* .note_chord {
   position: absolute;
   bottom: calc(100% + 20px);
 
@@ -218,7 +216,7 @@ export default {
 }
 .note_chord_name {
   font-size: 24px;
-  /* color: white; */
+  color: white;
   color: black;
 }
 .note_chord_graph {
@@ -226,5 +224,5 @@ export default {
   height: calc(var(--row-height) * 1.5);
   width: calc(var(--row-height) * 1.5 * 0.75);
   color: black;
-}
+} */
 </style>

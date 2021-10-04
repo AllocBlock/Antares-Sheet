@@ -1,8 +1,8 @@
 <template>
-  <span :class="getClass()" v-if="node.type == ENodeType.Chord">
-    {{getContent()}}
-    <span class="chord_name">{{node.chord}}</span>
-  </span>
+  <component :is="getTag()">
+    <chord-body>{{getContent()}}</chord-body>
+    <chord-ruby v-if="node.type == ENodeType.Chord">{{node.chord}}</chord-ruby>
+  </component>
 </template>
 
 <script>
@@ -24,11 +24,14 @@ export default {
     this.ENodeType = ENodeType
   },
   methods: {
-    getClass() {
-      return this.node.type == ENodeType.Chord ? "chord" : "chord_pure"
+    getTag() {
+      return this.node.type == ENodeType.Chord ? "chord" : "chord-pure"
     },
     getContent() {
-      return (!this.node.content || this.node.content == '_') ? "🔹" : this.node.content
+      if (this.node.type == ENodeType.Chord)
+        return (!this.node.content || this.node.content == '_') ? "🔹" : this.node.content
+      else
+        return this.node.chord
     }
   }
 };
@@ -36,22 +39,22 @@ export default {
 
 <style scoped>
 /* 占位标记 */
-.placeholder {
+/* placeholder {
   display: inline-block;
   border-bottom: var(--sheet-line-thickness) solid var(--sheet-theme-color);
   width: var(--sheet-font-size);
-}
+} */
 
 /* 和弦 */
-.chord {
+chord {
   color: var(--sheet-theme-color);
   user-select: none;
   position: relative;
   cursor: default;
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.3);
-  white-space: pre;
+  white-space: normal;
 }
-.chord:before {
+chord:before {
   content: " ";
   position: relative;
   display: inline-block;
@@ -59,7 +62,7 @@ export default {
   height: 0;
   width: 0;
 }
-.chord::after {
+chord::after {
   content: "";
   position: absolute;
   left: -10px;
@@ -73,14 +76,14 @@ export default {
   pointer-events: none;
 }
 
-.chord:hover::after,
-chord_pure:hover::after {
+chord:hover::after,
+chord-pure:hover::after {
   border: 2px solid var(--sheet-theme-color);
   box-shadow: 0 0 5px 2px black;
 }
 
-/* 和弦名称 */
-.chord_name {
+/* 和弦标注 */
+chord-ruby {
   color: var(--sheet-theme-color);
   position: absolute;
   user-select: none;
@@ -99,14 +102,16 @@ chord_pure:hover::after {
 }
 
 /* 同行和弦 */
-.chord_pure {
+chord-pure {
   color: var(--sheet-theme-color);
   user-select: none;
   position: relative;
   cursor: default;
   transition: 0.5s ease-out;
+  margin: 0 5px;
+  white-space: normal;
 }
-.chord_pure::after {
+chord-pure::after {
   content: "";
   position: absolute;
   left: -10px;

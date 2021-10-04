@@ -8,9 +8,7 @@
 </template>
 
 <script>
-import $ from "jquery";
 import Chord from "@/components/chord"
-import WebTab from "@/utils/webTab"
 import { SheetNode, ENodeType, createUnknownNode } from "./sheetNode.js"
 import SheetNodeRoot from "./root"
 
@@ -27,7 +25,7 @@ export default {
         "--sheet-font-size": "30px",
         "--sheet-underline-color": "var(--sheet-theme-color)",
         "--sheet-line-height": "calc(var(--sheet-font-size) + 20px)",
-        "--sheet-line-thickness": "calc(var(--sheet-font-size) * 0.05)" /* 各种下划线的粗细 */
+        "--sheet-line-thickness": "calc(var(--sheet-font-size) * 0.07)" /* 各种下划线的粗细 */
       },
       sheetTree: null
     };
@@ -45,7 +43,6 @@ export default {
   methods: {
     parseSheet() {
       let rootNode = new SheetNode(ENodeType.Root)
-      let parentNode = rootNode
       let str = this.sheetText;
       if (!str) return;
       // 解析标签信息，标签信息具有通用性，可以自定义标签
@@ -86,7 +83,6 @@ export default {
         } else break;
       }
 
-      
       let sheetBody = str.substr(index);
       parseNodes(rootNode, sheetBody)
       console.log(rootNode)
@@ -126,7 +122,6 @@ function matchSplit(content, matcher, createNode) {
 }
 
 const RePlugin = /\*\[([^\]]*)\]\{\{([\S\s]*?)\}\}/ // *[type]{{content}}
-const ReUnderline = /(!?)\{([^\}]*)\}/ // !{content} | {content}
 const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{word}
 const ReInfo = /!\(([^)]*)\)/ // !(content)
 const splitMethods = [
@@ -140,7 +135,7 @@ const splitMethods = [
     }
   },
   {
-    matcher: (content) => {
+    matcher: (content) => { // !{content} | {content}
       let index
       let isPure = false
       let depth = 0
@@ -185,7 +180,8 @@ const splitMethods = [
       let type = match[1] ? ENodeType.ChordPure : ENodeType.Chord
       let chordNode = new SheetNode(type)
       chordNode.chord = match[2]
-      chordNode.content = match[4] ?? match[3] 
+      if (type == ENodeType.Chord)
+        chordNode.content = match[4] ?? match[3] 
       return chordNode
     }
   },
