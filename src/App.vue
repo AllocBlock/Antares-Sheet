@@ -1,11 +1,13 @@
 <template>
   <!-- <Chord style="width: 300px; height: 400px" :chord="chord" /> -->
+  <Metronome />
   <Sheet style="width: 100%; height: 600px" :sheet-text="sheetText" />
 </template>
 
 <script>
 import Chord from "@/components/chord";
 import Sheet from "@/components/sheet";
+import Metronome from "@/components/metronome";
 import ChordManager from "@/utils/chordManager";
 
 const g_ChordManager = new ChordManager();
@@ -13,8 +15,7 @@ const g_ChordManager = new ChordManager();
 export default {
   name: "App",
   components: {
-    Chord,
-    Sheet,
+    Chord, Sheet, Metronome
   },
   data() {
     return {

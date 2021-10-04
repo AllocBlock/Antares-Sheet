@@ -288,55 +288,6 @@ function setupEvents() {
     changeAutoScrollSpeed($("#auto_scroll_slider").val())
   );
 
-  $("#metronome_control").click(() => {
-    g_MetronomeStarted = !g_MetronomeStarted;
-    if (g_MetronomeStarted) {
-      if (!g_Metronome.start()) {
-        alert("节拍器加载未完成，请稍后");
-        return;
-      }
-
-      $("#metronome_control").text("❚❚");
-    } else {
-      $("#metronome_control").text("▶");
-      g_Metronome.stop();
-    }
-  });
-
-  $("#metronome_bpm_input").bind("change", (e) => {
-    let bpm = $(e.currentTarget).val();
-    g_Metronome.bpm = Math.max(30, Math.min(240, bpm));
-  });
-
-  $("#metronome_bpm_decrease").bind("click", () => {
-    if (g_Metronome.bpm > 30) g_Metronome.bpm--;
-    $("#metronome_bpm_input").val(g_Metronome.bpm);
-  });
-
-  $("#metronome_bpm_increase").bind("click", () => {
-    if (g_Metronome.bpm < 240) g_Metronome.bpm++;
-    $("#metronome_bpm_input").val(g_Metronome.bpm);
-  });
-
-  let longPressTimer,
-    longPressing = false;
-  $("#metronome_bpm_decrease, #metronome_bpm_increase").bind(
-    "mousedown",
-    (e) => {
-      function longPress(element) {
-        if (longPressing) {
-          $(element).trigger("click");
-          setTimeout(longPress, 50, element);
-        }
-      }
-
-      longPressing = true;
-      longPressTimer = setTimeout(() => {
-        longPress(e.currentTarget);
-      }, 500);
-    }
-  );
-
   $("#toggle_page_type").bind("change", (e) => {
     if ($(e.currentTarget).prop("checked") == true) {
       g_PageType = "A4";
@@ -794,54 +745,6 @@ body[env="mobile"] #auto_scroll_block {
 
 body[env="pc"] #auto_scroll_slider {
   -webkit-appearance: slider-vertical;
-}
-
-#metronome_block {
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  user-select: none;
-  border: 2px white solid;
-  font-size: 20px;
-
-  z-index: 10;
-}
-
-#metronome_control {
-  height: 30px;
-  width: 30px;
-  margin: 5px 0;
-  border-radius: 50%;
-  border: 4px white solid;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-#metronome_bpm_block {
-  display: flex;
-  justify-content: space-around;
-}
-#metronome_bpm_decrease,
-#metronome_bpm_increase {
-  height: 20px;
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-#metronome_bpm_input {
-  outline-style: none;
-  border: 0px;
-  border-bottom: 1px white solid;
-  background-color: transparent;
-  color: white;
-  width: 50px;
-  text-align: center;
 }
 
 #page_type_block {
