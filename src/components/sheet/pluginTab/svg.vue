@@ -1,5 +1,5 @@
 <template>
-  <span v-html="svg" />
+  <span v-html="svg" class="svg_container"/>
 </template>
 
 <script>
@@ -46,7 +46,7 @@ export default {
 </script>
 
 <style>
-svg {
+.svg_container svg {
   width: 100%;
   height: 100%;
 }
