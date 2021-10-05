@@ -1,9 +1,9 @@
 <template>
   <div class="container" ref="container" :style="globalCssVar">
-    <div v-if="sheetTree" ref="sheet">
+    <template v-if="sheetTree" ref="sheet">
       <SheetNodeRoot :node="sheetTree" />
-    </div>
-    <span v-else>曲谱加载中...</span>
+    </template>
+    <template v-else>曲谱加载中...</template>
   </div>
 </template>
 
@@ -13,7 +13,7 @@ import { SheetNode, ENodeType, createUnknownNode } from "./sheetNode.js"
 import SheetNodeRoot from "./root"
 
 export default {
-  name: "Sheet",
+  name: "WebSheet",
   components: {
     Chord, SheetNodeRoot
   },
@@ -38,7 +38,7 @@ export default {
     },
   },
   mounted() {
-    this.parseSheet();
+    this.parseSheet()
   },
   methods: {
     parseSheet() {
@@ -87,6 +87,7 @@ export default {
       parseNodes(rootNode, sheetBody)
       console.log(rootNode)
       this.sheetTree = rootNode
+      this.$emit("loaded", rootNode)
     },
     getLine(str, offset) {
       if (offset > str) return [null, offset]
@@ -98,13 +99,10 @@ export default {
   },
   watch: {
     sheetText: function () {
-      this.$nextTick(() => {
-        this.parseSheet();
-      });
+      this.parseSheet()
     },
   },
 };
-
 
 function matchSplit(content, matcher, createNode) {
   const match = (typeof matcher == "function") ? matcher(content) : content.match(matcher)
@@ -121,12 +119,42 @@ function matchSplit(content, matcher, createNode) {
   return splitNodes
 }
 
-const RePlugin = /\*\[([^\]]*)\]\{\{([\S\s]*?)\}\}/ // *[type]{{content}}
 const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{word}
 const ReInfo = /!\(([^)]*)\)/ // !(content)
 const splitMethods = [
   {
-    matcher: RePlugin,
+    matcher: (content) => { // *[type]{content}
+      const RePluginStart = /\*\[([^\]]*)\]/ // *[type]
+      let tempMatch = content.match(RePluginStart)
+      if (!tempMatch) return null
+
+      let pluginType = tempMatch[1]
+      let contentStartIndex = tempMatch.index + tempMatch[0].length + 1
+      let startIndex = tempMatch.index, endIndex = null
+      let depth = 0
+      for(let i = startIndex; i < content.length; ++i) {
+        if (content[i] == '{') {
+          depth++
+        }
+        else if (content[i] == '}') {
+          depth--
+          if (depth == 0) {
+            endIndex = i
+            break
+          }
+        }
+      }
+
+      if (!endIndex) throw "曲谱解析失败，插件格式有误"
+
+      let match = []
+      match.index = startIndex
+      match[0] = content.substr(startIndex, endIndex - startIndex + 1)
+      match[1] = pluginType
+      match[2] = content.substr(contentStartIndex, endIndex - contentStartIndex)
+      console.log(match)
+      return match
+    },
     createNodeFunc: (match) => {
       let pluginNode = new SheetNode(ENodeType.PluginType)
       pluginNode.pluginType = match[1]
@@ -227,6 +255,8 @@ function parseNodes(parentNode, str) {
 
 <style>
 .container {
+  width: 100%;
+  height: 100%;
   word-wrap: break-word;
   user-select: none;
   letter-spacing: 1px;

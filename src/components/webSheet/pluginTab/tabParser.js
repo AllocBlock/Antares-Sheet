@@ -200,7 +200,7 @@ function _parseBar(strBar) {
                 bar.notes.push(note)
             }
             else
-                throw "解析失败"
+                throw "指法谱解析失败"
         }
     }
     return bar

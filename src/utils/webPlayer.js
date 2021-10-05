@@ -1,4 +1,4 @@
-import {ResourceDir} from "./webCommon.js"
+const ResourceDir = "/resources"
 
 const AudioSourceLibrary = [
     {

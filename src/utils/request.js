@@ -1,6 +1,4 @@
-import { getToken } from '@/utils/auth'
 import axios from 'axios'
-import { Message } from 'element-ui'
 
 // 全局使用的request，统一处理请求失败的操作
 const g_BaseUrl = process.env.VUE_APP_BASE_API
@@ -10,11 +8,7 @@ axios.defaults.baseURL = g_BaseUrl
 
 function reportError(msg) {
   console.error(msg)
-  Message({
-    message: msg,
-    type: 'error',
-    duration: 5000
-  })
+  throw "网络错误"
 }
 
 function handleResponse(response, resolve, reject) {
@@ -24,12 +18,6 @@ function handleResponse(response, resolve, reject) {
     return
   }
   var res = response.data
-  if (res.code != 10001) {
-    reportError('请求失败，错误信息：' + res.error)
-    reject()
-    return
-  }
-
   resolve(res)
 }
 
@@ -39,7 +27,6 @@ function handleError(error) {
 
 export function get(url, params = {}) {
   return new Promise((resolve, reject) => {
-    params.token = getToken()
     axios.get(url, {
       params: params
     })

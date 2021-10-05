@@ -100,7 +100,7 @@ function _chordArrayToObject(chordArray) {
     return chord
 }
 
-class ChordManager {
+class WebChordManager {
     constructor() {
         this.chords = []
         for(let chordArray of ChordArrayList) {
@@ -245,4 +245,4 @@ function _getNameByKeyIndex(mode) {
     return keyName
 }
 
-export default ChordManager
+export default WebChordManager
