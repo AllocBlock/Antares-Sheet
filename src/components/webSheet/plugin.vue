@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from './sheetNode';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 import SheetNodePluginTab from './pluginTab/index';
 
 export default {

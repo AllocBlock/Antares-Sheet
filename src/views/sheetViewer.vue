@@ -49,7 +49,7 @@
         </div>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
-      <WebSheet id="sheet_body_block" :sheet-text="sheetInfo.sheetText" @loaded="onLoadedSheet" :events="sheetEvents"/>
+      <WebSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
     </div>
   </div>
 </template>
@@ -61,6 +61,8 @@
 import { getQueryVariable } from "@/utils/webCommon.js";
 import { WebPlayer } from "@/utils/webPlayer.js";
 import WebChordManager from "@/utils/webChordManager.js";
+import { SheetNode, ENodeType, createUnknownNode } from "@/utils/sheetNode.js"
+import WebSheetParser from "@/utils/webSheetParser"
 
 import Metronome from "@/components/metronome"
 import WebSheet from "@/components/webSheet"
@@ -106,7 +108,7 @@ export default {
         sheetKey: '',
         chords: '',
         rhythms: '',
-        sheetText: ''
+        sheetTree: new SheetNode(ENodeType.Root)
       },
       sheetEvents: {
         text: {
@@ -152,15 +154,10 @@ export default {
 
     let sheetName = getQueryVariable("sheet")
     get(`sheets/${sheetName}.sheet`).then((res) => {
-      this.sheetInfo.sheetText = res
-    }).catch(() => {
-      console.error("加载失败")
-    })
-  },
-  methods: {
-    onLoadedSheet(rootNode) {
-      console.log("loaded!")
-      this.loaded = true
+      let rootNode = WebSheetParser.parse(res)
+      if (!rootNode) {
+        throw "曲谱解析失败！"
+      }
       this.sheetInfo.title = rootNode.title
       this.sheetInfo.singer = rootNode.singer
       this.sheetInfo.by = rootNode.by
@@ -168,7 +165,13 @@ export default {
       this.sheetInfo.sheetKey = rootNode.sheetKey
       this.sheetInfo.chords = rootNode.chords
       this.sheetInfo.rhythms = rootNode.rhythms
-    },
+      this.sheetInfo.sheetTree = rootNode
+      this.loaded = true
+    }).catch((e) => {
+      console.error("加载失败", e)
+    })
+  },
+  methods: {
     changeScale() {
       let scale = parseFloat(this.scale);
       let defaultFontSize, defaultTitleFontSize

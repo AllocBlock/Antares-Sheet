@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from './sheetNode';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 export default {
   name: "SheetNodeChord",
   props: {

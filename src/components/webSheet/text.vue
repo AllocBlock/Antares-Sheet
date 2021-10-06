@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { SheetNode } from './sheetNode';
+import { SheetNode } from '@/utils/sheetNode';
 export default {
   name: "SheetNodeText",
   props: {

@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from './sheetNode';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 import SheetNodeError from './error';
 import SheetNodeChord from './chord';
 import SheetNodeMark from './mark';

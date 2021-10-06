@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from './sheetNode';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 // import SheetNodeGeneral from './general';
 // const SheetNodeGeneral = () => import('./general');
 

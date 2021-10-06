@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { SheetNode } from "../sheetNode";
+import { SheetNode } from "@/utils/sheetNode";
 import { parseTab } from "./tabParser";
 import TabRow from "./row";
 
@@ -70,7 +70,6 @@ export default {
           row = []
         }
       }
-      console.log(this.tabRows)
     },
     isBarNumberVisible(bar) {
       let globalConfig = this.tab.config.getBool("showBarNumber");
