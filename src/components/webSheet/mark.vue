@@ -1,5 +1,5 @@
 <template>
-  <mark>{{node.content}}</mark>
+  <mark @click="events.mark ? events.mark.click(node) : null">{{node.content}}</mark>
 </template>
 
 <script>
@@ -11,6 +11,12 @@ export default {
       type: SheetNode,
       required: true,
     },
+    events: {
+      type: Object,
+      default: function() {
+        return {}
+      }
+    }
   },
 };
 </script>

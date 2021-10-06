@@ -1,6 +1,6 @@
 <template>
   <component :is="getTag()">
-    <SheetNodeGeneral v-for="childNode in node.children" :key="childNode" :node="childNode" />
+    <SheetNodeGeneral v-for="childNode in node.children" :key="childNode" :node="childNode" :events="events" />
   </component>
 </template>
 
@@ -24,6 +24,12 @@ export default {
         return node
       }
     },
+    events: {
+      type: Object,
+      default: function() {
+        return {}
+      }
+    }
   },
   created() {
     this.ENodeType = ENodeType

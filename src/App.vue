@@ -1,5 +1,5 @@
 <template>
-  <!-- <Chord style="width: 300px; height: 400px" :chord="chord" /> -->
+  <Chord style="width: 300px; height: 400px" :chord="chord" />
   <Metronome />
   <WebSheet style="width: 100%; height: 600px" :sheet-text="sheetText" />
 </template>

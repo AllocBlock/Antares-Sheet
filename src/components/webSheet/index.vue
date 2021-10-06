@@ -1,7 +1,7 @@
 <template>
   <div class="container" ref="container" :style="globalCssVar">
     <template v-if="sheetTree" ref="sheet">
-      <SheetNodeRoot :node="sheetTree" />
+      <SheetNodeRoot :node="sheetTree" :events="events"/>
     </template>
     <template v-else>曲谱加载中...</template>
   </div>
@@ -36,6 +36,12 @@ export default {
       required: true,
       default: "",
     },
+    events: {
+      type: Object,
+      default: function() {
+        return {}
+      }
+    }
   },
   mounted() {
     this.parseSheet()

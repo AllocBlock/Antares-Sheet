@@ -30,15 +30,15 @@
     </div>
 
     <div id="tools_block_2" class="tools_block">
-      <Metronome id="metronome_block" />
-      <select id="instrument_combo">
+      <Metronome />
+      <select id="instrument_combo" v-model="player.instrument">
         <option value="Oscillator">振荡器</option>
         <option value="Ukulele">尤克里里音源</option>
       </select>
     </div>
 
     <div id="sheet">
-      <!-- <div id="chord" :style="`opacity: ${drawChord ? 1 : 0}`"></div> -->
+      <Chord id="chord" :style="`opacity: ${tipChord.show ? 1 : 0}`" :chord="tipChord.chord" />
       <div id="song_title" class="title">{{sheetInfo.title}}</div>
       <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
       <div id="sheet_key_block">
@@ -49,7 +49,7 @@
         </div>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
-      <WebSheet id="sheet_body_block" :sheet-text="sheetInfo.sheetText" @loaded="onLoadedSheet"/>
+      <WebSheet id="sheet_body_block" :sheet-text="sheetInfo.sheetText" @loaded="onLoadedSheet" :events="sheetEvents"/>
     </div>
   </div>
 </template>
@@ -64,14 +64,17 @@ import WebChordManager from "@/utils/webChordManager.js";
 
 import Metronome from "@/components/metronome"
 import WebSheet from "@/components/webSheet"
+import Chord from "@/components/chord"
 import { get } from "@/utils/request.js"
 
 let g_ChordManager = new WebChordManager
+let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele")
+let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator")
 
 export default {
   name: "SheetViewer",
   components: {
-    Metronome, WebSheet
+    Metronome, WebSheet, Chord
   },
   data() {
     return {
@@ -91,6 +94,7 @@ export default {
       loaded: false,
       scale: 1,
       autoScroll: {
+        started: false,
         speed: 0.0,
         timer: null
       },
@@ -103,6 +107,37 @@ export default {
         chords: '',
         rhythms: '',
         sheetText: ''
+      },
+      sheetEvents: {
+        text: {
+          click: (node) => {
+            console.log("text", node)
+          }
+        },
+        chord: {
+          click: (node) => {
+            this.playChord(g_ChordManager.getChord(node.chord))
+          },
+          mouseenter: (node) => {
+            this.tipChord.show = true
+            this.tipChord.chord = g_ChordManager.getChord(node.chord)
+          },
+          mouseleave: (node) => {
+            this.tipChord.show = false
+          }
+        },
+        mark: {
+          click: (node) => {
+            console.log("mark", node)
+          },
+        }
+      },
+      tipChord: {
+        show: false,
+        chord: {}
+      },
+      player: {
+        instrument: "Oscillator"
       }
     }
   },
@@ -154,96 +189,62 @@ export default {
       );
     },
     changeAutoScrollSpeed() {
-      let speed = parseFloat(this.autoScroll.speed);
-      if (speed > 0) {
-        this.startAutoScroll();
+      if (!this.autoScroll.started) {
+        this.startAutoScroll()
       }
     },
     startAutoScroll() {
       let that = this
-      function scroll() {
-        document.body.scrollTop++;
+      function scroll(amount) {
+        console.log("scroll")
+        document.documentElement.scrollTop += amount
+        document.body.scrollTop += amount // 兼容老版chrome，好像小程序也需要用body
       }
 
+      let lastTimeStamp = new Date().getTime()
       function scrollLoop() {
         let speed = that.autoScroll.speed
         if (speed == 0) {
-          clearTimeout(that.autoScroll.timer)
+          window.cancelAnimationFrame(that.autoScroll.timer)
           that.autoScroll.timer = null
+          that.autoScroll.started = false
           return
         }
-        scroll()
-
-        let delay = 100 / speed
-        that.autoScroll.timer = setTimeout(scrollLoop, delay, 1)
+        const delay = 100 / speed
+        let curTimeStamp = new Date().getTime()
+        if (curTimeStamp - lastTimeStamp > delay) {
+          let amount = (curTimeStamp - lastTimeStamp) / delay
+          scroll(amount)
+          lastTimeStamp = curTimeStamp
+        }
+        that.autoScroll.timer = window.requestAnimationFrame(scrollLoop)
       }
+      this.autoScroll.started = true
       scrollLoop()
+    },
+    playChord(chord) {
+      const bpm = 120
+      let volume = 0.5;
+      let duration = (1 / bpm) * 60 * 4;
+      let player = null;
+      switch (this.player.instrument) {
+        case "Oscillator":
+          player = g_OscillatorPlayer;
+          break;
+        case "Ukulele":
+          player = g_UkulelePlayer;
+          break;
+        default:
+          throw "未知错误";
+      }
+      player.playChord(chord, volume, duration);
     }
   }
 }
 
 function setupEvents() {
-  $("#sheet_body_block").on("mouseenter", "chord, chord_pure", (e) => {
-    let $element = $(e.currentTarget);
-    let chordName =
-      $element.prop("nodeName") == "CHORD"
-        ? $element.find("chord_name").text()
-        : $element.text();
-    if (!chordName) return;
-    drawChord("#chord", g_ChordManager.getChord(chordName));
-    $("#chord").css("opacity", 1);
-  });
-
-  $("#sheet_body_block").on("mouseleave", "chord, chord_pure", (e) => {
-    $("#chord").css("opacity", 0);
-  });
-
-  $("#sheet_body_block").on("click", "chord, chord_pure", (e) => {
-    let $element = $(e.currentTarget);
-    let chordName =
-      $element.prop("nodeName") == "CHORD"
-        ? $element.find("chord_name").text()
-        : $element.text();
-    playChord(g_ChordManager.getChord(chordName));
-  });
-
   $("#sheet_key_shift_up").click(() => shiftKey(1));
   $("#sheet_key_shift_down").click(() => shiftKey(-1));
-
-  $("#scale_slider").on("input", () => changeScale($("#scale_slider").val()));
-  $("#auto_scroll_slider").on("change", () =>
-    changeAutoScrollSpeed($("#auto_scroll_slider").val())
-  );
-
-  $("#toggle_page_type").bind("change", (e) => {
-    if ($(e.currentTarget).prop("checked") == true) {
-      g_PageType = "A4";
-      $("#paper_size_slider").show();
-    } else {
-      g_PageType = "none";
-      $("#paper_size_slider").hide();
-    }
-    updateSheetBody();
-  });
-
-  $("#paper_size_slider").bind("change", (e) => {
-    document.documentElement.style.setProperty(
-      "--page-size",
-      `${e.currentTarget.value * 100}%`
-    );
-    updateSheetBody();
-  });
-
-  $(document).bind("mouseup", () => {
-    if (longPressing) {
-      longPressing = false;
-      clearTimeout(longPressTimer);
-    }
-  });
-
-  $("#instrument_combo").bind("change", (e) => {
-    g_CurrentInstrument = $(e.currentTarget).val();
-  });
 }
 
 function shiftKey(offset) {
@@ -268,44 +269,6 @@ function shiftKey(offset) {
 
   updateSheetInfo();
 }
-
-let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator");
-let g_CurrentInstrument = "Oscillator";
-
-function changeInstrument(value) {
-  g_CurrentInstrument = value;
-}
-
-function playChord(chord) {
-  let volume = 0.5;
-  let duration = (1 / g_Metronome.bpm) * 60 * 4;
-  let player = null;
-  switch (g_CurrentInstrument) {
-    case "Oscillator":
-      player = g_OscillatorPlayer;
-      break;
-    case "Ukulele":
-      player = g_UkulelePlayer;
-      break;
-    default:
-      throw "未知错误";
-  }
-  player.playChord(chord, volume, duration);
-}
-
-function getTextNodeRect(textNode, $sheetBody) {
-  let range = document.createRange();
-  range.selectNodeContents(textNode);
-  let rects = range.getClientRects();
-  if (rects.length > 0)
-    return {
-      bottom:
-        document.body.scrollTop + rects[0].bottom - $sheetBody.offset().top,
-      height: rects[0].height,
-    };
-  else return 0;
-}
 </script>
 
 <style scoped>
@@ -313,11 +276,11 @@ function getTextNodeRect(textNode, $sheetBody) {
   background: var(--theme-color);
 }
 
-chord_name::before,
-chord_pure::before {
+#container /deep/ chord-ruby::before,
+#container /deep/ chord-pure::before {
   content: "▶";
   position: absolute;
-  font-size: 30px;
+  font-size: 20px;
   color: black;
   transform: translate(-50%, -50%);
   top: 50%;
@@ -326,8 +289,8 @@ chord_pure::before {
   transition: all 0.2s ease-out;
 }
 
-chord:hover chord_name::before,
-chord_pure:hover::before {
+#container /deep/ chord:hover chord-ruby::before,
+#container /deep/ chord-pure:hover::before {
   opacity: 0.8;
 }
 

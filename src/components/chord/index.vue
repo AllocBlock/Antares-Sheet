@@ -1,7 +1,7 @@
 <template>
   <div class="container" ref="container">
-    <ChordError v-if="error" />
-    <div class="chord" :style="`transform: scale(${scale.x}, ${scale.y})`">
+    <ChordError v-if="error || !chord" />
+    <div v-else class="chord" :style="`transform: scale(${scale.x}, ${scale.y})`">
       <div class="name" ref="name" :style="`font-size: ${chordLayout.titleFontSize}px`">{{chord.name}}</div>
       <div class="graph" ref="graph">
         <div v-if="isFretMarkVisable()" class="start_fret flex-center" :style="getFretMarkStyle()">{{chord.startFret}}</div>
@@ -43,7 +43,7 @@ export default {
   },
   data() {
     return {
-      error: true,
+      error: false,
       $chordContainer: null,
       $chord: null,
       $graph: null,
@@ -83,8 +83,6 @@ export default {
   },
   mounted() {
     this.$chordContainer = $(this.$refs["container"])
-    this.$graph = $(this.$refs["graph"])
-    this.$board = $(this.$refs["board"])
   },
   methods: {
     isBarChord(fingering) {
@@ -133,8 +131,12 @@ export default {
         this.error = true;
         return;
       }
-      this.updateTitleFontSize()
-      this.updateLayout()
+      this.$nextTick(() => {
+        this.$graph = $(this.$refs["graph"])
+        this.$board = $(this.$refs["board"])
+        this.updateTitleFontSize()
+        this.updateLayout()
+      })
     },
     formatChordInfo(chord) {
       if (!chord) return null;
@@ -362,9 +364,7 @@ export default {
   },
   watch: {
     chord: function () {
-      this.$nextTick(() => {
-        this.update();
-      });
+      this.update()
     },
   },
 };

@@ -1,6 +1,6 @@
 <template>
   <div class="container" ref="container">
-    <SheetNodeGeneral v-for="childNode in node.children" :key="childNode" :node="childNode" />
+    <SheetNodeGeneral v-for="childNode in node.children" :key="childNode" :node="childNode" :events="events"/>
   </div>
 </template>
 
@@ -23,6 +23,12 @@ export default {
         return node
       }
     },
+    events: {
+      type: Object,
+      default: function() {
+        return {}
+      }
+    }
   },
 };
 </script>

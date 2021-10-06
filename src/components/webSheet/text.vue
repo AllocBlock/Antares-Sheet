@@ -1,5 +1,5 @@
 <template>
-  <text>{{node.content}}</text>
+  <text @click="events.text ? events.text.click(node) : null">{{node.content}}</text>
 </template>
 
 <script>
@@ -16,6 +16,12 @@ export default {
         return node
       }
     },
+    events: {
+      type: Object,
+      default: function() {
+        return {}
+      }
+    }
   },
 };
 </script>
