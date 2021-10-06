@@ -27,7 +27,7 @@ export default {
         "--string-num": "4",
         "--fret-font-size": "16px",
         "--row-split-width": "3px",
-        "--bar_split-width": "1px",
+        "--bar-split-width": "1px",
         "--row-height": "60px",
         "--row-margin-top": "30px",
         "--stem-margin": "70px",
@@ -123,7 +123,7 @@ tab-box[state="disabled"] > * {
   filter: blur(4px);
 }
 
-tab-box[state="disabled"]:before {
+tab-box[state="disabled"]::before {
   content: "";
   position: absolute;
   left: -8px;

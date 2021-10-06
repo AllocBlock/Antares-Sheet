@@ -22,3 +22,9 @@ export var createUnknownNode = function(content) {
   node.content = content
   return node
 }
+
+export function traverseNode(node, callback) {
+  for(let childNode of node.children)
+    traverseNode(childNode, callback)
+  callback(node)
+}

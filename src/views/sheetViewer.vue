@@ -38,14 +38,14 @@
     </div>
 
     <div id="sheet">
-      <Chord id="chord" :style="`opacity: ${tipChord.show ? 1 : 0}`" :chord="tipChord.chord" />
+      <Chord id="chord" v-if="env == 'pc'" :style="`opacity: ${tipChord.show ? 1 : 0}`" :chord="tipChord.chord" />
       <div id="song_title" class="title">{{sheetInfo.title}}</div>
       <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
       <div id="sheet_key_block">
         <div id="sheet_key" class="title">{{`原调 ${sheetInfo.originalKey} 选调 ${sheetInfo.sheetKey}`}}</div>
         <div id="sheet_key_shift">
-          <div id="sheet_key_shift_up">▲</div>
-          <div id="sheet_key_shift_down">▼</div>
+          <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
+          <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
         </div>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
@@ -61,7 +61,7 @@
 import { getQueryVariable } from "@/utils/webCommon.js";
 import { WebPlayer } from "@/utils/webPlayer.js";
 import WebChordManager from "@/utils/webChordManager.js";
-import { SheetNode, ENodeType, createUnknownNode } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js"
 import WebSheetParser from "@/utils/webSheetParser"
 
 import Metronome from "@/components/metronome"
@@ -108,6 +108,7 @@ export default {
         sheetKey: '',
         chords: '',
         rhythms: '',
+        originalSheetKey: '',
         sheetTree: new SheetNode(ENodeType.Root)
       },
       sheetEvents: {
@@ -151,21 +152,24 @@ export default {
     } else {
       this.env = "pc";
     }
+    this.changeScale()
 
     let sheetName = getQueryVariable("sheet")
     get(`sheets/${sheetName}.sheet`).then((res) => {
       let rootNode = WebSheetParser.parse(res)
+      console.log(rootNode)
       if (!rootNode) {
         throw "曲谱解析失败！"
       }
       this.sheetInfo.title = rootNode.title
       this.sheetInfo.singer = rootNode.singer
       this.sheetInfo.by = rootNode.by
-      this.sheetInfo.originalKey= rootNode.originalKey
+      this.sheetInfo.originalKey = rootNode.originalKey
       this.sheetInfo.sheetKey = rootNode.sheetKey
       this.sheetInfo.chords = rootNode.chords
       this.sheetInfo.rhythms = rootNode.rhythms
       this.sheetInfo.sheetTree = rootNode
+      this.sheetInfo.originalSheetKey = rootNode.sheetKey
       this.loaded = true
     }).catch((e) => {
       console.error("加载失败", e)
@@ -174,21 +178,23 @@ export default {
   methods: {
     changeScale() {
       let scale = parseFloat(this.scale);
-      let defaultFontSize, defaultTitleFontSize
+      let defaultFontSize, defaultTitleFontSize, unit
       if (this.env == "pc") {
         defaultFontSize = 18
         defaultTitleFontSize = 30
+        unit = "px"
       } else {
         defaultFontSize = 4
         defaultTitleFontSize = 8
+        unit = "vw"
       }
       document.documentElement.style.setProperty(
         "--base-font-size",
-        `${defaultFontSize * scale}px`
+        `${defaultFontSize * scale}${unit}`
       );
       document.documentElement.style.setProperty(
         "--title-base-font-size",
-        `${defaultTitleFontSize * scale}px`
+        `${defaultTitleFontSize * scale}${unit}`
       );
     },
     changeAutoScrollSpeed() {
@@ -241,114 +247,32 @@ export default {
           throw "未知错误";
       }
       player.playChord(chord, volume, duration);
+    },
+    shiftKey(offset) {
+      let curKey = this.sheetInfo.sheetKey;
+      let newKey = g_ChordManager.shiftKey(curKey, offset);
+      this.sheetInfo.sheetKey = newKey
+
+      traverseNode(this.sheetInfo.sheetTree, (node) => {
+        if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
+          node.chord = g_ChordManager.shiftKey(node.chord, offset)
+        }
+      })
     }
   }
 }
-
-function setupEvents() {
-  $("#sheet_key_shift_up").click(() => shiftKey(1));
-  $("#sheet_key_shift_down").click(() => shiftKey(-1));
-}
-
-function shiftKey(offset) {
-  let curKey = g_SheetInfo.sheetKey;
-  let newKey = g_ChordManager.shiftKey(curKey, offset);
-
-  let $chords = $("chord_name,chord_pure");
-  $chords.each((i, e) => {
-    let $chord = $(e);
-    let originalChord = $chord.text();
-    let newChord = g_ChordManager.shiftKey(originalChord, offset);
-    $chord.text(newChord);
-  });
-
-  if (g_OriginalSheetKey == newKey) {
-    $("tab-box").attr("state", "normal");
-  } else {
-    $("tab-box").attr("state", "disabled");
-  }
-
-  g_SheetInfo.sheetKey = newKey;
-
-  updateSheetInfo();
-}
 </script>
+
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+}
+</style>
 
 <style scoped>
 ::selection {
   background: var(--theme-color);
-}
-
-#container /deep/ chord-ruby::before,
-#container /deep/ chord-pure::before {
-  content: "▶";
-  position: absolute;
-  font-size: 20px;
-  color: black;
-  transform: translate(-50%, -50%);
-  top: 50%;
-  left: 50%;
-  opacity: 0;
-  transition: all 0.2s ease-out;
-}
-
-#container /deep/ chord:hover chord-ruby::before,
-#container /deep/ chord-pure:hover::before {
-  opacity: 0.8;
-}
-
-.flex-center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.toggle {
-  --size: 30px;
-  position: relative;
-  appearance: none;
-  width: calc(var(--size) * 2);
-  height: var(--size);
-  border: #fff 2px solid;
-  border-radius: calc(var(--size) / 2);
-  background: transparent;
-  transition: border 0.2s ease-out;
-
-  display: flex;
-  align-items: center;
-}
-.toggle::before {
-  --ball-size: calc(var(--size) * 0.8);
-  --margin-size: calc((var(--size) - var(--ball-size)) / 2);
-  content: "";
-  position: absolute;
-  width: var(--ball-size);
-  height: var(--ball-size);
-  border-radius: 50%;
-  background: grey;
-  left: var(--margin-size);
-  transition: all 0.2s ease-out;
-}
-
-.toggle:checked {
-  background: #e9266a33;
-}
-
-.toggle:checked::before {
-  left: calc(100% - var(--ball-size) - var(--margin-size));
-  background: var(--theme-color);
-}
-
-.toggle:focus {
-  outline: none;
-}
-
-a,
-a:link,
-a:visited,
-a:active,
-a:focus {
-  text-decoration: none;
 }
 
 #container {
@@ -369,14 +293,6 @@ a:focus {
   flex-direction: column;
 }
 
-#container[env="pc"] #sheet {
-  width: calc(100% - 400px);
-}
-
-#container[env="mobile"] #sheet {
-  width: 90%;
-}
-
 .title {
   overflow: hidden;
   white-space: nowrap;
@@ -385,7 +301,7 @@ a:focus {
 }
 
 #song_title {
-  margin-top: var(--title-base-font-size);
+  margin: calc(var(--title-base-font-size) * 0.2) 0;
   height: calc(var(--title-base-font-size) * 2);
   line-height: calc(var(--title-base-font-size) * 2);
   font-size: calc(var(--title-base-font-size) * 1.5);
@@ -461,17 +377,6 @@ a:focus {
   width: 100%;
 }
 
-.sheet_body[page="paper"] {
-  margin: 10px;
-  padding: 10px 20px;
-  /* width: calc(100% - 60px); */
-  width: calc(var(--page-size) - 60px);
-  min-width: 300px;
-  max-width: 600px;
-  outline: 2px white solid;
-  overflow: hidden;
-}
-
 #chord {
   position: fixed;
   right: 40px;
@@ -497,55 +402,11 @@ a:focus {
   color: black;
 }
 
-#container[env="pc"] .tools_text {
-  width: 100%;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-  font-size: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#container[env="mobile"] .tools_text {
-  width: 200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 4vw;
-}
-
-#container[env="pc"] #tools_block_1 {
-  top: 25%;
-  height: 50%;
-  left: 10px;
-  width: 160px;
-}
-
-#container[env="mobile"] #tools_block_1 {
-  bottom: 0;
-  height: 10%;
-  left: 0;
-  width: 100%;
-  background-color: #000000aa;
-  flex-direction: column;
-}
-
-#container[env="mobile"] #tools_block_1 input {
-  flex-shrink: 0;
-  width: 60%;
-}
-
 #tools_block_2 {
   right: 10px;
   width: 160px;
   top: 40%;
   flex-direction: column;
-}
-
-#container[env="mobile"] #tools_block_2 {
-  display: none;
 }
 
 #scale_block {
@@ -555,17 +416,9 @@ a:focus {
   overflow: hidden;
 }
 
-#container[env="mobile"] #scale_block {
-  flex-direction: row;
-}
-
 #scale_slider {
   flex-grow: 1;
   margin: 10px 0;
-}
-
-#container[env="pc"] #scale_slider {
-  -webkit-appearance: slider-vertical;
 }
 
 #auto_scroll_block {
@@ -575,17 +428,9 @@ a:focus {
   overflow: hidden;
 }
 
-#container[env="mobile"] #auto_scroll_block {
-  flex-direction: row;
-}
-
 #auto_scroll_slider {
   flex-grow: 1;
   margin: 10px 0;
-}
-
-#container[env="pc"] #auto_scroll_slider {
-  -webkit-appearance: slider-vertical;
 }
 
 #page_type_block {
@@ -597,5 +442,96 @@ a:focus {
 
 #paper_size_slider {
   display: none;
+}
+</style>
+
+<style scoped>
+#container /deep/ chord-ruby::before,
+#container /deep/ chord-pure::before {
+  content: "▶";
+  position: absolute;
+  font-size: 20px;
+  color: black;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  transition: all 0.2s ease-out;
+}
+
+#container /deep/ chord:hover chord-ruby::before,
+#container /deep/ chord-pure:hover::before {
+  opacity: 0.8;
+}
+</style>
+
+<style scoped>
+/* pc */
+#container[env="pc"] #sheet {
+  width: calc(100% - 400px);
+}
+
+#container[env="pc"] .tools_text {
+  width: 100%;
+  height: 20px;
+  text-align: center;
+  line-height: 20px;
+  font-size: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#container[env="pc"] #tools_block_1 {
+  top: 25%;
+  height: 50%;
+  left: 10px;
+  width: 160px;
+}
+
+#container[env="pc"] #scale_slider {
+  -webkit-appearance: slider-vertical;
+}
+
+#container[env="pc"] #auto_scroll_slider {
+  -webkit-appearance: slider-vertical;
+}
+</style>
+
+<style scoped>
+/* mobile */
+#container[env="mobile"] #sheet {
+  width: 90%;
+}
+
+#container[env="mobile"] .tools_text {
+  width: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 4vw;
+}
+
+#container[env="mobile"] #tools_block_1 {
+  bottom: 0;
+  height: 10%;
+  left: 0;
+  width: 100%;
+  background-color: #000000aa;
+  flex-direction: column;
+}
+#container[env="mobile"] #tools_block_1 input {
+  flex-shrink: 0;
+  width: 60%;
+}
+#container[env="mobile"] #tools_block_2 {
+  display: none;
+}
+#container[env="mobile"] #scale_block {
+  flex-direction: row;
+}
+
+#container[env="mobile"] #auto_scroll_block {
+  flex-direction: row;
 }
 </style>

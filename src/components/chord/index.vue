@@ -481,7 +481,7 @@ export default {
   height: 2px;
   transform: translateX(-50%);
 }
-.cross:before {
+.cross::before {
   position: absolute;
   left: 0;
   top: 0;
@@ -491,7 +491,7 @@ export default {
   background: black;
   transform: rotate(45deg);
 }
-.cross:after {
+.cross::after {
   position: absolute;
   left: 0;
   top: 0;

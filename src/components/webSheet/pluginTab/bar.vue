@@ -89,7 +89,7 @@ bar-number {
 }
 bar-split {
   flex-shrink: 0;
-  width: var(--bar_split-width);
+  width: var(--bar-split-width);
   height: 100%;
   margin: 5px;
   /* background-color: #fff; */

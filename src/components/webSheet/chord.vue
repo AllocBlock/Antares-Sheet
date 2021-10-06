@@ -65,7 +65,7 @@ chord {
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.3);
   white-space: normal;
 }
-chord:before {
+chord::before {
   content: " ";
   position: relative;
   display: inline-block;
