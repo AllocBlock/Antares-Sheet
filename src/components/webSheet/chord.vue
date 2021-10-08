@@ -73,25 +73,6 @@ chord::before {
   height: 0;
   width: 0;
 }
-chord::after {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: calc(-8px - var(--sheet-font-size));
-  right: -10px;
-  bottom: -2px;
-  border: 2px solid transparent;
-  transition: 0.3s ease-out;
-  border-radius: 5px;
-  z-index: 1;
-  pointer-events: none;
-}
-
-chord:hover::after,
-chord-pure:hover::after {
-  border: 2px solid var(--sheet-theme-color);
-  box-shadow: 0 0 5px 2px black;
-}
 
 /* 和弦标注 */
 chord-ruby {
@@ -121,18 +102,5 @@ chord-pure {
   transition: 0.5s ease-out;
   margin: 0 5px;
   white-space: normal;
-}
-chord-pure::after {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: -2px;
-  right: -10px;
-  bottom: -2px;
-  border: 2px solid transparent;
-  transition: 0.3s ease-out;
-  border-radius: 5px;
-  z-index: 1;
-  pointer-events: none;
 }
 </style>

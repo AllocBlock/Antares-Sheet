@@ -446,6 +446,40 @@ html, body {
 </style>
 
 <style scoped>
+#container /deep/ chord::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: calc(-8px - var(--sheet-font-size));
+  right: -10px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+#container /deep/ chord-pure::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: -2px;
+  right: -10px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+#container /deep/ chord:hover::after,
+#container /deep/ chord-pure:hover::after {
+  border: 2px solid var(--sheet-theme-color);
+  box-shadow: 0 0 5px 2px black;
+}
+
 #container /deep/ chord-ruby::before,
 #container /deep/ chord-pure::before {
   content: "▶";

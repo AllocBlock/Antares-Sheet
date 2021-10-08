@@ -1,5 +1,5 @@
 <template>
-  <tab-box :style="globalCssVar">
+  <tab-box ref="tabBox" :style="globalCssVar">
     <TabRow
       v-for="(row, rowIndex) in tabRows"
       :key="row"
@@ -34,6 +34,7 @@ export default {
       },
       tabRows: [],
       tabConfig: null,
+      tabResizeObserver: null,
     };
   },
   props: {
@@ -47,28 +48,34 @@ export default {
       },
     },
   },
-  created() {
-    let tab = parseTab(this.node.content);
-    this.createTabLayout(tab);
+  mounted() {
+    this.tab = parseTab(this.node.content)
+    this.updateTabLayout()
+
+    this.tabResizeObserver = new ResizeObserver(entries => {
+      console.log('resize layout')
+      this.updateTabLayout()
+    })
+    this.tabResizeObserver.observe(this.$refs['tabBox'])
   },
   methods: {
-    createTabLayout(tab) {
-      this.tab = tab
-
+    updateTabLayout() {
       this.tabRows = []
-      this.tabConfig = tab.config
-      let row = []
-      for (let i = 0; i < tab.bars.length; ++i) {
-        let bar = tab.bars[i] // TODO: 自定义class如何拷贝？
-        bar.number = i + 1
-        row.push(bar)
-        if (
-          ((i - 1) % 2 == 0) ||
-          (i == tab.bars.length - 1 && row.length > 0)
-        ) {
-          this.tabRows.push(row)
-          row = []
+      this.tabConfig = this.tab.config
+
+      let width = this.$refs['tabBox'].clientWidth
+      const BarEspectWidth = 300
+      let BarNum = Math.max(1, Math.round(width / BarEspectWidth))
+      console.log(BarNum)
+
+      for (let i = 0; i < this.tab.bars.length; i += BarNum) {
+        let row = []
+        for(let k = i; k < i + BarNum && k < this.tab.bars.length; ++k) {
+          let bar = this.tab.bars[k] // TODO: 自定义class如何拷贝？
+          bar.number = k + 1
+          row.push(bar)
         }
+        this.tabRows.push(row)
       }
     },
     isBarNumberVisible(bar) {
@@ -114,6 +121,7 @@ tab-box {
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 300px;
   /* color: white; */
   color: black;
   user-select: none;
