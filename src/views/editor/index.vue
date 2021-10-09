@@ -1,14 +1,14 @@
 <template>
-  <div id="container" :env="getEnv()">
+  <div id="container" :env="getEnv()" :style="globalCssVar">
     <input
       type="range"
       id="layout_slider"
       min="0"
       max="100"
-      value="20"
+      v-model="layout.toolWidthPercentage"
       step="0.1"
     />
-    <div id="tools_block">
+    <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%`">
       <div id="tools_block_fix">
         <div id="tools_title" class="title flex_center">工具栏</div>
         <ToolChord v-model:chords="attachedChords" />
@@ -23,7 +23,7 @@
         </div>
       </div>
     </div>
-    <div id="sheet_block">
+    <div id="sheet_block" :style="`width: ${100 - layout.toolWidthPercentage}%`">
       <input
         type="text"
         id="song_title_input"
@@ -89,18 +89,24 @@
           <option value="B">B</option>
         </select>
       </div>
-      <div type="text" id="sheet_by" class="title">制谱 锦瑟</div>
+      <div id="sheet_by" class="title">制谱 锦瑟</div>
       <div class="flex_center">
         <div id="edit_raw_lyric_button" class="button">编辑歌词</div>
         <div class="button" @click="saveSheetToFile">保存</div>
         <div class="button" @click="loadSheetFromFile">载入</div>
       </div>
-      <div id="sheet" class="sheet_box"></div>
+      <WebSheet id="sheet" class="sheet_box" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
     </div>
   </div>
 
-  <div id="editor_context" class="context">
-    <div id="editor_context_menu"></div>
+  <div id="editor_context" class="context" v-if="contentMenu.show" :style="contentMenu.style">
+    <div id="editor_context_menu">
+      <div class="editor_context_menu_item">插入</div>
+      <div class="editor_context_menu_item" @click="editContent">编辑</div>
+      <div class="editor_context_menu_item">删除</div>
+      <div class="editor_context_menu_item">添加下划线</div>
+      <div class="editor_context_menu_item">删除下划线</div>
+    </div>
   </div>
 
   <div id="editor_context_insert_pos" class="context">
@@ -165,29 +171,35 @@ let g_ChordManager = new WebChordManager();
 let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator");
 
+function getInputText(tips, defaultText = "") {
+    return prompt(tips, defaultText)
+}
+
 export default {
   name: "SheetEditor",
   components: {
     ToolChord,
     PanelChordSelector,
     Chord,
+    WebSheet
   },
   data() {
     return {
       globalCssVar: {
-        "font-size": "var(--base-font-size)",
         "--base-font-size": "18px",
         "--sheet-font-size": "var(--base-font-size)",
-        "--title-base-font-size": "30px",
+        "--title-base-font-size": "calc(var(--base-font-size) * 1.8)",
         "--title-scale": "1",
         "--theme-color": "#e9266a",
-        "--chord-renderer-theme-color": "white",
-        "--chord-renderer-font-color": "black",
         "--sheet-theme-color": "var(--theme-color)",
-        "--page-size": "100%",
+        "--tip-text-background-color": "var(--theme-color)",
+        "--tip-button-background-color": "seagreen",
       },
       env: "pc",
       showChordPanel: false,
+      layout: {
+        toolWidthPercentage: 20
+      },
       attachedChords: [],
       loaded: false,
       scale: 1,
@@ -212,6 +224,7 @@ export default {
           click: (node) => {
             console.log("text", node);
           },
+          contextmenu: (e, node) => this.openContext(e, node)
         },
         chord: {
           click: (node) => {
@@ -224,11 +237,13 @@ export default {
           mouseleave: (node) => {
             this.tipChord.show = false;
           },
+          contextmenu: (e, node) => this.openContext(e, node)
         },
         mark: {
           click: (node) => {
             console.log("mark", node);
           },
+          contextmenu: (e, node) => this.openContext(e, node)
         },
       },
       tipChord: {
@@ -238,15 +253,22 @@ export default {
       player: {
         instrument: "Oscillator",
       },
-    };
+      contentMenu: {
+        show: false,
+        node: null,
+        style: {
+          left: 0,
+          top: 0
+        }
+      }
+    }
   },
   mounted() {
-    this.changeScale();
-
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
       .then((res) => {
         let rootNode = WebSheetParser.parse(res);
+        rootNode = this.splitTextNode(rootNode)[0]
         console.log(rootNode);
         if (!rootNode) {
           throw "曲谱解析失败！";
@@ -273,64 +295,37 @@ export default {
   },
   methods: {
     getEnv,
+    splitTextNode(node) {
+      let nodes = []
+      if (node.type == ENodeType.Text) {
+        for(let char of node.content) {
+          let newNode = new SheetNode(ENodeType.Text)
+          newNode.content = char
+          newNode.parent = node.parent
+          nodes.push(newNode)
+        }
+      }
+      else {
+        nodes.push(node)
+        for(let i = 0; i < node.children.length;) {
+          let childNode = node.children[i]
+          let splitNodes = this.splitTextNode(childNode)
+          node.children.splice(i, 1, ...splitNodes)
+          i += splitNodes.length
+        }
+      }
+      
+      return nodes
+    },
     openPanelChord() {
       this.showChordPanel = true;
     },
-    changeScale() {
-      const env = getEnv()
-      let scale = parseFloat(this.scale);
-      let defaultFontSize, defaultTitleFontSize, unit;
-      if (env == "pc") {
-        defaultFontSize = 18;
-        defaultTitleFontSize = 30;
-        unit = "px";
-      } else {
-        defaultFontSize = 4;
-        defaultTitleFontSize = 8;
-        unit = "vw";
-      }
-      document.documentElement.style.setProperty(
-        "--base-font-size",
-        `${defaultFontSize * scale}${unit}`
-      );
-      document.documentElement.style.setProperty(
-        "--title-base-font-size",
-        `${defaultTitleFontSize * scale}${unit}`
-      );
-    },
-    changeAutoScrollSpeed() {
-      if (!this.autoScroll.started) {
-        this.startAutoScroll();
-      }
-    },
-    startAutoScroll() {
-      let that = this;
-      function scroll(amount) {
-        console.log("scroll");
-        document.documentElement.scrollTop += amount;
-        document.body.scrollTop += amount; // 兼容老版chrome，好像小程序也需要用body
-      }
-
-      let lastTimeStamp = new Date().getTime();
-      function scrollLoop() {
-        let speed = that.autoScroll.speed;
-        if (speed == 0) {
-          window.cancelAnimationFrame(that.autoScroll.timer);
-          that.autoScroll.timer = null;
-          that.autoScroll.started = false;
-          return;
-        }
-        const delay = 100 / speed;
-        let curTimeStamp = new Date().getTime();
-        if (curTimeStamp - lastTimeStamp > delay) {
-          let amount = (curTimeStamp - lastTimeStamp) / delay;
-          scroll(amount);
-          lastTimeStamp = curTimeStamp;
-        }
-        that.autoScroll.timer = window.requestAnimationFrame(scrollLoop);
-      }
-      this.autoScroll.started = true;
-      scrollLoop();
+    openContext(e, node) {
+      e.preventDefault()
+      this.contentMenu.show = true
+      this.contentMenu.node = node
+      this.contentMenu.style.left = `${e.clientX}px`
+      this.contentMenu.style.top = `${e.clientY}px`
     },
     playChord(chord) {
       const bpm = 120;
@@ -360,7 +355,27 @@ export default {
         }
       });
     },
+    editContent() {
+      this.contentMenu.show = false
+
+      let node = this.contentMenu.node
+      let newChars = getInputText("新文本", node.content)
+      if (newChars) {
+          node.content = newChars
+          let newNodes = this.splitTextNode(node)
+
+          let index = node.parent.children.findIndex((e) => e == node)
+          console.log(node.parent.children[index])
+          node.parent.children.splice(index, 1, ...newNodes)
+          console.log(node.parent.children[index])
+      }
+    }
   },
+  watch: {
+    "layout.toolWidthPercentage": function() {
+      this.layout.toolWidthPercentage = Math.min(70, Math.max(10, this.layout.toolWidthPercentage))
+    }
+  }
 };
 
 // import { getQueryVariable } from "./modules/webCommon.js"
@@ -448,7 +463,7 @@ export default {
 //     }
 
 //     insertChar($e, pos) {
-//         let newChars = _getInputText("插入文字")
+//         let newChars = getInputText("插入文字")
 //         if (newChars) {
 //             let chars = newChars.split("")
 //             for (let char of chars) {
@@ -458,7 +473,7 @@ export default {
 //     }
 
 //     insertInfo($e, pos) {
-//         let text = _getInputText("插入标记")
+//         let text = getInputText("插入标记")
 //         if (text) {
 //             this.insert($e, `<info>${text}</info>`, pos)
 //         }
@@ -469,7 +484,7 @@ export default {
 //     }
 
 //     editChar($e) {
-//         let newChars = _getInputText("新文本", $e.text())
+//         let newChars = getInputText("新文本", $e.text())
 //         if (newChars) {
 //             let chars = newChars.split("")
 //             let firstChar = chars[0]
@@ -482,14 +497,14 @@ export default {
 //     }
 
 //     editInfo($e) {
-//         let text = _getInputText("新文本", $e.text())
+//         let text = getInputText("新文本", $e.text())
 //         if (text) {
 //             $e.text(text)
 //         }
 //     }
 
 //     editChord($e) {
-//         let newChars = _getInputText("新文本", _getChordTextNode($e).text())
+//         let newChars = getInputText("新文本", _getChordTextNode($e).text())
 //         if (newChars) {
 //             let chars = newChars.split("")
 //             let firstChar = chars[0]
@@ -1861,10 +1876,6 @@ export default {
 //     else return null;
 // }
 
-// function _getInputText(tips, defaultText = "") {
-//     return prompt(tips, defaultText)
-// }
-
 // function _getChordTextNode($e) {
 //     return $e.contents().filter(function() {
 //         return this.nodeType === 3;
@@ -1890,19 +1901,6 @@ export default {
 <style scoped src="./common.css"></style>
 
 <style scoped>
-:root {
-  --base-font-size: 18px;
-  --sheet-font-size: var(--base-font-size);
-  --title-base-font-size: calc(var(--base-font-size) * 1.8);
-  --title-scale: 1;
-  --theme-color: #e9266a;
-  --chord-renderer-theme-color: white;
-  --chord-renderer-font-color: black;
-  --sheet-theme-color: var(--theme-color);
-
-  --tip-text-background-color: var(--theme-color);
-  --tip-button-background-color: seagreen;
-}
 
 .flex_center {
   display: flex;
@@ -1919,7 +1917,6 @@ export default {
 }
 
 .input {
-  color: white;
   outline: none;
   border: none;
   background-color: transparent;
@@ -1935,7 +1932,6 @@ export default {
   height: 100%;
   margin: 0 10px;
   background-color: transparent;
-  color: white;
   font-size: var(--base-font-size);
   border: none;
   outline: 2px solid grey;
@@ -1993,24 +1989,6 @@ export default {
   outline: yellow 2px dashed;
 }
 
-body[env="pc"] char::after {
-  content: "";
-  position: absolute;
-  left: -4px;
-  right: -4px;
-  top: -4px;
-  bottom: -4px;
-  border: 2px solid transparent;
-  transition: 0.3s ease-out;
-  border-radius: 5px;
-  pointer-events: none;
-}
-
-body[env="pc"] char:hover::after {
-  border: 2px solid white;
-  box-shadow: 0 0 5px 2px black;
-}
-
 #container {
   width: 100%;
   display: flex;
@@ -2045,7 +2023,7 @@ body[env="mobile"] #layout_slider {
 #tools_block_fix {
   position: fixed;
   left: 0;
-  width: 20%;
+  width: inherit;
   height: 100%;
 
   box-sizing: border-box;
@@ -2083,7 +2061,6 @@ body[env="mobile"] #sheet_block {
   height: calc(var(--title-base-font-size) * 2);
   line-height: calc(var(--title-base-font-size) * 2);
   font-size: calc(var(--title-base-font-size) * 1.5);
-  color: white;
 }
 
 #song_singer_input {
@@ -2097,7 +2074,6 @@ body[env="mobile"] #sheet_block {
   margin-top: 10px;
   line-height: var(--title-base-font-size);
   font-size: calc(var(--title-base-font-size) * 0.9);
-  color: white;
 
   display: flex;
   align-items: center;
@@ -2118,7 +2094,7 @@ body[env="mobile"] #sheet_block {
 
 .context {
   position: fixed;
-  display: none;
+  display: flex;
   overflow: hidden;
   user-select: none;
   overflow: hidden;
@@ -2137,7 +2113,7 @@ body[env="mobile"] #sheet_block {
   right: 0;
   top: 0;
   bottom: 0;
-  background: var(--theme-color);
+  background: rgb(49, 100, 88);
   opacity: 0.9;
 }
 
@@ -2147,13 +2123,16 @@ body[env="mobile"] #sheet_block {
 #editor_context_menu {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  padding: 10px;
 
   width: 100%;
 }
 
 .editor_context_menu_item {
   padding: 5% calc(var(--base-font-size));
-  color: white;
   transition: all 0.2s ease-out;
   cursor: pointer;
   border-radius: 10px;
@@ -2210,15 +2189,12 @@ body[env="mobile"] #sheet_block {
 }
 #raw_lyric_button_confirm {
   background: var(--sheet-theme-color);
-  color: white;
 }
 #raw_lyric_button_cancel {
   background: grey;
-  color: white;
 }
 #edit_raw_lyric_button {
   background: var(--sheet-theme-color);
-  color: white;
 }
 
 #edit_mode_block {
@@ -2260,7 +2236,7 @@ body[env="mobile"] #drag_mark::after {
   height: 0;
   border-left: 20px solid transparent;
   border-right: 20px solid transparent;
-  border-top: 40px solid white;
+  border-top: 40px solid black;
 
   left: calc(50% - 20px);
   top: 100%;
@@ -2371,12 +2347,12 @@ body[env="mobile"] #tools_title {
 :deep(chord:hover::after),
 :deep(chord-pure:hover::after) {
   border: 2px solid var(--sheet-theme-color);
-  box-shadow: 0 0 5px 2px black;
+  box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
 }
 
 :deep(chord-ruby::before),
 :deep(chord-pure::before) {
-  content: "▶";
+  content: "";
   position: absolute;
   font-size: 20px;
   color: black;
@@ -2387,59 +2363,26 @@ body[env="mobile"] #tools_title {
   transition: all 0.2s ease-out;
 }
 
-:deep(chord:hover chord-ruby::before),
-:deep(chord-pure:hover::before) {
-  opacity: 0.8;
-}
-</style>
-
-<style scoped>
-/* pc */
-#container[env="pc"] #sheet {
-  width: calc(100% - 400px);
+:deep(text) {
+  position: relative;
 }
 
-#container[env="pc"] .tools_text {
-  width: 100%;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-  font-size: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+:deep(text::after) {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -2px;
+  right: -4px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  z-index: 1;
+  pointer-events: none;
 }
 
-#container[env="pc"] #scale_slider {
-  -webkit-appearance: slider-vertical;
-}
-
-#container[env="pc"] #auto_scroll_slider {
-  -webkit-appearance: slider-vertical;
-}
-</style>
-
-<style scoped>
-/* mobile */
-#container[env="mobile"] #sheet {
-  width: 90%;
-}
-
-#container[env="mobile"] .tools_text {
-  width: 200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 4vw;
-}
-#container[env="mobile"] #tools_block_2 {
-  display: none;
-}
-#container[env="mobile"] #scale_block {
-  flex-direction: row;
-}
-
-#container[env="mobile"] #auto_scroll_block {
-  flex-direction: row;
+:deep(text:hover::after) {
+  border: 2px solid var(--sheet-theme-color);
+  box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
 }
 </style>

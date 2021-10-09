@@ -1,5 +1,8 @@
 <template>
-  <mark @click="events.mark ? events.mark.click(node) : null">{{node.content}}</mark>
+  <mark 
+    @click="events.mark ? events.mark.click(node) : null"
+    @contextmenu="events.mark ? events.mark.contextmenu($event, node) : null"
+  >{{node.content}}</mark>
 </template>
 
 <script>

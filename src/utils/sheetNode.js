@@ -17,9 +17,10 @@ export class SheetNode {
   }
 }
 
-export var createUnknownNode = function(content) {
+export var createUnknownNode = function(content, parent = null) {
   let node = new SheetNode(ENodeType.Unknown)
   node.content = content
+  node.parent = parent
   return node
 }
 

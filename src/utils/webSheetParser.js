@@ -128,7 +128,7 @@ function matchSplit(content, matcher, createNode) {
 }
 
 function parseNodes(parentNode, str) {
-  let nodes = [createUnknownNode(str)]
+  let nodes = [createUnknownNode(str, parentNode)]
   // 遍历
   for(let i = 0; i < nodes.length; ++i) {
     const node = nodes[i]
@@ -140,6 +140,8 @@ function parseNodes(parentNode, str) {
     for(let splitMethod of splitMethods) {
       let splitNodes = matchSplit(content, splitMethod.matcher, splitMethod.createNodeFunc)
       if (splitNodes) {
+        for(let node of splitNodes)
+          node.parent = parentNode
         nodes.splice(i, 1, ...splitNodes)
         hasMatch = true
         break

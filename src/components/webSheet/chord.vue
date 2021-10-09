@@ -4,6 +4,7 @@
     @click="events.chord ? events.chord.click(node) : null"
     @mouseenter="events.chord ? events.chord.mouseenter(node) : null"
     @mouseleave="events.chord ? events.chord.mouseleave(node) : null"
+    @contextmenu="events.chord ? events.chord.contextmenu($event, node) : null"
   >
     <chord-body>{{getContent()}}</chord-body>
     <chord-ruby v-if="node.type == ENodeType.Chord">{{node.chord}}</chord-ruby>
