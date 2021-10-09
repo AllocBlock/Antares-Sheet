@@ -6,9 +6,9 @@ const g_BaseUrl = process.env.VUE_APP_BASE_API
 // 设置默认前缀，之后的请求都不需要加了
 axios.defaults.baseURL = g_BaseUrl
 
-function reportError(msg) {
+function reportError(msg, reject) {
   console.error(msg)
-  throw "网络错误"
+  reject("网络错误")
 }
 
 function handleResponse(response, resolve, reject) {
@@ -21,8 +21,8 @@ function handleResponse(response, resolve, reject) {
   resolve(res)
 }
 
-function handleError(error) {
-  reportError(error.message)
+function handleError(error, reject) {
+  reportError(error.message, reject)
 }
 
 export function get(url, params = {}) {
@@ -31,7 +31,7 @@ export function get(url, params = {}) {
       params: params
     })
     .then(response => handleResponse(response, resolve, reject))
-    .catch(error => handleError(error))
+    .catch(error => handleError(error, reject))
   })
 }
 

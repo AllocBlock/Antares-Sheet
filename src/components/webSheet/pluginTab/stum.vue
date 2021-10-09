@@ -110,12 +110,6 @@ note-stum[direction="up"] {
   transform: scaleY(-1);
 }
 
-.flex_center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .note_stum_arrow {
   width: 100%;
   position: absolute;

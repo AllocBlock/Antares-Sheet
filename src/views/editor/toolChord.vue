@@ -1,0 +1,148 @@
+<template>
+  <div id="container" :env="getEnv()">
+    <div class="title">和弦工具</div>
+    <div class="list">
+      <div v-if="chords.length == 0">暂未添加任何和弦</div>
+      <Chord
+        v-else
+        v-for="chord in chords"
+        :key="chord.name"
+        class="prefab_chord drag attached_chord"
+        :chord="chord"
+      />
+    </div>
+  </div>
+</template>
+
+<script>
+import Chord from "@/components/chord";
+import { getEnv } from "@/utils/webCommon.js";
+
+export default {
+  name: "SheetEditorToolChord",
+  components: {
+    Chord,
+  },
+  data() {
+    return {};
+  },
+  props: {
+    chords: {
+      type: Array,
+      required: true,
+    },
+  },
+  methods: {
+    getEnv
+  }
+};
+</script>
+
+<style scoped src="./common.css"></style>
+
+<style scoped>
+#container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+#container[env="mobile"] {
+  bottom: 0;
+  height: 10%;
+  left: 0;
+  width: 100%;
+  background-color: #000000aa;
+  flex-direction: column;
+}
+#container[env="mobile"] input {
+  flex-shrink: 0;
+  width: 60%;
+}
+#container[env="mobile"] {
+  padding: 0 15% 0 15%;
+  left: 0;
+  width: 70%;
+  top: auto;
+  bottom: 0;
+  height: 100%;
+  transform: none;
+  background-color: rgba(155, 117, 59, 0.87);
+
+  overflow-y: scroll;
+}
+#container[env="mobile"]::before {
+  content: "";
+  position: fixed;
+  background: rgb(124, 74, 74);
+  left: 0;
+  bottom: 0;
+  height: 20%;
+  width: 10%;
+}
+#container[env="mobile"]::after {
+  content: "";
+  position: fixed;
+  background: rgb(124, 74, 74);
+  right: 0;
+  bottom: 0;
+  height: 20%;
+  width: 10%;
+}
+#container[env="mobile"] .prefab_chord {
+  position: relative;
+  width: 180px;
+  height: 240px;
+  margin: 15px;
+}
+
+.tool {
+  width: 100%;
+  border-top: 2px white solid;
+  border-bottom: 2px white solid;
+}
+
+.title {
+  margin: 5px 0;
+  flex-shrink: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.list {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.prefab_chord::after {
+  position: absolute;
+  content: "";
+  opacity: 0;
+  transition: all 0.2s ease-out;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 5px;
+  white-space: pre;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.prefab_chord:hover::after {
+  opacity: 1;
+}
+.drag::after {
+  content: "拖拽";
+  background-color: rgba(51, 129, 58, 0.685);
+  color: white;
+}
+
+</style>

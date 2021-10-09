@@ -1,5 +1,5 @@
 <template>
-  <div id="container" :env="env">
+  <div id="container" :env="getEnv()">
     <div id="tools_block_1" class="tools_block" :style="globalCssVar">
       <div id="scale_block">
         <div class="tools_text">缩放</div>
@@ -58,7 +58,7 @@
 // TODO: 突然想到，给不同和弦加上颜色是不是很炫酷
 // TODO: 再整一个节拍器，可以随节拍换颜色
 
-import { getQueryVariable } from "@/utils/webCommon.js";
+import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebPlayer } from "@/utils/webPlayer.js";
 import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js"
@@ -106,8 +106,8 @@ export default {
         by: '',
         originalKey: '',
         sheetKey: '',
-        chords: '',
-        rhythms: '',
+        chords: [],
+        rhythms: [],
         originalSheetKey: '',
         sheetTree: new SheetNode(ENodeType.Root)
       },
@@ -145,13 +145,6 @@ export default {
     }
   },
   mounted() {
-    // 检查环境
-    if (document.body.clientWidth / document.body.clientHeight < 0.8) {
-      // 竖屏
-      this.env = "mobile";
-    } else {
-      this.env = "pc";
-    }
     this.changeScale()
 
     let sheetName = getQueryVariable("sheet")
@@ -176,10 +169,12 @@ export default {
     })
   },
   methods: {
+    getEnv,
     changeScale() {
+      const env = getEnv()
       let scale = parseFloat(this.scale);
       let defaultFontSize, defaultTitleFontSize, unit
-      if (this.env == "pc") {
+      if (env == "pc") {
         defaultFontSize = 18
         defaultTitleFontSize = 30
         unit = "px"
@@ -446,7 +441,7 @@ html, body {
 </style>
 
 <style scoped>
-#container /deep/ chord::after {
+:deep(chord::after) {
   content: "";
   position: absolute;
   left: -10px;
@@ -460,7 +455,7 @@ html, body {
   pointer-events: none;
 }
 
-#container /deep/ chord-pure::after {
+:deep(chord-pure::after) {
   content: "";
   position: absolute;
   left: -10px;
@@ -474,14 +469,14 @@ html, body {
   pointer-events: none;
 }
 
-#container /deep/ chord:hover::after,
-#container /deep/ chord-pure:hover::after {
+:deep(chord:hover::after),
+:deep(chord-pure:hover::after) {
   border: 2px solid var(--sheet-theme-color);
   box-shadow: 0 0 5px 2px black;
 }
 
-#container /deep/ chord-ruby::before,
-#container /deep/ chord-pure::before {
+:deep(chord-ruby::before),
+:deep(chord-pure::before) {
   content: "▶";
   position: absolute;
   font-size: 20px;
@@ -493,8 +488,8 @@ html, body {
   transition: all 0.2s ease-out;
 }
 
-#container /deep/ chord:hover chord-ruby::before,
-#container /deep/ chord-pure:hover::before {
+:deep(chord:hover chord-ruby::before),
+:deep(chord-pure:hover::before) {
   opacity: 0.8;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
-  <div class="container" ref="container">
+  <div class="container" ref="container" :style="getGlobalCssVar()">
     <ChordError v-if="error || !chord" />
-    <div v-else class="chord" :style="`transform: scale(${scale.x}, ${scale.y})`">
+    <div v-else class="chord" :style="calChordStyle()">
       <div class="name" ref="name" :style="`font-size: ${chordLayout.titleFontSize}px`">{{chord.name}}</div>
       <div class="graph" ref="graph">
         <div v-if="isFretMarkVisable()" class="start_fret flex-center" :style="getFretMarkStyle()">{{chord.startFret}}</div>
@@ -34,7 +34,6 @@ import ChordError from "./error";
 
 const MinChordGraphHeight = 400, MinChordGraphWidth = 300;
 const FingerNameList = ["1", "2", "3", "4", "T"];
-const TitleRatio = 0.16;
 
 export default {
   name: "Chord",
@@ -45,10 +44,13 @@ export default {
     return {
       error: false,
       $chordContainer: null,
-      $chord: null,
       $graph: null,
       $board: null,
       chordLayout: {
+        size: {
+          width: MinChordGraphWidth,
+          height: MinChordGraphHeight,
+        },
         titleFontSize: 12,
         boardPadding: {
           left: 0.1,
@@ -56,35 +58,39 @@ export default {
           top: 0.05,
           bottom: 0.1
         },
-        markSize: 80,
+        markSize: 0,
       },
-      scale: {
-        x: 1.0,
-        y: 1.0
-      },
-      style: {
-        titleRatio: 0.16,
-        colorString: "black",
-        colorText: "white",
-        colorRootString: "red"
-      }
     };
   },
   props: {
     chord: {
       type: Object,
       required: true,
+    },
+    styles: {
+      type: Object,
       default: function() {
         return {
-          name: '😘'
+          titleRatio: 0.16,
+          colorMain: "black",
+          colorMarkText: "white",
+          colorRootString: "red"
         }
       }
-    },
+    }
   },
   mounted() {
-    this.$chordContainer = $(this.$refs["container"])
+    this.$data.$chordContainer = $(this.$refs["container"])
+    this.update()
   },
   methods: {
+    getGlobalCssVar() {
+      return {
+        "--color-main": this.styles.colorMain ?? "black",
+        "--color-mark-text": this.styles.colorMarkText ?? "white",
+        "--color-root-string": this.styles.colorRootString ?? "red",
+      }
+    },
     isBarChord(fingering) {
       let fingeringStringNum = fingering.endString ? fingering.endString - fingering.startString + 1 : 1
       return fingeringStringNum > 1
@@ -113,16 +119,20 @@ export default {
       }
       return style
     },
-    // 自动适配
-    fit() {
-      let scaleX = $chordContainer.width() / this.$chord.width();
-      let scaleY = $chordContainer.height() / this.$chord.height();
-      this.$chordContainer.css({
+    calChordStyle() {
+      if (!this.$data.$chordContainer) return {}
+
+      let chordWidth = this.chordLayout.size.width
+      let chordHeight = this.chordLayout.size.height
+      let scaleX = this.$data.$chordContainer.width() / chordWidth
+      let scaleY = this.$data.$chordContainer.height() / chordHeight
+      return {
+        width: `${chordWidth}px`,
+        height: `${chordHeight}px`,
         transform: `scale(${scaleX}, ${scaleY})`,
-      });
+      }
     },
     update() {
-      // 绘制和弦的核心函数
       this.error = false;
 
       let chord = this.chord;
@@ -131,6 +141,11 @@ export default {
         this.error = true;
         return;
       }
+
+      let [width, height] = this.getActualChordGraphLayout()
+      this.chordLayout.size.width = width
+      this.chordLayout.size.height = height
+
       this.$nextTick(() => {
         this.$graph = $(this.$refs["graph"])
         this.$board = $(this.$refs["board"])
@@ -257,7 +272,7 @@ export default {
     },
     updateTitleFontSize() {
       let $title = $(this.$refs['name'])
-      const width = this.$chordContainer.width()
+      const width = this.chordLayout.size.width
       const height = $title.height()
       const maxWidth = width * 0.9
       this.chordLayout.titleFontSize = height * 0.9
@@ -306,7 +321,7 @@ export default {
       let boardHeightPx = graphHeightPx * (1 - top - bottom);
       let markSize = Math.min(
         boardWidthPx * stringInterval * 1.2,
-        boardHeightPx * fretInterval * 0.6,
+        boardHeightPx * fretInterval * 0.7,
       );
       this.chordLayout.markSize = markSize
     },
@@ -315,8 +330,8 @@ export default {
     },
     getActualChordGraphLayout() {
       // 获取父元素长宽
-      let parentWidth = this.$chordContainer.width();
-      let parentHeight = this.$chordContainer.height();
+      let parentWidth = this.$data.$chordContainer.width();
+      let parentHeight = this.$data.$chordContainer.height();
 
       let actualWidth = parentWidth;
       let actualHeight = parentHeight;
@@ -328,6 +343,8 @@ export default {
       return [actualWidth, actualHeight];
     },
     getFretMarkStyle() {
+      if (!this.$graph) return {}
+
       const fretInterval = 1 / this.chord.fretNum;
       const padding = this.chordLayout.boardPadding
       let top = padding.top
@@ -394,7 +411,7 @@ export default {
 }
 
 .name {
-  color: black;
+  color: var(--color-main);
   position: absolute;
   height: 16%;
   top: 0;
@@ -433,7 +450,7 @@ export default {
   height: 1%;
   min-height: 1px;
   width: 101%;
-  background-color: black;
+  background-color: var(--color-main);
 }
 
 .fret_bold {
@@ -448,11 +465,11 @@ export default {
   width: 1%;
   min-width: 1px;
   height: 100%;
-  background-color: black;
+  background-color: var(--color-main);
 }
 
 .string_root {
-  background-color: red !important;
+  background-color: var(--color-root-string) !important;
 }
 
 .fingering {
@@ -464,13 +481,13 @@ export default {
   display: flex;
   align-items: center;
 
-  background-color: black;
-  color: white;
+  background-color: var(--color-main);
+  color: var(--color-mark-text);
   font-weight: bold;
 }
 
 .start_fret {
-  color: black;
+  color: var(--color-main);
   position: absolute;
   z-index: 1;
 }
@@ -488,7 +505,7 @@ export default {
   content: "";
   width: 100%;
   height: 100%;
-  background: black;
+  background: var(--color-main);
   transform: rotate(45deg);
 }
 .cross::after {
@@ -498,7 +515,7 @@ export default {
   content: "";
   width: 100%;
   height: 100%;
-  background: black;
+  background: var(--color-main);
   transform: rotate(-45deg);
 }
 

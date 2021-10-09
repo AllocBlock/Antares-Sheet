@@ -1,7 +1,8 @@
 <template>
   <div id="nav">
-    <router-link to="/test">测试</router-link> |
-    <router-link to="/sheet">曲谱</router-link>
+    <router-link to="/test">测试</router-link><br />
+    <router-link to="/sheet">曲谱</router-link><br />
+    <router-link to="/editor">编辑</router-link><br />
   </div>
 </template>
 

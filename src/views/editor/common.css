@@ -1,0 +1,33 @@
+.prefab_chord {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  margin: 5px;
+}
+
+.button {
+  background: rgb(184, 184, 184);
+  color: black;
+  padding: 10px 20px;
+  margin: 10px 20px;
+  border-radius: 20px;
+  align-self: center;
+  user-select: none;
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex_center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.v_split {
+  height: 100%;
+  width: 2px;
+  background: white;
+}
