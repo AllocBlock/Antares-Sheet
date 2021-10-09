@@ -21,6 +21,7 @@
             :chord="chord"
             :styles="chordStyle"
             class="prefab_chord chord_drag_sort"
+            :type="index == _DraggingChordIndex ? 'fake' : ''"
             @mousedown="dragSortStart($event, index)"
             @touchstart="dragSortStart($event, index)"
             @mouseover="dragSortOver(index)"
@@ -275,9 +276,6 @@ export default {
       this._isDraggingChord = true;
       this._DraggingChord = this.localAttachedChords[index];
       this._DraggingChordIndex = index;
-
-      // $e.css("opacity", 0.5);
-      // $e.attr("type", "fake");
       this.dragSortMove(e);
     },
 
@@ -351,6 +349,9 @@ export default {
 <style scoped>
 * {
   color: white;
+}
+*[type=fake] {
+  opacity: 0.5;
 }
 #chord_sort_drag_mark {
   position: fixed;

@@ -103,9 +103,9 @@
     <div id="editor_context_menu">
       <div class="editor_context_menu_item">插入</div>
       <div class="editor_context_menu_item" @click="editContent">编辑</div>
-      <div class="editor_context_menu_item">删除</div>
+      <div class="editor_context_menu_item" @click="editRemove">删除</div>
       <div class="editor_context_menu_item">添加下划线</div>
-      <div class="editor_context_menu_item">删除下划线</div>
+      <div class="editor_context_menu_item" @click="editRemoveUnderline">删除下划线</div>
     </div>
   </div>
 
@@ -155,6 +155,7 @@
 </template>
 
 <script>
+import { reactive } from 'vue'
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebPlayer } from "@/utils/webPlayer.js";
 import WebChordManager from "@/utils/webChordManager.js";
@@ -173,6 +174,409 @@ let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator");
 
 function getInputText(tips, defaultText = "") {
     return prompt(tips, defaultText)
+}
+
+const Editor = {
+  isChord(node) {
+    return node ? node.type == ENodeType.Chord || node.type == ENodeType.ChordPure : false
+  },
+  isUnderline(node) {
+    return node ? node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure : false
+  },
+  indexOf(node) {
+    if (!node.parent)
+      throw "该节点是根节点"
+    console.log(node.parent.children.findIndex((e) => e === node))
+    console.log(node.parent.children.includes(node))
+    return node.parent.children.findIndex((e) => e === node)
+  },
+  commonAncestor(node1, node2) {
+    let node1Ancestors = []
+    let tempNode = node1
+    while(tempNode.parent) {
+      node1Ancestors.push(tempNode.parent)
+      tempNode = tempNode.parent
+    }
+    tempNode = node2
+    while(tempNode.parent) {
+      if (node1Ancestors.includes(tempNode.parent)) return tempNode.parent
+      tempNode = tempNode.parent
+    }
+    return null
+  },
+  parentUntil(node, target) {
+    // 找到以target为父节点的祖先节点
+    while(node.parent != target) {
+      if (!node.parent) return null
+      node = node.parent
+    }
+    return node
+  },
+  traverseNext(node, index, callback) {
+    if (callback(node)) return node
+    // 继续向后遍历
+    // 已知当前节点、起始索引
+    // 递归调用索引>起始索引的子节点，传入索引=-1，表示该节点需要被完整遍历，不再遍历回父节点
+    // 如果起始索引>-1，且有父节点，递归调用父节点，传入索引=自身索引
+    for(let i = index + 1; i < node.children.length; ++i) {
+      let res = this.traverseNext(node.children[i], -1, callback)
+      if (res) return res
+    }
+    if (index > -1 && node.parent)
+      return this.traverseNext(node.parent, this.indexOf(node), callback)
+    else
+      return null
+  },
+  findNextNodeByType(node, type) {
+    return this.traverseNext(node, node.children.length, (n) => n != node && n.type == type)
+  },
+  insert(parent, index, data, replace = 0) {
+    if (index < 0) throw "索引错误"
+
+    if (Array.isArray(data)) {
+      for(let newNode of data)
+        newNode.parent = parent
+      parent.children.splice(index, replace, ...data)
+    }
+    else {
+      data.parent = parent
+      parent.children.splice(index, replace, data)
+    }
+  },
+  replace(node, data) {
+    this.insert(node.parent, this.indexOf(node), data, 1)
+  },
+  insertAfter(node, data) {
+    this.insert(node.parent, this.indexOf(node) + 1, data, 0)
+  },
+  insertBefore(node, data) {
+    this.insert(node.parent, this.indexOf(node), data, 0)
+  },
+  remove(data) {
+    if (Array.isArray(data)) {
+      for(let node of data) {
+        this.replace(node, [])
+        node.parent = null
+      }
+    }
+    else {
+      this.replace(data, [])
+      data.parent = null
+    }
+  },
+  append(parent, data) {
+    this.insert(parent, parent.children.length, data, 0)
+  },
+    createChordNode(content, chordName) {
+      let node = reactive(new SheetNode(ENodeType.Chord))
+      node.content = content
+      node.chord = chordName
+      return node
+    },
+
+    createTextNodes(content) {
+      let nodes = []
+      for(let char of content) {
+        let node = reactive(new SheetNode(ENodeType.Text))
+        node.content = char
+        nodes.push(node)
+      }
+      return nodes
+    },
+
+    removeUnderlineOfChord(node) {
+      if (!this.isChord(node)) throw "类型错误"
+      if (!this.isUnderline(node.parent)) throw "和弦不在下划线下，无需删除"
+
+        let chordType = node.type
+        let underlineType
+        switch (chordType) {
+            case ENodeType.Chord: underlineType = ENodeType.Underline; break;
+            case ENodeType.ChordPure: underlineType = ENodeType.UnderlinePure; break;
+            default: console.error("非和弦不能添加下划线"); return;
+        }
+
+        let nextChordNode = this.findNextNodeByType(node, chordType)
+        if (!nextChordNode) throw "未找到下一个和弦"
+
+        let commonAncestorNode = this.commonAncestor(node, nextChordNode)
+        if (!commonAncestorNode || !this.isUnderline(commonAncestorNode)) throw "不在下划线下"
+        // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
+        // 起始节点和终止节点一定是兄弟节点
+        let startNode = this.parentUntil(node, commonAncestorNode)
+        let endNode = this.parentUntil(nextChordNode, commonAncestorNode)
+
+        // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
+        // 否则就要看兄弟节点其前其后是否有和弦节点
+        let beforeStartNodes = startNode.parent.children.slice(0, this.indexOf(startNode))
+        let afterStartNodes = startNode.parent.children.slice(this.indexOf(startNode) + 1)
+        let beforeEndNodes = endNode.parent.children.slice(0, this.indexOf(endNode))
+        let afterEndNodes = endNode.parent.children.slice(this.indexOf(endNode) + 1)
+        let hasPrev = this.isUnderline(startNode) || 
+          beforeStartNodes.filter(n => n.type == chordType).length > 0
+        let hasNextNext = this.isUnderline(endNode) ||
+          afterEndNodes.filter(n => n.type == chordType).length > 0
+
+        if (!hasPrev && !hasNextNext) { // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
+            console.log("_s e_")
+            this.replace(commonAncestorNode, commonAncestorNode.children)
+        }
+        else if (hasPrev && !hasNextNext) { // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
+            console.log("_xxx s e_")
+            this.remove(afterStartNodes)
+            this.insertAfter(commonAncestorNode, afterStartNodes)
+        }
+        else if (!hasPrev && hasNextNext) { // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
+            console.log("_s e xxx_")
+            this.remove(beforeEndNodes)
+            this.insertBefore(commonAncestorNode, beforeEndNodes)
+        }
+        else { // 前后都有元素，需要从中间断开
+            console.log("_xxx s e yyy_")
+            let newUnderlineNode = reactive(new SheetNode(underlineType))
+            this.insertAfter(commonAncestorNode, newUnderlineNode)
+            this.remove(afterStartNodes)
+            this.append(newUnderlineNode, afterStartNodes)
+            beforeEndNodes = endNode.parent.children.slice(0, this.indexOf(endNode)) // 这一堆被放到新位置的，需要更新，这里实际获取到的是之前after和before的交集
+            this.remove(beforeEndNodes)
+            this.insertBefore(newUnderlineNode, beforeEndNodes)
+        }
+    },
+
+    convertChordToText(node) {
+      if (!this.isChord(node.type)) throw "类型错误"
+      this.replace(node, this.createTextNodes(node.content ?? ' ')) // 为空，说明原来为占位符，还原为空格?
+    },
+
+    recoverChordToChar(chordNode) {
+        while(this.isUnderline(chordNode.parent)) {
+            // 如果是首位，删除本和弦下划线
+            // 如果是末位，删除倒数第二个和弦的下划线
+            // 否则在中间，不做处理即可，直接删除
+            this.removeUnderlineOfChord(chordNode)
+        }
+        this.convertChordToText(chordNode)
+    },
+
+    // insert($base, $inserted, pos) {
+    //     switch (pos) {
+    //         case "before":
+    //             while(true) {
+    //                 if ($base.is("char")) break; // 文字前面必定可以插入
+    //                 else if ($base.parent().is("underline") && $base.index() == 0) {
+    //                     // 如果非文字，且是下划线的第一个元素，那么移到上一级检测
+    //                     $base = $base.parent();
+    //                     continue;
+    //                 }
+    //                 break;
+    //             }
+    //             $base.before($inserted)
+    //             break;
+    //         case "after":
+    //             while(true) {
+    //                 if ($base.is("char")) break; // 文字后面必定可以插入
+    //                 else if ($base.parent().is("underline") && $base.index() == $base.parent().children().length - 1) {
+    //                     // 如果非文字，且是下划线的最后一个元素，那么移到上一级检测
+    //                     $base = $base.parent();
+    //                     continue;
+    //                 }
+    //                 break;
+    //             }
+    //             $base.after($inserted)
+    //             break;
+    //         default:
+    //             throw "插入位置类型错误"
+    //             break;
+    //     }
+    // },
+
+    insertChar($e, pos) {
+        let newChars = getInputText("插入文字")
+        if (newChars) {
+            let chars = newChars.split("")
+            for (let char of chars) {
+                this.insert($e, `<char>${char}</char>`, pos)
+            }
+        }
+    },
+
+    insertInfo($e, pos) {
+        let text = getInputText("插入标记")
+        if (text) {
+            this.insert($e, `<info>${text}</info>`, pos)
+        }
+    },
+
+    insertLine($e, pos) {
+        this.insert($e, `<newline>⇲</newline>`, pos)
+    },
+
+    editChar($e) {
+        let newChars = getInputText("新文本", $e.text())
+        if (newChars) {
+            let chars = newChars.split("")
+            let firstChar = chars[0]
+            let restChars = chars.slice(1).reverse()
+            $e.text(firstChar)
+            for (let char of restChars) {
+                $e.after(`<char>${char}</char>`)
+            }
+        }
+    },
+
+    editInfo($e) {
+        let text = getInputText("新文本", $e.text())
+        if (text) {
+            $e.text(text)
+        }
+    },
+
+    editChord($e) {
+        let newChars = getInputText("新文本", _getChordTextNode($e).text())
+        if (newChars) {
+            let chars = newChars.split("")
+            let firstChar = chars[0]
+            let restChars = chars.slice(1).reverse()
+            let $textNode = _getChordTextNode($e)
+            $textNode[0].textContent = firstChar
+            for (let char of restChars) {
+                $e.after(`<char>${char}</char>`)
+            }
+        }
+    },
+
+    // 给和弦添加下划线
+    addUnderline($chord) {
+        // 注意，默认不存在纯文本节点，所以不能处理！
+        let chordTagName
+        let underlineTagName
+        switch ($chord[0].tagName) {
+            case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
+            case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
+            default: console.error("非和弦不能添加下划线"); return;
+        }
+
+        function findNextChord($start, chordTagName) {
+            let $chords = $g_Sheet.find(chordTagName)
+            let curIndex = $chords.index($start)
+            if (curIndex == -1) {console.error("未找到该元素"); return null;}
+            if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
+            return $chords.eq(curIndex + 1)
+        }
+
+        let $nextChord = findNextChord($chord, chordTagName)
+        if (!$nextChord) return;
+        if ($chord.parent().is($nextChord.parent())) { // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
+            console.log("s e")
+            let $betweenElements = $chord.nextUntil($nextChord)
+            let $underline = $(`<${underlineTagName}>`)
+            $chord.before($underline)
+            $underline.append($chord)
+            $underline.append($betweenElements)
+            $underline.append($nextChord)
+        }
+        else if ($chord.parents().is($nextChord.parent())) { // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
+            console.log("[s] e")
+            let $startUnderline = $chord.parentsUntil($nextChord.parent()).last()
+            let $betweenElements = $startUnderline.nextUntil($nextChord)
+            $startUnderline.append($betweenElements)
+            $startUnderline.append($nextChord)
+        }
+        else if ($nextChord.parents().is($chord.parent())) { // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
+            console.log("s [e]")
+            let $endUnderline = $nextChord.parentsUntil($chord.parent()).last()
+            let $betweenElements = $chord.nextUntil($endUnderline)
+            $endUnderline.prepend($betweenElements)
+            $endUnderline.prepend($chord)
+        }
+        else { // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
+            console.log("[s] [e]")
+            let $commonAncestor = $chord.parents().has($nextChord).first()
+            let $startUnderline = $chord.parentsUntil($commonAncestor).last()
+            let $endUnderline = $nextChord.parentsUntil($commonAncestor).last()
+            let $betweenElements = $startUnderline.nextUntil($endUnderline)
+            $startUnderline.append($betweenElements)
+            $startUnderline.append($endUnderline.contents())
+            $endUnderline.remove()
+        }
+    },
+
+    hasUnderlineToNextChord($chord) {
+        // 注意，默认不存在纯文本节点，所以不能处理！
+        let chordTagName
+        let underlineTagName
+        switch ($chord[0].tagName) {
+            case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
+            case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
+            default: console.error("非和弦不能添加下划线"); return;
+        }
+
+        function findNextChord($start, chordTagName) {
+            let $chords = $g_Sheet.find(chordTagName)
+            let curIndex = $chords.index($start)
+            if (curIndex == -1) {console.error("未找到该元素"); return null;}
+            if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
+            return $chords.eq(curIndex + 1)
+        }
+
+        let $nextChord = findNextChord($chord, chordTagName)
+        if (!$nextChord) return;
+
+        let $commonAncestor = $chord.parents().has($nextChord).first()
+        return $commonAncestor.is(underlineTagName)
+    },
+
+    generateSheetFileData() {
+        var that = this
+        let data = ""
+
+        data += "$title " + vmSheet.title + "\n"
+        data += "$singer " + vmSheet.singer + "\n"
+        data += "$by 锦瑟\n"
+        data += "$originalKey " + vmSheet.originalKey + "\n"
+        data += "$sheetKey " + vmSheet.sheetKey + "\n"
+        data += "$attachedChords "
+        for (let chordName of vmChordTool.attachedChords) {
+            data += chordName + " "
+        }
+        data += "\n\n"
+
+        let $elements = $g_Sheet.children()
+        $elements.each(function(){
+            data += that.elementToFileStr($(this))
+        })
+
+        // 测试能否解析
+        let sheet = new DigitalSheet(data)
+        console.log("解析通过", sheet)
+
+        return data
+    },
+
+    elementToFileStr($e) {
+        var that = this
+        let tagName = $e[0].tagName
+        switch (tagName) {
+            case "CHAR": return $e.text();
+            case "NEWLINE": return "\n";
+            case "CHORD": {
+                let char = _getChordTextNode($e).text()
+                if (char == "") char = "_"
+                let chordName = $e.find("chord_name").text()
+                return `[${chordName}]${char}`
+            }
+            case "UNDERLINE": {
+                let $children = $e.children()
+                let str = "{"
+                $children.each(function(){
+                    str += that.elementToFileStr($(this))
+                })
+                str += "}"
+                return str
+            }
+            default: return `[不支持的元素${tagName}]`;
+        }
+    },
 }
 
 export default {
@@ -217,7 +621,7 @@ export default {
         chords: [],
         rhythms: [],
         originalSheetKey: "",
-        sheetTree: new SheetNode(ENodeType.Root),
+        sheetTree: reactive(new SheetNode(ENodeType.Root)),
       },
       sheetEvents: {
         text: {
@@ -299,7 +703,7 @@ export default {
       let nodes = []
       if (node.type == ENodeType.Text) {
         for(let char of node.content) {
-          let newNode = new SheetNode(ENodeType.Text)
+          let newNode = reactive(new SheetNode(ENodeType.Text))
           newNode.content = char
           newNode.parent = node.parent
           nodes.push(newNode)
@@ -369,6 +773,18 @@ export default {
           node.parent.children.splice(index, 1, ...newNodes)
           console.log(node.parent.children[index])
       }
+    },
+    editRemove() {
+      this.contentMenu.show = false
+
+      let node = this.contentMenu.node
+      Editor.remove(node) // TODO: 不安全
+    },
+    editRemoveUnderline() {
+      this.contentMenu.show = false
+
+      let node = this.contentMenu.node
+      Editor.removeUnderlineOfChord(node)
     }
   },
   watch: {
@@ -399,312 +815,6 @@ export default {
 // let $g_Sheet = null
 // let g_ChordManager = new ChordManager
 // let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele")
-
-// class Editor {
-//     createChord(char, chordName) {
-//         return $(`<chord>${char}<chord_name>${chordName}</chord_name></chord>`)
-//     }
-
-//     createCharFromChord($e) {
-//         let char = _getChordTextNode($e).text();
-//         if (char == "") char = " "; // 为空，说明原来为占位符，还原为空格
-//         return $(`<char>${char}</char>`)
-//     }
-
-//     recoverChordToChar($e) {
-//         while($e.parent().is("underline")) {
-//             // 如果是首位，删除本和弦下划线
-//             // 如果是末位，删除倒数第二个和弦的下划线
-//             // 否则在中间，不做处理即可，直接删除
-//             if ($e.index() == 0) g_Editor.deleteUnderline($e)
-//             else if ($e.index() == $e.parent().children().length - 1) g_Editor.deleteUnderline($e.prevAll("chord").last())
-//             else break;
-//         }
-
-//         let $char = this.createCharFromChord($e)
-//         $e.replaceWith($char)
-//         return $char
-//     }
-
-//     removeElement($e) {
-//         $e.remove()
-//     }
-
-//     insert($base, $inserted, pos) {
-//         switch (pos) {
-//             case "before":
-//                 while(true) {
-//                     if ($base.is("char")) break; // 文字前面必定可以插入
-//                     else if ($base.parent().is("underline") && $base.index() == 0) {
-//                         // 如果非文字，且是下划线的第一个元素，那么移到上一级检测
-//                         $base = $base.parent();
-//                         continue;
-//                     }
-//                     break;
-//                 }
-//                 $base.before($inserted)
-//                 break;
-//             case "after":
-//                 while(true) {
-//                     if ($base.is("char")) break; // 文字后面必定可以插入
-//                     else if ($base.parent().is("underline") && $base.index() == $base.parent().children().length - 1) {
-//                         // 如果非文字，且是下划线的最后一个元素，那么移到上一级检测
-//                         $base = $base.parent();
-//                         continue;
-//                     }
-//                     break;
-//                 }
-//                 $base.after($inserted)
-//                 break;
-//             default:
-//                 throw "插入位置类型错误"
-//                 break;
-//         }
-//     }
-
-//     insertChar($e, pos) {
-//         let newChars = getInputText("插入文字")
-//         if (newChars) {
-//             let chars = newChars.split("")
-//             for (let char of chars) {
-//                 this.insert($e, `<char>${char}</char>`, pos)
-//             }
-//         }
-//     }
-
-//     insertInfo($e, pos) {
-//         let text = getInputText("插入标记")
-//         if (text) {
-//             this.insert($e, `<info>${text}</info>`, pos)
-//         }
-//     }
-
-//     insertLine($e, pos) {
-//         this.insert($e, `<newline>⇲</newline>`, pos)
-//     }
-
-//     editChar($e) {
-//         let newChars = getInputText("新文本", $e.text())
-//         if (newChars) {
-//             let chars = newChars.split("")
-//             let firstChar = chars[0]
-//             let restChars = chars.slice(1).reverse()
-//             $e.text(firstChar)
-//             for (let char of restChars) {
-//                 $e.after(`<char>${char}</char>`)
-//             }
-//         }
-//     }
-
-//     editInfo($e) {
-//         let text = getInputText("新文本", $e.text())
-//         if (text) {
-//             $e.text(text)
-//         }
-//     }
-
-//     editChord($e) {
-//         let newChars = getInputText("新文本", _getChordTextNode($e).text())
-//         if (newChars) {
-//             let chars = newChars.split("")
-//             let firstChar = chars[0]
-//             let restChars = chars.slice(1).reverse()
-//             let $textNode = _getChordTextNode($e)
-//             $textNode[0].textContent = firstChar
-//             for (let char of restChars) {
-//                 $e.after(`<char>${char}</char>`)
-//             }
-//         }
-//     }
-
-//     // 给和弦添加下划线
-//     addUnderline($chord) {
-//         // 注意，默认不存在纯文本节点，所以不能处理！
-//         let chordTagName
-//         let underlineTagName
-//         switch ($chord[0].tagName) {
-//             case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
-//             case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
-//             default: console.error("非和弦不能添加下划线"); return;
-//         }
-
-//         function findNextChord($start, chordTagName) {
-//             let $chords = $g_Sheet.find(chordTagName)
-//             let curIndex = $chords.index($start)
-//             if (curIndex == -1) {console.error("未找到该元素"); return null;}
-//             if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
-//             return $chords.eq(curIndex + 1)
-//         }
-
-//         let $nextChord = findNextChord($chord, chordTagName)
-//         if (!$nextChord) return;
-//         if ($chord.parent().is($nextChord.parent())) { // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
-//             console.log("s e")
-//             let $betweenElements = $chord.nextUntil($nextChord)
-//             let $underline = $(`<${underlineTagName}>`)
-//             $chord.before($underline)
-//             $underline.append($chord)
-//             $underline.append($betweenElements)
-//             $underline.append($nextChord)
-//         }
-//         else if ($chord.parents().is($nextChord.parent())) { // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
-//             console.log("[s] e")
-//             let $startUnderline = $chord.parentsUntil($nextChord.parent()).last()
-//             let $betweenElements = $startUnderline.nextUntil($nextChord)
-//             $startUnderline.append($betweenElements)
-//             $startUnderline.append($nextChord)
-//         }
-//         else if ($nextChord.parents().is($chord.parent())) { // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
-//             console.log("s [e]")
-//             let $endUnderline = $nextChord.parentsUntil($chord.parent()).last()
-//             let $betweenElements = $chord.nextUntil($endUnderline)
-//             $endUnderline.prepend($betweenElements)
-//             $endUnderline.prepend($chord)
-//         }
-//         else { // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
-//             console.log("[s] [e]")
-//             let $commonAncestor = $chord.parents().has($nextChord).first()
-//             let $startUnderline = $chord.parentsUntil($commonAncestor).last()
-//             let $endUnderline = $nextChord.parentsUntil($commonAncestor).last()
-//             let $betweenElements = $startUnderline.nextUntil($endUnderline)
-//             $startUnderline.append($betweenElements)
-//             $startUnderline.append($endUnderline.contents())
-//             $endUnderline.remove()
-//         }
-//     }
-
-//     deleteUnderline($chord) {
-//         // 注意，默认不存在纯文本节点，所以不能处理！
-//         let chordTagName
-//         let underlineTagName
-//         switch ($chord[0].tagName) {
-//             case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
-//             case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
-//             default: console.error("非和弦不能添加下划线"); return;
-//         }
-
-//         function findNextChord($start, chordTagName) {
-//             let $chords = $g_Sheet.find(chordTagName)
-//             let curIndex = $chords.index($start)
-//             if (curIndex == -1) {console.error("未找到该元素"); return null;}
-//             if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
-//             return $chords.eq(curIndex + 1)
-//         }
-
-//         let $nextChord = findNextChord($chord, chordTagName)
-//         if (!$nextChord) return;
-
-//         let $commonAncestor = $chord.parents().has($nextChord).first()
-//         if (!$commonAncestor.is(underlineTagName)) {
-//             console.error("不在下划线下")
-//             return
-//         }
-//         let $start = $chord.parent().is($commonAncestor) ? $chord : $chord.parentsUntil($commonAncestor).last()
-//         let $end = $nextChord.parent().is($commonAncestor) ? $nextChord : $nextChord.parentsUntil($commonAncestor).last()
-
-//         let hasPrev = $start.is(underlineTagName) || $start.prev().length > 0
-//         let hasNextNext = $end.is(underlineTagName) || $end.next().length > 0
-//         let $underline = $commonAncestor
-
-//         if (!hasPrev && !hasNextNext) { // 下划线只有这两个和弦，则删除整个下划线
-//             console.log("_s e_")
-//             $underline.after($underline.children())
-//             $underline.remove()
-//         }
-//         else if (hasPrev && !hasNextNext) { // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
-//             console.log("_xxx s e_")
-//             $underline.after($start.nextAll())
-//         }
-//         else if (!hasPrev && hasNextNext) { // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
-//             console.log("_s e xxx_")
-//             $underline.before($end.prevAll().reverse())
-//         }
-//         else { // 前后都有元素，需要从中间断开
-//             console.log("_xxx s e yyy_")
-//             let $newUnderline = $(`<${underlineTagName}>`)
-//             $underline.after($newUnderline)
-//             $newUnderline.append($start.nextAll())
-//             $newUnderline.before($end.prevAll().reverse())
-//         }
-//     }
-
-//     hasUnderlineToNextChord($chord) {
-//         // 注意，默认不存在纯文本节点，所以不能处理！
-//         let chordTagName
-//         let underlineTagName
-//         switch ($chord[0].tagName) {
-//             case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
-//             case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
-//             default: console.error("非和弦不能添加下划线"); return;
-//         }
-
-//         function findNextChord($start, chordTagName) {
-//             let $chords = $g_Sheet.find(chordTagName)
-//             let curIndex = $chords.index($start)
-//             if (curIndex == -1) {console.error("未找到该元素"); return null;}
-//             if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
-//             return $chords.eq(curIndex + 1)
-//         }
-
-//         let $nextChord = findNextChord($chord, chordTagName)
-//         if (!$nextChord) return;
-
-//         let $commonAncestor = $chord.parents().has($nextChord).first()
-//         return $commonAncestor.is(underlineTagName)
-//     }
-
-//     generateSheetFileData() {
-//         var that = this
-//         let data = ""
-
-//         data += "$title " + vmSheet.title + "\n"
-//         data += "$singer " + vmSheet.singer + "\n"
-//         data += "$by 锦瑟\n"
-//         data += "$originalKey " + vmSheet.originalKey + "\n"
-//         data += "$sheetKey " + vmSheet.sheetKey + "\n"
-//         data += "$attachedChords "
-//         for (let chordName of vmChordTool.attachedChords) {
-//             data += chordName + " "
-//         }
-//         data += "\n\n"
-
-//         let $elements = $g_Sheet.children()
-//         $elements.each(function(){
-//             data += that.elementToFileStr($(this))
-//         })
-
-//         // 测试能否解析
-//         let sheet = new DigitalSheet(data)
-//         console.log("解析通过", sheet)
-
-//         return data
-//     }
-
-//     elementToFileStr($e) {
-//         var that = this
-//         let tagName = $e[0].tagName
-//         switch (tagName) {
-//             case "CHAR": return $e.text();
-//             case "NEWLINE": return "\n";
-//             case "CHORD": {
-//                 let char = _getChordTextNode($e).text()
-//                 if (char == "") char = "_"
-//                 let chordName = $e.find("chord_name").text()
-//                 return `[${chordName}]${char}`
-//             }
-//             case "UNDERLINE": {
-//                 let $children = $e.children()
-//                 let str = "{"
-//                 $children.each(function(){
-//                     str += that.elementToFileStr($(this))
-//                 })
-//                 str += "}"
-//                 return str
-//             }
-//             default: return `[不支持的元素${tagName}]`;
-//         }
-//     }
-// }
 
 // let g_Editor = new Editor
 
@@ -1239,7 +1349,7 @@ export default {
 //                 if (g_Editor.hasUnderlineToNextChord($e)) {
 //                     items.push({
 //                         name: "删除下划线",
-//                         func: ()=>g_Editor.deleteUnderline($e)
+//                         func: ()=>g_Editor.removeUnderline($e)
 //                     })
 //                 }
 
