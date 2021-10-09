@@ -104,7 +104,7 @@
       <div class="editor_context_menu_item">插入</div>
       <div class="editor_context_menu_item" @click="editContent">编辑</div>
       <div class="editor_context_menu_item" @click="editRemove">删除</div>
-      <div class="editor_context_menu_item">添加下划线</div>
+      <div class="editor_context_menu_item" @click="editAddUnderline">添加下划线</div>
       <div class="editor_context_menu_item" @click="editRemoveUnderline">删除下划线</div>
     </div>
   </div>
@@ -204,6 +204,18 @@ const Editor = {
     }
     return null
   },
+  nextUntil(node1, node2, containStart = false, containEnd = false) {
+    if (node1.parent != node2.parent) throw "元素不同级"
+    return node1.parent.children.slice(this.indexOf(node1) + (containStart ? 0 : 1), this.indexOf(node2) + (containEnd ? 1 : 0))
+  },
+  parentsOf(node) {
+    let list = []
+    while(node.parent) {
+      list.push(node.parent)
+      node = node.parent
+    }
+    return list
+  },
   parentUntil(node, target) {
     // 找到以target为父节点的祖先节点
     while(node.parent != target) {
@@ -267,6 +279,9 @@ const Editor = {
   append(parent, data) {
     this.insert(parent, parent.children.length, data, 0)
   },
+  prepend(parent, data) {
+    this.insert(parent, 0, data, 0)
+  },
     createChordNode(content, chordName) {
       let node = reactive(new SheetNode(ENodeType.Chord))
       node.content = content
@@ -283,12 +298,10 @@ const Editor = {
       }
       return nodes
     },
-
-    removeUnderlineOfChord(node) {
-      if (!this.isChord(node)) throw "类型错误"
-      if (!this.isUnderline(node.parent)) throw "和弦不在下划线下，无需删除"
-
-        let chordType = node.type
+    
+    addUnderlineForChord(chordNode) {
+      if (!this.isChord(chordNode)) throw "类型错误"
+      let chordType = chordNode.type
         let underlineType
         switch (chordType) {
             case ENodeType.Chord: underlineType = ENodeType.Underline; break;
@@ -296,14 +309,65 @@ const Editor = {
             default: console.error("非和弦不能添加下划线"); return;
         }
 
-        let nextChordNode = this.findNextNodeByType(node, chordType)
+        let nextChordNode = this.findNextNodeByType(chordNode, chordType)
         if (!nextChordNode) throw "未找到下一个和弦"
 
-        let commonAncestorNode = this.commonAncestor(node, nextChordNode)
+        if (chordNode.parent == nextChordNode.parent) { // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
+            console.log("s e")
+            let coveredNodes = this.nextUntil(chordNode, nextChordNode, true, true)
+            let newUnderlineNode = reactive(new SheetNode(underlineType))
+            this.insertBefore(chordNode, newUnderlineNode)
+            this.remove(coveredNodes)
+            this.append(newUnderlineNode, coveredNodes)
+        }
+        else if (this.parentsOf(chordNode).includes(nextChordNode.parent)) { // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
+            console.log("[s] e")
+            let startUnderlineNode = this.parentUntil(chordNode, nextChordNode.parent)
+            let coveredNodes = this.nextUntil(startUnderlineNode, nextChordNode, false, true)
+            this.remove(coveredNodes)
+            this.append(startUnderlineNode, coveredNodes)
+        }
+        else if (this.parentsOf(nextChordNode).includes(chordNode.parent)) { // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
+            console.log("s [e]")
+            let endUnderlineNode = this.parentUntil(nextChordNode, chordNode.parent)
+            let coveredNodes = this.nextUntil(chordNode, endUnderlineNode, true, false)
+            this.remove(coveredNodes)
+            this.prepend(endUnderlineNode, coveredNodes)
+        }
+        else { // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
+            console.log("[s] [e]")
+            let commonAncestorNode = this.commonAncestor(chordNode, nextChordNode)
+            let startUnderlineNode = this.parentUntil(chordNode, commonAncestorNode)
+            let endUnderlineNode = this.parentUntil(nextChordNode, commonAncestorNode)
+            let coveredNodes = this.nextUntil(startUnderlineNode, endUnderlineNode, false, false)
+            this.remove(coveredNodes)
+            this.append(startUnderlineNode, coveredNodes)
+            let endUnderlineChildrenNodes = endUnderlineNode.children.map(n => n) // map创建新数组
+            this.remove(endUnderlineChildrenNodes)
+            this.append(startUnderlineNode, endUnderlineChildrenNodes)
+            this.remove(endUnderlineNode)
+        }
+    },
+    removeUnderlineOfChord(chordNode) {
+      if (!this.isChord(chordNode)) throw "类型错误"
+      if (!this.isUnderline(chordNode.parent)) throw "和弦不在下划线下，无需删除"
+
+        let chordType = chordNode.type
+        let underlineType
+        switch (chordType) {
+            case ENodeType.Chord: underlineType = ENodeType.Underline; break;
+            case ENodeType.ChordPure: underlineType = ENodeType.UnderlinePure; break;
+            default: console.error("非和弦不能添加下划线"); return;
+        }
+
+        let nextChordNode = this.findNextNodeByType(chordNode, chordType)
+        if (!nextChordNode) throw "未找到下一个和弦"
+
+        let commonAncestorNode = this.commonAncestor(chordNode, nextChordNode)
         if (!commonAncestorNode || !this.isUnderline(commonAncestorNode)) throw "不在下划线下"
         // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
         // 起始节点和终止节点一定是兄弟节点
-        let startNode = this.parentUntil(node, commonAncestorNode)
+        let startNode = this.parentUntil(chordNode, commonAncestorNode)
         let endNode = this.parentUntil(nextChordNode, commonAncestorNode)
 
         // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
@@ -442,62 +506,6 @@ const Editor = {
             for (let char of restChars) {
                 $e.after(`<char>${char}</char>`)
             }
-        }
-    },
-
-    // 给和弦添加下划线
-    addUnderline($chord) {
-        // 注意，默认不存在纯文本节点，所以不能处理！
-        let chordTagName
-        let underlineTagName
-        switch ($chord[0].tagName) {
-            case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
-            case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
-            default: console.error("非和弦不能添加下划线"); return;
-        }
-
-        function findNextChord($start, chordTagName) {
-            let $chords = $g_Sheet.find(chordTagName)
-            let curIndex = $chords.index($start)
-            if (curIndex == -1) {console.error("未找到该元素"); return null;}
-            if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
-            return $chords.eq(curIndex + 1)
-        }
-
-        let $nextChord = findNextChord($chord, chordTagName)
-        if (!$nextChord) return;
-        if ($chord.parent().is($nextChord.parent())) { // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
-            console.log("s e")
-            let $betweenElements = $chord.nextUntil($nextChord)
-            let $underline = $(`<${underlineTagName}>`)
-            $chord.before($underline)
-            $underline.append($chord)
-            $underline.append($betweenElements)
-            $underline.append($nextChord)
-        }
-        else if ($chord.parents().is($nextChord.parent())) { // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
-            console.log("[s] e")
-            let $startUnderline = $chord.parentsUntil($nextChord.parent()).last()
-            let $betweenElements = $startUnderline.nextUntil($nextChord)
-            $startUnderline.append($betweenElements)
-            $startUnderline.append($nextChord)
-        }
-        else if ($nextChord.parents().is($chord.parent())) { // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
-            console.log("s [e]")
-            let $endUnderline = $nextChord.parentsUntil($chord.parent()).last()
-            let $betweenElements = $chord.nextUntil($endUnderline)
-            $endUnderline.prepend($betweenElements)
-            $endUnderline.prepend($chord)
-        }
-        else { // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
-            console.log("[s] [e]")
-            let $commonAncestor = $chord.parents().has($nextChord).first()
-            let $startUnderline = $chord.parentsUntil($commonAncestor).last()
-            let $endUnderline = $nextChord.parentsUntil($commonAncestor).last()
-            let $betweenElements = $startUnderline.nextUntil($endUnderline)
-            $startUnderline.append($betweenElements)
-            $startUnderline.append($endUnderline.contents())
-            $endUnderline.remove()
         }
     },
 
@@ -785,6 +793,12 @@ export default {
 
       let node = this.contentMenu.node
       Editor.removeUnderlineOfChord(node)
+    },
+    editAddUnderline() {
+      this.contentMenu.show = false
+
+      let node = this.contentMenu.node
+      Editor.addUnderlineForChord(node)
     }
   },
   watch: {
