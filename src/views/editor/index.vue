@@ -71,7 +71,7 @@
           id="sheet_current_key_select"
           class="select"
           :value="sheetInfo.sheetKey"
-          @change="sheetKeyChange"
+          @change="onChangeSheetKey"
         >
           <option value="C" selected>C</option>
           <option value="#C">♯C</option>
@@ -123,6 +123,9 @@
       <div class="editor_context_menu_item" @click="editRemoveUnderline()">
         删除下划线
       </div>
+      <div class="editor_context_menu_item" @click="editRecoverChord()">
+        恢复和弦为文字
+      </div>
     </div>
   </div>
 
@@ -141,7 +144,7 @@
     </div>
   </div>
 
-  <div id="drag_mark" v-if="dragChord.is">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
+  <div id="drag_mark" v-show="dragChord.is">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
   <div id="temp_tip">
     双击可以编辑文字/添加下划线<br />
     按住Ctrl可以复制和弦<br />
@@ -267,12 +270,25 @@ const Editor = {
       return this.traverseNext(node.parent, this.indexOf(node), callback);
     else return null;
   },
+  traversePrev(node, index, callback) {
+    if (callback(node)) return node;
+    // 继续向前遍历
+    // 已知当前节点、结束索引
+    // 递归倒序调用索引<结束索引的子节点，传入索引=其孩子数量，表示该节点需要被完整遍历，不再遍历回父节点
+    // 如果起始索引<其孩子数量，且有父节点，递归调用父节点，传入索引=自身索引
+    for (let i = index - 1; i >= 0; --i) {
+      let res = this.traversePrev(node.children[i], node.children[i].children.length, callback);
+      if (res) return res;
+    }
+    if (index < node.children.length && node.parent)
+      return this.traversePrev(node.parent, this.indexOf(node), callback);
+    else return null;
+  },
   findNextNodeByType(node, type) {
-    return this.traverseNext(
-      node,
-      node.children.length,
-      (n) => n != node && n.type == type
-    );
+    return this.traverseNext(node, node.children.length, (n) => n != node && n.type == type);
+  },
+  findPrevNodeByType(node, type) {
+    return this.traversePrev(node, -1, (n) => n != node && n.type == type);
   },
   insert(parent, index, data, replace = 0) {
     if (index < 0) throw "索引错误";
@@ -328,6 +344,28 @@ const Editor = {
     return nodes;
   },
 
+  hasUnderlineToNextChord(chordNode) {
+    if (!Editor.isChord(chordNode)) throw "类型错误";
+    let chordType = chordNode.type;
+    let underlineType;
+    switch (chordType) {
+      case ENodeType.Chord:
+        underlineType = ENodeType.Underline;
+        break;
+      case ENodeType.ChordPure:
+        underlineType = ENodeType.UnderlinePure;
+        break;
+      default:
+        throw "类型错误";
+    }
+
+    let nextChordNode = Editor.findNextNodeByType(chordNode, chordType);
+    if (!nextChordNode) return false
+
+    let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
+    return commonAncestorNode.type == underlineType;
+  },
+
   // insert($base, $inserted, pos) {
   //     switch (pos) {
   //         case "before":
@@ -381,44 +419,7 @@ const Editor = {
     this.insert($e, `<newline>⇲</newline>`, pos);
   },
 
-  hasUnderlineToNextChord($chord) {
-    // 注意，默认不存在纯文本节点，所以不能处理！
-    let chordTagName;
-    let underlineTagName;
-    switch ($chord[0].tagName) {
-      case "CHORD":
-        chordTagName = "chord";
-        underlineTagName = "underline";
-        break;
-      case "CHORD_PURE":
-        chordTagName = "chord_pure";
-        underlineTagName = "underline_pure";
-        break;
-      default:
-        console.error("非和弦不能添加下划线");
-        return;
-    }
-
-    function findNextChord($start, chordTagName) {
-      let $chords = $g_Sheet.find(chordTagName);
-      let curIndex = $chords.index($start);
-      if (curIndex == -1) {
-        console.error("未找到该元素");
-        return null;
-      }
-      if (curIndex == $chords.length - 1) {
-        console.error("未找到下一个和弦");
-        return null;
-      }
-      return $chords.eq(curIndex + 1);
-    }
-
-    let $nextChord = findNextChord($chord, chordTagName);
-    if (!$nextChord) return;
-
-    let $commonAncestor = $chord.parents().has($nextChord).first();
-    return $commonAncestor.is(underlineTagName);
-  },
+  
 
   elementToFileStr($e) {
     var that = this;
@@ -450,6 +451,13 @@ const Editor = {
 };
 
 const EditorAction = {
+  remove(node) {
+    // 非和弦，直接删除即可
+    if (Editor.isChord(node)) { 
+      this.removeAllUnderlineOnChord(node)
+    }
+    Editor.remove(node) 
+  },
   editTextContent(node, newContent) {
     if (node.type != ENodeType.Text) throw "类型错误，要求文本节点";
     Editor.replace(node, Editor.createTextNodes(newContent));
@@ -629,19 +637,28 @@ const EditorAction = {
     }
   },
 
+  removeAllUnderlineOnChord(chordNode) {
+    // 首先对自己进行下划线删除操作，移除自己到后面和弦的下划线
+    while(Editor.hasUnderlineToNextChord(chordNode)) {
+      EditorAction.removeUnderlineOfChord(chordNode)
+    }
+    // 如果还在下划线下，则要删除前面和弦的所有下划线
+    let prevChordNode = Editor.findPrevNodeByType(chordNode, chordNode.type)
+    if (prevChordNode) {
+      while(Editor.hasUnderlineToNextChord(prevChordNode)) {
+        EditorAction.removeUnderlineOfChord(prevChordNode)
+      }
+    }
+  },
+
   convertChordToText(node) {
-    if (!Editor.isChord(node.type)) throw "类型错误";
+    if (!Editor.isChord(node)) throw "类型错误";
     Editor.replace(node, Editor.createTextNodes(node.content ?? " ")); // 为空，说明原来为占位符，还原为空格?
   },
 
   recoverChordToChar(chordNode) {
-    while (Editor.isUnderline(chordNode.parent)) {
-      // 如果是首位，删除本和弦下划线
-      // 如果是末位，删除倒数第二个和弦的下划线
-      // 否则在中间，不做处理即可，直接删除
-      Editor.removeUnderlineOfChord(chordNode);
-    }
-    Editor.convertChordToText(chordNode);
+    this.removeAllUnderlineOnChord(chordNode)
+    this.convertChordToText(chordNode);
   },
 };
 
@@ -716,6 +733,9 @@ export default {
           click: (e, node) => {
             console.log("mark", node);
           },
+          dblclick: (e, node) => {
+            this.editContent(node);
+          },
           contextmenu: (e, node) => this.openContext(e, node),
         },
       },
@@ -739,6 +759,8 @@ export default {
     };
   },
   mounted() {
+    this.$dragMark = $("#drag_mark")
+
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
       .then((res) => {
@@ -757,7 +779,9 @@ export default {
         this.sheetInfo.rhythms = rootNode.rhythms;
         this.sheetInfo.sheetTree = rootNode;
         this.sheetInfo.originalSheetKey = rootNode.sheetKey;
-        this.loaded = true;
+        this.$nextTick(() => {
+          this.loaded = true; // 下一帧才设为加载完成，避免触发watch
+        })
 
         this.attachedChords = this.sheetInfo.chords.map((chordName) =>
           g_ChordManager.getChord(chordName)
@@ -819,16 +843,18 @@ export default {
       }
       player.playChord(chord, volume, duration);
     },
-    shiftKey(offset) {
-      let curKey = this.sheetInfo.sheetKey;
-      let newKey = g_ChordManager.shiftKey(curKey, offset);
-      this.sheetInfo.sheetKey = newKey;
-
+    shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = g_ChordManager.shiftKey(node.chord, offset);
+          node.chord = g_ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
+
+      for (let i in this.attachedChords) {
+        let chordName = this.attachedChords[i].name
+        let newChordName = g_ChordManager.shiftKey(chordName, oldKey, newKey);
+        this.attachedChords[i] = g_ChordManager.getChord(newChordName)
+      }
     },
     editContent(node = null) {
       node = node ?? this.contentMenu.node;
@@ -855,11 +881,15 @@ export default {
     },
     editRemove(node = null) {
       node = node ?? this.contentMenu.node;
-      Editor.remove(node); // TODO: 不安全
+      EditorAction.remove(node);
     },
     editRemoveUnderline(node = null) {
       node = node ?? this.contentMenu.node;
       EditorAction.removeUnderlineOfChord(node);
+    },
+    editRecoverChord(node = null) {
+      node = node ?? this.contentMenu.node;
+      EditorAction.recoverChordToChar(node);
     },
     editAddUnderline(node = null) {
       node = node ?? this.contentMenu.node;
@@ -896,8 +926,7 @@ export default {
       if (!this.dragChord.is) return
 
       let [x, y] = getMouseOrTouchClient(e);
-      let $e = $("#drag_mark")
-      $e.css({
+      this.$dragMark.css({
         left: x,
         top: y
       })
@@ -909,7 +938,16 @@ export default {
         this.dragChord.chordNode.style = {}
         this.dragChord.chordNode = null
       }
-    }
+    },
+    onChangeSheetKey(e) {
+      let oldKey = this.sheetInfo.sheetKey
+      let newKey = e.currentTarget.value
+      if (newKey == oldKey) return;
+      this.sheetInfo.sheetKey = newKey
+      let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
+      if (!confirmed) return
+      this.shiftKey(oldKey, newKey)
+    },
 
   },
   watch: {
@@ -919,6 +957,9 @@ export default {
         Math.max(10, this.layout.toolWidthPercentage)
       );
     },
+    attachedChords: function() {
+      this.sheetInfo.chords = this.attachedChords.map(chord => chord.name)
+    }
   },
 };
 
