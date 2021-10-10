@@ -1,15 +1,16 @@
 <template>
-  <mark 
-    @click="events.mark ? events.mark.click(node) : null"
-    @dblclick="events.mark ? events.mark.dblclick(node) : null"
-    @contextmenu="events.mark ? events.mark.contextmenu($event, node) : null"
-  >{{node.content}}</mark>
+  <mark v-on="localEvents">{{node.content}}</mark>
 </template>
 
 <script>
 import { SheetNode, ENodeType } from '@/utils/sheetNode';
 export default {
   name: "SheetNodeMark",
+  data() {
+    return {
+      localEvents: {}
+    }
+  },
   props: {
     node: {
       type: SheetNode,
@@ -19,6 +20,14 @@ export default {
       type: Object,
       default: function() {
         return {}
+      }
+    }
+  },
+  created() {
+    this.localEvents = {}
+    if (this.events.mark) {
+      for(let eventName in this.events.mark) {
+        this.localEvents[eventName] = (e) => this.events.mark[eventName](e, this.node)
       }
     }
   },

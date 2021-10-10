@@ -9,6 +9,8 @@
         :key="chord.name"
         class="prefab_chord drag attached_chord"
         :chord="chord"
+        @mousedown="dragStart($event, chord)"
+        @touchstart="dragStart($event, chord)"
       />
     </div>
   </div>
@@ -33,7 +35,10 @@ export default {
     },
   },
   methods: {
-    getEnv
+    getEnv,
+    dragStart(e, chord) {
+      this.$emit("dragStart", e, chord)
+    }
   }
 };
 </script>

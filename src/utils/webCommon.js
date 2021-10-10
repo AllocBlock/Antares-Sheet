@@ -32,3 +32,14 @@ export function getEnv() {
 export function setEnv(env) {
   return g_Env = env
 }
+
+export function getMouseOrTouchClient(e) {
+  if (e.clientX) {
+    return [e.clientX, e.clientY];
+  } else {
+    return [
+      e.originalEvent.changedTouches[0].clientX,
+      e.originalEvent.changedTouches[0].clientY,
+    ];
+  }
+}

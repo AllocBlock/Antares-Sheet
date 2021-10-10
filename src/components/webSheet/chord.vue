@@ -1,12 +1,5 @@
 <template>
-  <component 
-    :is="getTag()"
-    @click="events.chord ? events.chord.click(node) : null"
-    @dblclick="events.chord ? events.chord.dblclick(node) : null"
-    @mouseenter="events.chord ? events.chord.mouseenter(node) : null"
-    @mouseleave="events.chord ? events.chord.mouseleave(node) : null"
-    @contextmenu="events.chord ? events.chord.contextmenu($event, node) : null"
-  >
+  <component :is="getTag()" ref="main" v-on="localEvents" :style="node.style ?? {}">
     <chord-body>{{getContent()}}</chord-body>
     <chord-ruby v-if="node.type == ENodeType.Chord">{{node.chord}}</chord-ruby>
   </component>
@@ -16,6 +9,11 @@
 import { SheetNode, ENodeType } from '@/utils/sheetNode';
 export default {
   name: "SheetNodeChord",
+  data() {
+    return {
+      localEvents: {}
+    }
+  },
   props: {
     node: {
       type: SheetNode,
@@ -35,6 +33,12 @@ export default {
   },
   created() {
     this.ENodeType = ENodeType
+    this.localEvents = {}
+    if (this.events.chord) {
+      for(let eventName in this.events.chord) {
+        this.localEvents[eventName] = (e) => this.events.chord[eventName](e, this.node)
+      }
+    }
   },
   methods: {
     getTag() {
@@ -42,7 +46,7 @@ export default {
     },
     getContent() {
       if (this.node.type == ENodeType.Chord)
-        return (!this.node.content || this.node.content == '_') ? "🔹" : this.node.content
+        return (!this.node.content || this.node.content == '_' || this.node.content == ' ') ? "🔹" : this.node.content
       else
         return this.node.chord
     }

@@ -110,7 +110,7 @@
 import $ from 'jquery'
 import WebChordManager from "@/utils/webChordManager.js";
 import Chord from "@/components/chord";
-import { clone, getEnv } from "@/utils/webCommon.js";
+import { clone, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 
 let g_ChordManager = new WebChordManager();
 const g_RecommendChordInCMajor = {
@@ -118,17 +118,6 @@ const g_RecommendChordInCMajor = {
   修饰音: ["C7", "G7", "E7", "Csus4", "Gsus4", "Gsus2"],
   其他: ["D", "A", "Fm", "Gm"],
 };
-
-function getMouseOrTouchClient(e) {
-  if (e.clientX) {
-    return [e.clientX, e.clientY];
-  } else {
-    return [
-      e.originalEvent.changedTouches[0].clientX,
-      e.originalEvent.changedTouches[0].clientY,
-    ];
-  }
-}
 
 export default {
   name: "SheetEditorPanelChordSelector",

@@ -1,15 +1,16 @@
 <template>
-  <text 
-    @click="events.text ? events.text.click(node) : null"
-    @dblclick="events.text ? events.text.dblclick(node) : null"
-    @contextmenu="events.text ? events.text.contextmenu($event, node) : null"
-  >{{node.content}}</text>
+  <text v-on="localEvents">{{node.content}}</text>
 </template>
 
 <script>
 import { SheetNode } from '@/utils/sheetNode';
 export default {
   name: "SheetNodeText",
+  data() {
+    return {
+      localEvents: {}
+    }
+  },
   props: {
     node: {
       type: SheetNode,
@@ -24,6 +25,14 @@ export default {
       type: Object,
       default: function() {
         return {}
+      }
+    }
+  },
+  created() {
+    this.localEvents = {}
+    if (this.events.text) {
+      for(let eventName in this.events.text) {
+        this.localEvents[eventName] = (e) => this.events.text[eventName](e, this.node)
       }
     }
   },

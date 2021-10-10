@@ -11,7 +11,7 @@
     <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%`">
       <div id="tools_block_fix">
         <div id="tools_title" class="title flex_center">工具栏</div>
-        <ToolChord v-model:chords="attachedChords" />
+        <ToolChord v-model:chords="attachedChords" @dragStart="onChordDragStart"/>
         <div id="chord_tool_edit_button" class="button" @click="openPanelChord">
           编辑和弦
         </div>
@@ -141,7 +141,7 @@
     </div>
   </div>
 
-  <div id="drag_mark"></div>
+  <div id="drag_mark" v-if="dragChord.is">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
   <div id="temp_tip">
     双击可以编辑文字/添加下划线<br />
     按住Ctrl可以复制和弦<br />
@@ -173,8 +173,9 @@
 </template>
 
 <script>
+import $ from "jquery";
 import { reactive } from "vue";
-import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
+import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 import { WebPlayer } from "@/utils/webPlayer.js";
 import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
@@ -207,8 +208,6 @@ const Editor = {
   },
   indexOf(node) {
     if (!node.parent) throw "该节点是根节点";
-    console.log(node.parent.children.findIndex((e) => e === node));
-    console.log(node.parent.children.includes(node));
     return node.parent.children.findIndex((e) => e === node);
   },
   commonAncestor(node1, node2) {
@@ -673,12 +672,6 @@ export default {
       },
       attachedChords: [],
       loaded: false,
-      scale: 1,
-      autoScroll: {
-        started: false,
-        speed: 0.0,
-        timer: null,
-      },
       sheetInfo: {
         title: "加载中",
         singer: "",
@@ -692,40 +685,39 @@ export default {
       },
       sheetEvents: {
         text: {
-          click: (node) => {
+          click: (e, node) => {
             console.log("text", node);
           },
-          dblclick: (node) => {
+          dblclick: (e, node) => {
             this.editContent(node);
           },
           contextmenu: (e, node) => this.openContext(e, node),
+          mouseenter: (e, node) => {
+            if (!this.dragChord.is) return
+            if (node == this.dragChord.chordNode) return
+            this.replaceNodeWithDraggedChord(node)
+          },
         },
         chord: {
-          click: (node) => {
+          click: (e, node) => {
             this.playChord(g_ChordManager.getChord(node.chord));
           },
-          dblclick: (node) => {
+          dblclick: (e, node) => {
             this.editAddUnderline(node);
           },
-          mouseenter: (node) => {
-            this.tipChord.show = true;
-            this.tipChord.chord = g_ChordManager.getChord(node.chord);
-          },
-          mouseleave: (node) => {
-            this.tipChord.show = false;
-          },
           contextmenu: (e, node) => this.openContext(e, node),
+          mouseenter: (e, node) => {
+            if (!this.dragChord.is) return
+            if (node == this.dragChord.chordNode) return
+            this.replaceNodeWithDraggedChord(node)
+          },
         },
         mark: {
-          click: (node) => {
+          click: (e, node) => {
             console.log("mark", node);
           },
           contextmenu: (e, node) => this.openContext(e, node),
         },
-      },
-      tipChord: {
-        show: false,
-        chord: {},
       },
       player: {
         instrument: "Oscillator",
@@ -738,6 +730,12 @@ export default {
           top: 0,
         },
       },
+      dragChord: {
+        is: false,
+        chord: {},
+        chordNode: null,
+        originalNode: null
+      }
     };
   },
   mounted() {
@@ -771,6 +769,10 @@ export default {
       });
 
     document.addEventListener("click", () => this.closeContext());
+    document.addEventListener("mousemove", (e) => this.onCursorMove(e));
+    document.addEventListener("touchmove", (e) => this.onCursorMove(e));
+    document.addEventListener("mouseup", () => this.onCursorUp());
+    document.addEventListener("touchend", () => this.onCursorUp());
   },
   methods: {
     getEnv,
@@ -863,6 +865,52 @@ export default {
       node = node ?? this.contentMenu.node;
       EditorAction.addUnderlineForChord(node);
     },
+    replaceNodeWithDraggedChord(node) {
+      let chordNode = this.dragChord.chordNode
+      if (node.type == ENodeType.ChordPure) {
+        chordNode.type = node.type
+        chordNode.content = ''
+      } else {
+        chordNode.type = ENodeType.Chord
+        chordNode.content = node.content
+      }
+      this.recoverDrag()
+      this.dragChord.originalNode = node
+      Editor.replace(node, this.dragChord.chordNode)
+    },
+    recoverDrag() {
+      if (this.dragChord.originalNode)
+        Editor.replace(this.dragChord.chordNode, this.dragChord.originalNode)
+    },
+    onChordDragStart(e, chord) {
+      this.dragChord.is = true
+      this.dragChord.chord = chord
+      this.dragChord.chordNode = reactive(new SheetNode(ENodeType.Chord))
+      this.dragChord.chordNode.chord = chord.name
+      this.dragChord.chordNode.style = {opacity: 0.5}
+      this.dragChord.originalNode = null
+        // e.preventDefault()
+      this.onCursorMove(e)
+    },
+    onCursorMove(e) {
+      if (!this.dragChord.is) return
+
+      let [x, y] = getMouseOrTouchClient(e);
+      let $e = $("#drag_mark")
+      $e.css({
+        left: x,
+        top: y
+      })
+    },
+    onCursorUp() {
+      if (this.dragChord.is) {
+        this.dragChord.is = false
+        this.dragChord.chord = null
+        this.dragChord.chordNode.style = {}
+        this.dragChord.chordNode = null
+      }
+    }
+
   },
   watch: {
     "layout.toolWidthPercentage": function () {
@@ -1925,13 +1973,13 @@ body[env="mobile"] #edit_mode_block {
 
 #drag_mark {
   position: fixed;
-  display: none;
   pointer-events: none;
 
   padding: 5px 10px;
-  border: 2px white solid;
+  border: 2px rgb(17, 83, 58) solid;
   border-radius: 5px;
-  background-color: grey;
+  background-color: rgb(39, 124, 92);
+  color: white;
 
   z-index: 20;
 }
