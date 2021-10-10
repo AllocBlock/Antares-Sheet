@@ -1,7 +1,7 @@
 import { SheetNode, ENodeType, createUnknownNode } from "@/utils/sheetNode.js"
 
 const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{word}
-const ReInfo = /!\(([^)]*)\)/ // !(content)
+const ReMark = /!\(([^)]*)\)/ // !(content)
 const splitMethods = [
   {
     matcher: (content) => { // *[type]{content}
@@ -95,11 +95,11 @@ const splitMethods = [
     }
   },
   {
-    matcher: ReInfo, 
+    matcher: ReMark, 
     createNodeFunc: (match) => {
-      let infoNode = new SheetNode(ENodeType.Info)
-      infoNode.content = match[1]
-      return infoNode
+      let markNode = new SheetNode(ENodeType.Mark)
+      markNode.content = match[1]
+      return markNode
     }
   }
 ]

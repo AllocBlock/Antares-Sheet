@@ -4,7 +4,7 @@ export const ENodeType = {
   Text: "文本",
   Chord: "和弦",
   ChordPure: "纯和弦",
-  Info: "标记",
+  Mark: "标记",
   Underline: "下划线",
   UnderlinePure: "纯下划线",
   PluginType: "插件"

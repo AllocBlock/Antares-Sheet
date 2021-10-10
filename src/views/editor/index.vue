@@ -102,10 +102,10 @@
   <div id="editor_context" class="context" v-if="contentMenu.show" :style="contentMenu.style">
     <div id="editor_context_menu">
       <div class="editor_context_menu_item">插入</div>
-      <div class="editor_context_menu_item" @click="editContent">编辑</div>
-      <div class="editor_context_menu_item" @click="editRemove">删除</div>
-      <div class="editor_context_menu_item" @click="editAddUnderline">添加下划线</div>
-      <div class="editor_context_menu_item" @click="editRemoveUnderline">删除下划线</div>
+      <div class="editor_context_menu_item" @click="editContent()">编辑</div>
+      <div class="editor_context_menu_item" @click="editRemove()">删除</div>
+      <div class="editor_context_menu_item" @click="editAddUnderline()">添加下划线</div>
+      <div class="editor_context_menu_item" @click="editRemoveUnderline()">删除下划线</div>
     </div>
   </div>
 
@@ -126,9 +126,10 @@
 
   <div id="drag_mark"></div>
   <div id="temp_tip">
+    双击可以编辑文字/添加下划线<br />
     按住Ctrl可以复制和弦<br />
     按住Shift可以移动和弦<br />
-    拖入保存的文件可以直接加载
+    拖入保存的文件可以直接加载<br />
   </div>
   <div id="raw_lyric_panel" class="panel" style="display: none">
     <div id="raw_lyric_container">
@@ -587,6 +588,29 @@ const Editor = {
     },
 }
 
+const EditorAction = {
+  editTextContent(node, newContent) {
+    if (node.type != ENodeType.Text) throw "类型错误，要求文本节点"
+    Editor.replace(node, Editor.createTextNodes(newContent))
+  },
+  editMarkContent(node, newContent) {
+    if (node.type != ENodeType.Mark) throw "类型错误，要求标记节点"
+    node.content = newContent
+  },
+  editChordContent(node, newContent) {
+    if (!Editor.isChord(node)) throw "类型错误，要求和弦节点"
+    node.content = newContent[0]
+    let textNodes = Editor.createTextNodes(newContent.substr(1))
+    // 找到最近的父节点下划线，要求和弦不在该下划线的末尾
+    let targetNode = node
+    while(targetNode.parent && Editor.indexOf(targetNode) == targetNode.parent.children.length - 1) {
+      targetNode = targetNode.parent
+    }
+    // TODO: 可能要验证一下目标节点是否正确
+    Editor.insertAfter(targetNode, textNodes)
+  },
+}
+
 export default {
   name: "SheetEditor",
   components: {
@@ -636,11 +660,17 @@ export default {
           click: (node) => {
             console.log("text", node);
           },
+          dblclick: (node) => {
+            this.editContent(node)
+          },
           contextmenu: (e, node) => this.openContext(e, node)
         },
         chord: {
           click: (node) => {
             this.playChord(g_ChordManager.getChord(node.chord));
+          },
+          dblclick: (node) => {
+            this.editAddUnderline(node)
           },
           mouseenter: (node) => {
             this.tipChord.show = true;
@@ -704,6 +734,8 @@ export default {
       .catch((e) => {
         console.error("加载失败", e);
       });
+
+    document.addEventListener("click", () => this.closeContext())
   },
   methods: {
     getEnv,
@@ -739,6 +771,10 @@ export default {
       this.contentMenu.style.left = `${e.clientX}px`
       this.contentMenu.style.top = `${e.clientY}px`
     },
+    closeContext() {
+      this.contentMenu.show = false
+      this.contentMenu.node = null
+    },
     playChord(chord) {
       const bpm = 120;
       let volume = 0.5;
@@ -767,37 +803,39 @@ export default {
         }
       });
     },
-    editContent() {
-      this.contentMenu.show = false
-
-      let node = this.contentMenu.node
-      let newChars = getInputText("新文本", node.content)
-      if (newChars) {
-          node.content = newChars
-          let newNodes = this.splitTextNode(node)
-
-          let index = node.parent.children.findIndex((e) => e == node)
-          console.log(node.parent.children[index])
-          node.parent.children.splice(index, 1, ...newNodes)
-          console.log(node.parent.children[index])
+    editContent(node = null) {
+      node = node ?? this.contentMenu.node
+      let newContent = getInputText("新文本", node.content)
+      if (!newContent) return
+      switch(node.type) {
+        case ENodeType.Text: {
+          EditorAction.editTextContent(node, newContent)
+          break
+        }
+        case ENodeType.Mark: {
+          EditorAction.editMarkContent(node, newContent)
+          break
+        }
+        case ENodeType.Chord: {
+          EditorAction.editChordContent(node, newContent)
+          break
+        }
+        default: {
+          throw "未知的节点，无法编辑内容"
+          break
+        }
       }
     },
-    editRemove() {
-      this.contentMenu.show = false
-
-      let node = this.contentMenu.node
+    editRemove(node = null) {
+      node = node ?? this.contentMenu.node
       Editor.remove(node) // TODO: 不安全
     },
-    editRemoveUnderline() {
-      this.contentMenu.show = false
-
-      let node = this.contentMenu.node
+    editRemoveUnderline(node = null) {
+      node = node ?? this.contentMenu.node
       Editor.removeUnderlineOfChord(node)
     },
-    editAddUnderline() {
-      this.contentMenu.show = false
-
-      let node = this.contentMenu.node
+    editAddUnderline(node = null) {
+      node = node ?? this.contentMenu.node
       Editor.addUnderlineForChord(node)
     }
   },

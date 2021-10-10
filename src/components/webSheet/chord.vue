@@ -2,6 +2,7 @@
   <component 
     :is="getTag()"
     @click="events.chord ? events.chord.click(node) : null"
+    @dblclick="events.chord ? events.chord.dblclick(node) : null"
     @mouseenter="events.chord ? events.chord.mouseenter(node) : null"
     @mouseleave="events.chord ? events.chord.mouseleave(node) : null"
     @contextmenu="events.chord ? events.chord.contextmenu($event, node) : null"

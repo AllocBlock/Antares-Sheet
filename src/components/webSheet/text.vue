@@ -1,6 +1,7 @@
 <template>
   <text 
     @click="events.text ? events.text.click(node) : null"
+    @dblclick="events.text ? events.text.dblclick(node) : null"
     @contextmenu="events.text ? events.text.contextmenu($event, node) : null"
   >{{node.content}}</text>
 </template>

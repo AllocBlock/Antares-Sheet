@@ -2,7 +2,7 @@
   <SheetNodePlugin v-if="node.type == ENodeType.PluginType" :node="node" :events="events" />
   <SheetNodeUnderline v-else-if="node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure" :node="node" :events="events" />
   <SheetNodeChord v-else-if="node.type == ENodeType.Chord || node.type == ENodeType.ChordPure" :node="node" :events="events" />
-  <SheetNodeMark v-else-if="node.type == ENodeType.Info" :node="node" :events="events" />
+  <SheetNodeMark v-else-if="node.type == ENodeType.Mark" :node="node" :events="events" />
   <SheetNodeText v-else-if="node.type == ENodeType.Text" :node="node" :events="events" />
   <SheetNodeError v-else />
 </template>
