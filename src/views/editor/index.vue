@@ -23,7 +23,10 @@
         </div>
       </div>
     </div>
-    <div id="sheet_block" :style="`width: ${100 - layout.toolWidthPercentage}%`">
+    <div
+      id="sheet_block"
+      :style="`width: ${100 - layout.toolWidthPercentage}%`"
+    >
       <input
         type="text"
         id="song_title_input"
@@ -95,17 +98,31 @@
         <div class="button" @click="saveSheetToFile">保存</div>
         <div class="button" @click="loadSheetFromFile">载入</div>
       </div>
-      <WebSheet id="sheet" class="sheet_box" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
+      <WebSheet
+        id="sheet"
+        class="sheet_box"
+        :sheet-tree="sheetInfo.sheetTree"
+        :events="sheetEvents"
+      />
     </div>
   </div>
 
-  <div id="editor_context" class="context" v-if="contentMenu.show" :style="contentMenu.style">
+  <div
+    id="editor_context"
+    class="context"
+    v-if="contentMenu.show"
+    :style="contentMenu.style"
+  >
     <div id="editor_context_menu">
       <div class="editor_context_menu_item">插入</div>
       <div class="editor_context_menu_item" @click="editContent()">编辑</div>
       <div class="editor_context_menu_item" @click="editRemove()">删除</div>
-      <div class="editor_context_menu_item" @click="editAddUnderline()">添加下划线</div>
-      <div class="editor_context_menu_item" @click="editRemoveUnderline()">删除下划线</div>
+      <div class="editor_context_menu_item" @click="editAddUnderline()">
+        添加下划线
+      </div>
+      <div class="editor_context_menu_item" @click="editRemoveUnderline()">
+        删除下划线
+      </div>
     </div>
   </div>
 
@@ -156,7 +173,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue'
+import { reactive } from "vue";
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebPlayer } from "@/utils/webPlayer.js";
 import WebChordManager from "@/utils/webChordManager.js";
@@ -174,442 +191,460 @@ let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator");
 
 function getInputText(tips, defaultText = "") {
-    return prompt(tips, defaultText)
+  return prompt(tips, defaultText);
 }
 
 const Editor = {
   isChord(node) {
-    return node ? node.type == ENodeType.Chord || node.type == ENodeType.ChordPure : false
+    return node
+      ? node.type == ENodeType.Chord || node.type == ENodeType.ChordPure
+      : false;
   },
   isUnderline(node) {
-    return node ? node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure : false
+    return node
+      ? node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure
+      : false;
   },
   indexOf(node) {
-    if (!node.parent)
-      throw "该节点是根节点"
-    console.log(node.parent.children.findIndex((e) => e === node))
-    console.log(node.parent.children.includes(node))
-    return node.parent.children.findIndex((e) => e === node)
+    if (!node.parent) throw "该节点是根节点";
+    console.log(node.parent.children.findIndex((e) => e === node));
+    console.log(node.parent.children.includes(node));
+    return node.parent.children.findIndex((e) => e === node);
   },
   commonAncestor(node1, node2) {
-    let node1Ancestors = []
-    let tempNode = node1
-    while(tempNode.parent) {
-      node1Ancestors.push(tempNode.parent)
-      tempNode = tempNode.parent
+    let node1Ancestors = [];
+    let tempNode = node1;
+    while (tempNode.parent) {
+      node1Ancestors.push(tempNode.parent);
+      tempNode = tempNode.parent;
     }
-    tempNode = node2
-    while(tempNode.parent) {
-      if (node1Ancestors.includes(tempNode.parent)) return tempNode.parent
-      tempNode = tempNode.parent
+    tempNode = node2;
+    while (tempNode.parent) {
+      if (node1Ancestors.includes(tempNode.parent)) return tempNode.parent;
+      tempNode = tempNode.parent;
     }
-    return null
+    return null;
   },
   nextUntil(node1, node2, containStart = false, containEnd = false) {
-    if (node1.parent != node2.parent) throw "元素不同级"
-    return node1.parent.children.slice(this.indexOf(node1) + (containStart ? 0 : 1), this.indexOf(node2) + (containEnd ? 1 : 0))
+    if (node1.parent != node2.parent) throw "元素不同级";
+    return node1.parent.children.slice(
+      this.indexOf(node1) + (containStart ? 0 : 1),
+      this.indexOf(node2) + (containEnd ? 1 : 0)
+    );
   },
   parentsOf(node) {
-    let list = []
-    while(node.parent) {
-      list.push(node.parent)
-      node = node.parent
+    let list = [];
+    while (node.parent) {
+      list.push(node.parent);
+      node = node.parent;
     }
-    return list
+    return list;
   },
   parentUntil(node, target) {
     // 找到以target为父节点的祖先节点
-    while(node.parent != target) {
-      if (!node.parent) return null
-      node = node.parent
+    while (node.parent != target) {
+      if (!node.parent) return null;
+      node = node.parent;
     }
-    return node
+    return node;
+  },
+  traverseDFS(node, callback) {
+    for (let i = 0; i < node.children.length; ++i) {
+      this.traverseDFS(node.children[i], callback);
+    }
+    callback(node);
   },
   traverseNext(node, index, callback) {
-    if (callback(node)) return node
+    if (callback(node)) return node;
     // 继续向后遍历
     // 已知当前节点、起始索引
     // 递归调用索引>起始索引的子节点，传入索引=-1，表示该节点需要被完整遍历，不再遍历回父节点
     // 如果起始索引>-1，且有父节点，递归调用父节点，传入索引=自身索引
-    for(let i = index + 1; i < node.children.length; ++i) {
-      let res = this.traverseNext(node.children[i], -1, callback)
-      if (res) return res
+    for (let i = index + 1; i < node.children.length; ++i) {
+      let res = this.traverseNext(node.children[i], -1, callback);
+      if (res) return res;
     }
     if (index > -1 && node.parent)
-      return this.traverseNext(node.parent, this.indexOf(node), callback)
-    else
-      return null
+      return this.traverseNext(node.parent, this.indexOf(node), callback);
+    else return null;
   },
   findNextNodeByType(node, type) {
-    return this.traverseNext(node, node.children.length, (n) => n != node && n.type == type)
+    return this.traverseNext(
+      node,
+      node.children.length,
+      (n) => n != node && n.type == type
+    );
   },
   insert(parent, index, data, replace = 0) {
-    if (index < 0) throw "索引错误"
+    if (index < 0) throw "索引错误";
 
     if (Array.isArray(data)) {
-      for(let newNode of data)
-        newNode.parent = parent
-      parent.children.splice(index, replace, ...data)
-    }
-    else {
-      data.parent = parent
-      parent.children.splice(index, replace, data)
+      for (let newNode of data) newNode.parent = parent;
+      parent.children.splice(index, replace, ...data);
+    } else {
+      data.parent = parent;
+      parent.children.splice(index, replace, data);
     }
   },
   replace(node, data) {
-    this.insert(node.parent, this.indexOf(node), data, 1)
+    this.insert(node.parent, this.indexOf(node), data, 1);
   },
   insertAfter(node, data) {
-    this.insert(node.parent, this.indexOf(node) + 1, data, 0)
+    this.insert(node.parent, this.indexOf(node) + 1, data, 0);
   },
   insertBefore(node, data) {
-    this.insert(node.parent, this.indexOf(node), data, 0)
+    this.insert(node.parent, this.indexOf(node), data, 0);
   },
   remove(data) {
     if (Array.isArray(data)) {
-      for(let node of data) {
-        this.replace(node, [])
-        node.parent = null
+      for (let node of data) {
+        this.replace(node, []);
+        node.parent = null;
       }
-    }
-    else {
-      this.replace(data, [])
-      data.parent = null
+    } else {
+      this.replace(data, []);
+      data.parent = null;
     }
   },
   append(parent, data) {
-    this.insert(parent, parent.children.length, data, 0)
+    this.insert(parent, parent.children.length, data, 0);
   },
   prepend(parent, data) {
-    this.insert(parent, 0, data, 0)
+    this.insert(parent, 0, data, 0);
   },
-    createChordNode(content, chordName) {
-      let node = reactive(new SheetNode(ENodeType.Chord))
-      node.content = content
-      node.chord = chordName
-      return node
-    },
+  createChordNode(content, chordName) {
+    let node = reactive(new SheetNode(ENodeType.Chord));
+    node.content = content;
+    node.chord = chordName;
+    return node;
+  },
 
-    createTextNodes(content) {
-      let nodes = []
-      for(let char of content) {
-        let node = reactive(new SheetNode(ENodeType.Text))
-        node.content = char
-        nodes.push(node)
+  createTextNodes(content) {
+    let nodes = [];
+    for (let char of content) {
+      let node = reactive(new SheetNode(ENodeType.Text));
+      node.content = char;
+      nodes.push(node);
+    }
+    return nodes;
+  },
+
+  // insert($base, $inserted, pos) {
+  //     switch (pos) {
+  //         case "before":
+  //             while(true) {
+  //                 if ($base.is("char")) break; // 文字前面必定可以插入
+  //                 else if ($base.parent().is("underline") && $base.index() == 0) {
+  //                     // 如果非文字，且是下划线的第一个元素，那么移到上一级检测
+  //                     $base = $base.parent();
+  //                     continue;
+  //                 }
+  //                 break;
+  //             }
+  //             $base.before($inserted)
+  //             break;
+  //         case "after":
+  //             while(true) {
+  //                 if ($base.is("char")) break; // 文字后面必定可以插入
+  //                 else if ($base.parent().is("underline") && $base.index() == $base.parent().children().length - 1) {
+  //                     // 如果非文字，且是下划线的最后一个元素，那么移到上一级检测
+  //                     $base = $base.parent();
+  //                     continue;
+  //                 }
+  //                 break;
+  //             }
+  //             $base.after($inserted)
+  //             break;
+  //         default:
+  //             throw "插入位置类型错误"
+  //             break;
+  //     }
+  // },
+
+  insertChar($e, pos) {
+    let newChars = getInputText("插入文字");
+    if (newChars) {
+      let chars = newChars.split("");
+      for (let char of chars) {
+        this.insert($e, `<char>${char}</char>`, pos);
       }
-      return nodes
-    },
-    
-    addUnderlineForChord(chordNode) {
-      if (!this.isChord(chordNode)) throw "类型错误"
-      let chordType = chordNode.type
-        let underlineType
-        switch (chordType) {
-            case ENodeType.Chord: underlineType = ENodeType.Underline; break;
-            case ENodeType.ChordPure: underlineType = ENodeType.UnderlinePure; break;
-            default: console.error("非和弦不能添加下划线"); return;
-        }
+    }
+  },
 
-        let nextChordNode = this.findNextNodeByType(chordNode, chordType)
-        if (!nextChordNode) throw "未找到下一个和弦"
+  insertInfo($e, pos) {
+    let text = getInputText("插入标记");
+    if (text) {
+      this.insert($e, `<info>${text}</info>`, pos);
+    }
+  },
 
-        if (chordNode.parent == nextChordNode.parent) { // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
-            console.log("s e")
-            let coveredNodes = this.nextUntil(chordNode, nextChordNode, true, true)
-            let newUnderlineNode = reactive(new SheetNode(underlineType))
-            this.insertBefore(chordNode, newUnderlineNode)
-            this.remove(coveredNodes)
-            this.append(newUnderlineNode, coveredNodes)
-        }
-        else if (this.parentsOf(chordNode).includes(nextChordNode.parent)) { // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
-            console.log("[s] e")
-            let startUnderlineNode = this.parentUntil(chordNode, nextChordNode.parent)
-            let coveredNodes = this.nextUntil(startUnderlineNode, nextChordNode, false, true)
-            this.remove(coveredNodes)
-            this.append(startUnderlineNode, coveredNodes)
-        }
-        else if (this.parentsOf(nextChordNode).includes(chordNode.parent)) { // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
-            console.log("s [e]")
-            let endUnderlineNode = this.parentUntil(nextChordNode, chordNode.parent)
-            let coveredNodes = this.nextUntil(chordNode, endUnderlineNode, true, false)
-            this.remove(coveredNodes)
-            this.prepend(endUnderlineNode, coveredNodes)
-        }
-        else { // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
-            console.log("[s] [e]")
-            let commonAncestorNode = this.commonAncestor(chordNode, nextChordNode)
-            let startUnderlineNode = this.parentUntil(chordNode, commonAncestorNode)
-            let endUnderlineNode = this.parentUntil(nextChordNode, commonAncestorNode)
-            let coveredNodes = this.nextUntil(startUnderlineNode, endUnderlineNode, false, false)
-            this.remove(coveredNodes)
-            this.append(startUnderlineNode, coveredNodes)
-            let endUnderlineChildrenNodes = endUnderlineNode.children.map(n => n) // map创建新数组
-            this.remove(endUnderlineChildrenNodes)
-            this.append(startUnderlineNode, endUnderlineChildrenNodes)
-            this.remove(endUnderlineNode)
-        }
-    },
-    removeUnderlineOfChord(chordNode) {
-      if (!this.isChord(chordNode)) throw "类型错误"
-      if (!this.isUnderline(chordNode.parent)) throw "和弦不在下划线下，无需删除"
+  insertLine($e, pos) {
+    this.insert($e, `<newline>⇲</newline>`, pos);
+  },
 
-        let chordType = chordNode.type
-        let underlineType
-        switch (chordType) {
-            case ENodeType.Chord: underlineType = ENodeType.Underline; break;
-            case ENodeType.ChordPure: underlineType = ENodeType.UnderlinePure; break;
-            default: console.error("非和弦不能添加下划线"); return;
-        }
+  hasUnderlineToNextChord($chord) {
+    // 注意，默认不存在纯文本节点，所以不能处理！
+    let chordTagName;
+    let underlineTagName;
+    switch ($chord[0].tagName) {
+      case "CHORD":
+        chordTagName = "chord";
+        underlineTagName = "underline";
+        break;
+      case "CHORD_PURE":
+        chordTagName = "chord_pure";
+        underlineTagName = "underline_pure";
+        break;
+      default:
+        console.error("非和弦不能添加下划线");
+        return;
+    }
 
-        let nextChordNode = this.findNextNodeByType(chordNode, chordType)
-        if (!nextChordNode) throw "未找到下一个和弦"
+    function findNextChord($start, chordTagName) {
+      let $chords = $g_Sheet.find(chordTagName);
+      let curIndex = $chords.index($start);
+      if (curIndex == -1) {
+        console.error("未找到该元素");
+        return null;
+      }
+      if (curIndex == $chords.length - 1) {
+        console.error("未找到下一个和弦");
+        return null;
+      }
+      return $chords.eq(curIndex + 1);
+    }
 
-        let commonAncestorNode = this.commonAncestor(chordNode, nextChordNode)
-        if (!commonAncestorNode || !this.isUnderline(commonAncestorNode)) throw "不在下划线下"
-        // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
-        // 起始节点和终止节点一定是兄弟节点
-        let startNode = this.parentUntil(chordNode, commonAncestorNode)
-        let endNode = this.parentUntil(nextChordNode, commonAncestorNode)
+    let $nextChord = findNextChord($chord, chordTagName);
+    if (!$nextChord) return;
 
-        // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
-        // 否则就要看兄弟节点其前其后是否有和弦节点
-        let beforeStartNodes = startNode.parent.children.slice(0, this.indexOf(startNode))
-        let afterStartNodes = startNode.parent.children.slice(this.indexOf(startNode) + 1)
-        let beforeEndNodes = endNode.parent.children.slice(0, this.indexOf(endNode))
-        let afterEndNodes = endNode.parent.children.slice(this.indexOf(endNode) + 1)
-        let hasPrev = this.isUnderline(startNode) || 
-          beforeStartNodes.filter(n => n.type == chordType).length > 0
-        let hasNextNext = this.isUnderline(endNode) ||
-          afterEndNodes.filter(n => n.type == chordType).length > 0
+    let $commonAncestor = $chord.parents().has($nextChord).first();
+    return $commonAncestor.is(underlineTagName);
+  },
 
-        if (!hasPrev && !hasNextNext) { // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
-            console.log("_s e_")
-            this.replace(commonAncestorNode, commonAncestorNode.children)
-        }
-        else if (hasPrev && !hasNextNext) { // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
-            console.log("_xxx s e_")
-            this.remove(afterStartNodes)
-            this.insertAfter(commonAncestorNode, afterStartNodes)
-        }
-        else if (!hasPrev && hasNextNext) { // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
-            console.log("_s e xxx_")
-            this.remove(beforeEndNodes)
-            this.insertBefore(commonAncestorNode, beforeEndNodes)
-        }
-        else { // 前后都有元素，需要从中间断开
-            console.log("_xxx s e yyy_")
-            let newUnderlineNode = reactive(new SheetNode(underlineType))
-            this.insertAfter(commonAncestorNode, newUnderlineNode)
-            this.remove(afterStartNodes)
-            this.append(newUnderlineNode, afterStartNodes)
-            beforeEndNodes = endNode.parent.children.slice(0, this.indexOf(endNode)) // 这一堆被放到新位置的，需要更新，这里实际获取到的是之前after和before的交集
-            this.remove(beforeEndNodes)
-            this.insertBefore(newUnderlineNode, beforeEndNodes)
-        }
-    },
-
-    convertChordToText(node) {
-      if (!this.isChord(node.type)) throw "类型错误"
-      this.replace(node, this.createTextNodes(node.content ?? ' ')) // 为空，说明原来为占位符，还原为空格?
-    },
-
-    recoverChordToChar(chordNode) {
-        while(this.isUnderline(chordNode.parent)) {
-            // 如果是首位，删除本和弦下划线
-            // 如果是末位，删除倒数第二个和弦的下划线
-            // 否则在中间，不做处理即可，直接删除
-            this.removeUnderlineOfChord(chordNode)
-        }
-        this.convertChordToText(chordNode)
-    },
-
-    // insert($base, $inserted, pos) {
-    //     switch (pos) {
-    //         case "before":
-    //             while(true) {
-    //                 if ($base.is("char")) break; // 文字前面必定可以插入
-    //                 else if ($base.parent().is("underline") && $base.index() == 0) {
-    //                     // 如果非文字，且是下划线的第一个元素，那么移到上一级检测
-    //                     $base = $base.parent();
-    //                     continue;
-    //                 }
-    //                 break;
-    //             }
-    //             $base.before($inserted)
-    //             break;
-    //         case "after":
-    //             while(true) {
-    //                 if ($base.is("char")) break; // 文字后面必定可以插入
-    //                 else if ($base.parent().is("underline") && $base.index() == $base.parent().children().length - 1) {
-    //                     // 如果非文字，且是下划线的最后一个元素，那么移到上一级检测
-    //                     $base = $base.parent();
-    //                     continue;
-    //                 }
-    //                 break;
-    //             }
-    //             $base.after($inserted)
-    //             break;
-    //         default:
-    //             throw "插入位置类型错误"
-    //             break;
-    //     }
-    // },
-
-    insertChar($e, pos) {
-        let newChars = getInputText("插入文字")
-        if (newChars) {
-            let chars = newChars.split("")
-            for (let char of chars) {
-                this.insert($e, `<char>${char}</char>`, pos)
-            }
-        }
-    },
-
-    insertInfo($e, pos) {
-        let text = getInputText("插入标记")
-        if (text) {
-            this.insert($e, `<info>${text}</info>`, pos)
-        }
-    },
-
-    insertLine($e, pos) {
-        this.insert($e, `<newline>⇲</newline>`, pos)
-    },
-
-    editChar($e) {
-        let newChars = getInputText("新文本", $e.text())
-        if (newChars) {
-            let chars = newChars.split("")
-            let firstChar = chars[0]
-            let restChars = chars.slice(1).reverse()
-            $e.text(firstChar)
-            for (let char of restChars) {
-                $e.after(`<char>${char}</char>`)
-            }
-        }
-    },
-
-    editInfo($e) {
-        let text = getInputText("新文本", $e.text())
-        if (text) {
-            $e.text(text)
-        }
-    },
-
-    editChord($e) {
-        let newChars = getInputText("新文本", _getChordTextNode($e).text())
-        if (newChars) {
-            let chars = newChars.split("")
-            let firstChar = chars[0]
-            let restChars = chars.slice(1).reverse()
-            let $textNode = _getChordTextNode($e)
-            $textNode[0].textContent = firstChar
-            for (let char of restChars) {
-                $e.after(`<char>${char}</char>`)
-            }
-        }
-    },
-
-    hasUnderlineToNextChord($chord) {
-        // 注意，默认不存在纯文本节点，所以不能处理！
-        let chordTagName
-        let underlineTagName
-        switch ($chord[0].tagName) {
-            case "CHORD": chordTagName = "chord"; underlineTagName = "underline"; break;
-            case "CHORD_PURE": chordTagName = "chord_pure"; underlineTagName = "underline_pure"; break;
-            default: console.error("非和弦不能添加下划线"); return;
-        }
-
-        function findNextChord($start, chordTagName) {
-            let $chords = $g_Sheet.find(chordTagName)
-            let curIndex = $chords.index($start)
-            if (curIndex == -1) {console.error("未找到该元素"); return null;}
-            if (curIndex == $chords.length - 1) {console.error("未找到下一个和弦"); return null;}
-            return $chords.eq(curIndex + 1)
-        }
-
-        let $nextChord = findNextChord($chord, chordTagName)
-        if (!$nextChord) return;
-
-        let $commonAncestor = $chord.parents().has($nextChord).first()
-        return $commonAncestor.is(underlineTagName)
-    },
-
-    generateSheetFileData() {
-        var that = this
-        let data = ""
-
-        data += "$title " + vmSheet.title + "\n"
-        data += "$singer " + vmSheet.singer + "\n"
-        data += "$by 锦瑟\n"
-        data += "$originalKey " + vmSheet.originalKey + "\n"
-        data += "$sheetKey " + vmSheet.sheetKey + "\n"
-        data += "$attachedChords "
-        for (let chordName of vmChordTool.attachedChords) {
-            data += chordName + " "
-        }
-        data += "\n\n"
-
-        let $elements = $g_Sheet.children()
-        $elements.each(function(){
-            data += that.elementToFileStr($(this))
-        })
-
-        // 测试能否解析
-        let sheet = new DigitalSheet(data)
-        console.log("解析通过", sheet)
-
-        return data
-    },
-
-    elementToFileStr($e) {
-        var that = this
-        let tagName = $e[0].tagName
-        switch (tagName) {
-            case "CHAR": return $e.text();
-            case "NEWLINE": return "\n";
-            case "CHORD": {
-                let char = _getChordTextNode($e).text()
-                if (char == "") char = "_"
-                let chordName = $e.find("chord_name").text()
-                return `[${chordName}]${char}`
-            }
-            case "UNDERLINE": {
-                let $children = $e.children()
-                let str = "{"
-                $children.each(function(){
-                    str += that.elementToFileStr($(this))
-                })
-                str += "}"
-                return str
-            }
-            default: return `[不支持的元素${tagName}]`;
-        }
-    },
-}
+  elementToFileStr($e) {
+    var that = this;
+    let tagName = $e[0].tagName;
+    switch (tagName) {
+      case "CHAR":
+        return $e.text();
+      case "NEWLINE":
+        return "\n";
+      case "CHORD": {
+        let char = _getChordTextNode($e).text();
+        if (char == "") char = "_";
+        let chordName = $e.find("chord_name").text();
+        return `[${chordName}]${char}`;
+      }
+      case "UNDERLINE": {
+        let $children = $e.children();
+        let str = "{";
+        $children.each(function () {
+          str += that.elementToFileStr($(this));
+        });
+        str += "}";
+        return str;
+      }
+      default:
+        return `[不支持的元素${tagName}]`;
+    }
+  },
+};
 
 const EditorAction = {
   editTextContent(node, newContent) {
-    if (node.type != ENodeType.Text) throw "类型错误，要求文本节点"
-    Editor.replace(node, Editor.createTextNodes(newContent))
+    if (node.type != ENodeType.Text) throw "类型错误，要求文本节点";
+    Editor.replace(node, Editor.createTextNodes(newContent));
   },
   editMarkContent(node, newContent) {
-    if (node.type != ENodeType.Mark) throw "类型错误，要求标记节点"
-    node.content = newContent
+    if (node.type != ENodeType.Mark) throw "类型错误，要求标记节点";
+    node.content = newContent;
   },
   editChordContent(node, newContent) {
-    if (!Editor.isChord(node)) throw "类型错误，要求和弦节点"
-    node.content = newContent[0]
-    let textNodes = Editor.createTextNodes(newContent.substr(1))
+    if (!Editor.isChord(node)) throw "类型错误，要求和弦节点";
+    node.content = newContent[0];
+    let textNodes = Editor.createTextNodes(newContent.substr(1));
     // 找到最近的父节点下划线，要求和弦不在该下划线的末尾
-    let targetNode = node
-    while(targetNode.parent && Editor.indexOf(targetNode) == targetNode.parent.children.length - 1) {
-      targetNode = targetNode.parent
+    let targetNode = node;
+    while (
+      targetNode.parent &&
+      Editor.indexOf(targetNode) == targetNode.parent.children.length - 1
+    ) {
+      targetNode = targetNode.parent;
     }
     // TODO: 可能要验证一下目标节点是否正确
-    Editor.insertAfter(targetNode, textNodes)
+    Editor.insertAfter(targetNode, textNodes);
   },
-}
+  addUnderlineForChord(chordNode) {
+    if (!Editor.isChord(chordNode)) throw "类型错误";
+    let chordType = chordNode.type;
+    let underlineType;
+    switch (chordType) {
+      case ENodeType.Chord:
+        underlineType = ENodeType.Underline;
+        break;
+      case ENodeType.ChordPure:
+        underlineType = ENodeType.UnderlinePure;
+        break;
+      default:
+        console.error("非和弦不能添加下划线");
+        return;
+    }
+
+    let nextChordNode = Editor.findNextNodeByType(chordNode, chordType);
+    if (!nextChordNode) throw "未找到下一个和弦";
+
+    if (chordNode.parent == nextChordNode.parent) {
+      // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
+      console.log("s e");
+      let coveredNodes = Editor.nextUntil(chordNode, nextChordNode, true, true);
+      let newUnderlineNode = reactive(new SheetNode(underlineType));
+      Editor.insertBefore(chordNode, newUnderlineNode);
+      Editor.remove(coveredNodes);
+      Editor.append(newUnderlineNode, coveredNodes);
+    } else if (Editor.parentsOf(chordNode).includes(nextChordNode.parent)) {
+      // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
+      console.log("[s] e");
+      let startUnderlineNode = Editor.parentUntil(
+        chordNode,
+        nextChordNode.parent
+      );
+      let coveredNodes = Editor.nextUntil(
+        startUnderlineNode,
+        nextChordNode,
+        false,
+        true
+      );
+      Editor.remove(coveredNodes);
+      Editor.append(startUnderlineNode, coveredNodes);
+    } else if (Editor.parentsOf(nextChordNode).includes(chordNode.parent)) {
+      // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
+      console.log("s [e]");
+      let endUnderlineNode = Editor.parentUntil(nextChordNode, chordNode.parent);
+      let coveredNodes = Editor.nextUntil(
+        chordNode,
+        endUnderlineNode,
+        true,
+        false
+      );
+      Editor.remove(coveredNodes);
+      Editor.prepend(endUnderlineNode, coveredNodes);
+    } else {
+      // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
+      console.log("[s] [e]");
+      let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
+      let startUnderlineNode = Editor.parentUntil(chordNode, commonAncestorNode);
+      let endUnderlineNode = Editor.parentUntil(
+        nextChordNode,
+        commonAncestorNode
+      );
+      let coveredNodes = Editor.nextUntil(
+        startUnderlineNode,
+        endUnderlineNode,
+        false,
+        false
+      );
+      Editor.remove(coveredNodes);
+      Editor.append(startUnderlineNode, coveredNodes);
+      let endUnderlineChildrenNodes = endUnderlineNode.children.map((n) => n); // map创建新数组
+      Editor.remove(endUnderlineChildrenNodes);
+      Editor.append(startUnderlineNode, endUnderlineChildrenNodes);
+      Editor.remove(endUnderlineNode);
+    }
+  },
+  removeUnderlineOfChord(chordNode) {
+    if (!Editor.isChord(chordNode)) throw "类型错误";
+    if (!Editor.isUnderline(chordNode.parent)) throw "和弦不在下划线下，无需删除";
+
+    let chordType = chordNode.type;
+    let underlineType;
+    switch (chordType) {
+      case ENodeType.Chord:
+        underlineType = ENodeType.Underline;
+        break;
+      case ENodeType.ChordPure:
+        underlineType = ENodeType.UnderlinePure;
+        break;
+      default:
+        console.error("非和弦不能添加下划线");
+        return;
+    }
+
+    let nextChordNode = Editor.findNextNodeByType(chordNode, chordType);
+    if (!nextChordNode) throw "未找到下一个和弦";
+
+    let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
+    if (!commonAncestorNode || !Editor.isUnderline(commonAncestorNode))
+      throw "不在下划线下";
+    // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
+    // 起始节点和终止节点一定是兄弟节点
+    let startNode = Editor.parentUntil(chordNode, commonAncestorNode);
+    let endNode = Editor.parentUntil(nextChordNode, commonAncestorNode);
+
+    // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
+    // 否则就要看兄弟节点其前其后是否有和弦节点
+    let beforeStartNodes = startNode.parent.children.slice(
+      0,
+      Editor.indexOf(startNode)
+    );
+    let afterStartNodes = startNode.parent.children.slice(
+      Editor.indexOf(startNode) + 1
+    );
+    let beforeEndNodes = endNode.parent.children.slice(
+      0,
+      Editor.indexOf(endNode)
+    );
+    let afterEndNodes = endNode.parent.children.slice(
+      Editor.indexOf(endNode) + 1
+    );
+    let hasPrev =
+      Editor.isUnderline(startNode) ||
+      beforeStartNodes.filter((n) => n.type == chordType).length > 0;
+    let hasNextNext =
+      Editor.isUnderline(endNode) ||
+      afterEndNodes.filter((n) => n.type == chordType).length > 0;
+
+    if (!hasPrev && !hasNextNext) {
+      // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
+      console.log("_s e_");
+      Editor.replace(commonAncestorNode, commonAncestorNode.children);
+    } else if (hasPrev && !hasNextNext) {
+      // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
+      console.log("_xxx s e_");
+      Editor.remove(afterStartNodes);
+      Editor.insertAfter(commonAncestorNode, afterStartNodes);
+    } else if (!hasPrev && hasNextNext) {
+      // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
+      console.log("_s e xxx_");
+      Editor.remove(beforeEndNodes);
+      Editor.insertBefore(commonAncestorNode, beforeEndNodes);
+    } else {
+      // 前后都有元素，需要从中间断开
+      console.log("_xxx s e yyy_");
+      let newUnderlineNode = reactive(new SheetNode(underlineType));
+      Editor.insertAfter(commonAncestorNode, newUnderlineNode);
+      Editor.remove(afterStartNodes);
+      Editor.append(newUnderlineNode, afterStartNodes);
+      beforeEndNodes = endNode.parent.children.slice(0, Editor.indexOf(endNode)); // 这一堆被放到新位置的，需要更新，这里实际获取到的是之前after和before的交集
+      Editor.remove(beforeEndNodes);
+      Editor.insertBefore(newUnderlineNode, beforeEndNodes);
+    }
+  },
+
+  convertChordToText(node) {
+    if (!Editor.isChord(node.type)) throw "类型错误";
+    Editor.replace(node, Editor.createTextNodes(node.content ?? " ")); // 为空，说明原来为占位符，还原为空格?
+  },
+
+  recoverChordToChar(chordNode) {
+    while (Editor.isUnderline(chordNode.parent)) {
+      // 如果是首位，删除本和弦下划线
+      // 如果是末位，删除倒数第二个和弦的下划线
+      // 否则在中间，不做处理即可，直接删除
+      Editor.removeUnderlineOfChord(chordNode);
+    }
+    Editor.convertChordToText(chordNode);
+  },
+};
 
 export default {
   name: "SheetEditor",
@@ -617,7 +652,7 @@ export default {
     ToolChord,
     PanelChordSelector,
     Chord,
-    WebSheet
+    WebSheet,
   },
   data() {
     return {
@@ -634,7 +669,7 @@ export default {
       env: "pc",
       showChordPanel: false,
       layout: {
-        toolWidthPercentage: 20
+        toolWidthPercentage: 20,
       },
       attachedChords: [],
       loaded: false,
@@ -661,16 +696,16 @@ export default {
             console.log("text", node);
           },
           dblclick: (node) => {
-            this.editContent(node)
+            this.editContent(node);
           },
-          contextmenu: (e, node) => this.openContext(e, node)
+          contextmenu: (e, node) => this.openContext(e, node),
         },
         chord: {
           click: (node) => {
             this.playChord(g_ChordManager.getChord(node.chord));
           },
           dblclick: (node) => {
-            this.editAddUnderline(node)
+            this.editAddUnderline(node);
           },
           mouseenter: (node) => {
             this.tipChord.show = true;
@@ -679,13 +714,13 @@ export default {
           mouseleave: (node) => {
             this.tipChord.show = false;
           },
-          contextmenu: (e, node) => this.openContext(e, node)
+          contextmenu: (e, node) => this.openContext(e, node),
         },
         mark: {
           click: (node) => {
             console.log("mark", node);
           },
-          contextmenu: (e, node) => this.openContext(e, node)
+          contextmenu: (e, node) => this.openContext(e, node),
         },
       },
       tipChord: {
@@ -700,17 +735,17 @@ export default {
         node: null,
         style: {
           left: 0,
-          top: 0
-        }
-      }
-    }
+          top: 0,
+        },
+      },
+    };
   },
   mounted() {
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
       .then((res) => {
-        let rootNode = WebSheetParser.parse(res);
-        rootNode = this.splitTextNode(rootNode)[0]
+        let rootNode = reactive(WebSheetParser.parse(res));
+        this.formatSheetTree(rootNode);
         console.log(rootNode);
         if (!rootNode) {
           throw "曲谱解析失败！";
@@ -735,45 +770,35 @@ export default {
         console.error("加载失败", e);
       });
 
-    document.addEventListener("click", () => this.closeContext())
+    document.addEventListener("click", () => this.closeContext());
   },
   methods: {
     getEnv,
-    splitTextNode(node) {
-      let nodes = []
-      if (node.type == ENodeType.Text) {
-        for(let char of node.content) {
-          let newNode = reactive(new SheetNode(ENodeType.Text))
-          newNode.content = char
-          newNode.parent = node.parent
-          nodes.push(newNode)
+    formatSheetTree(node) {
+      Editor.traverseDFS(node, (n) => {
+        // 文本拆分
+        if (n.type == ENodeType.Text && n.content.length > 1) {
+          Editor.replace(n, Editor.createTextNodes(n.content));
         }
-      }
-      else {
-        nodes.push(node)
-        for(let i = 0; i < node.children.length;) {
-          let childNode = node.children[i]
-          let splitNodes = this.splitTextNode(childNode)
-          node.children.splice(i, 1, ...splitNodes)
-          i += splitNodes.length
+        // 和弦内容拆分
+        else if (n.type == ENodeType.Chord && n.content.length > 1) {
+          EditorAction.editContent(n, n.content);
         }
-      }
-      
-      return nodes
+      });
     },
     openPanelChord() {
       this.showChordPanel = true;
     },
     openContext(e, node) {
-      e.preventDefault()
-      this.contentMenu.show = true
-      this.contentMenu.node = node
-      this.contentMenu.style.left = `${e.clientX}px`
-      this.contentMenu.style.top = `${e.clientY}px`
+      e.preventDefault();
+      this.contentMenu.show = true;
+      this.contentMenu.node = node;
+      this.contentMenu.style.left = `${e.clientX}px`;
+      this.contentMenu.style.top = `${e.clientY}px`;
     },
     closeContext() {
-      this.contentMenu.show = false
-      this.contentMenu.node = null
+      this.contentMenu.show = false;
+      this.contentMenu.node = null;
     },
     playChord(chord) {
       const bpm = 120;
@@ -804,46 +829,49 @@ export default {
       });
     },
     editContent(node = null) {
-      node = node ?? this.contentMenu.node
-      let newContent = getInputText("新文本", node.content)
-      if (!newContent) return
-      switch(node.type) {
+      node = node ?? this.contentMenu.node;
+      let newContent = getInputText("新文本", node.content);
+      if (!newContent) return;
+      switch (node.type) {
         case ENodeType.Text: {
-          EditorAction.editTextContent(node, newContent)
-          break
+          EditorAction.editTextContent(node, newContent);
+          break;
         }
         case ENodeType.Mark: {
-          EditorAction.editMarkContent(node, newContent)
-          break
+          EditorAction.editMarkContent(node, newContent);
+          break;
         }
         case ENodeType.Chord: {
-          EditorAction.editChordContent(node, newContent)
-          break
+          EditorAction.editChordContent(node, newContent);
+          break;
         }
         default: {
-          throw "未知的节点，无法编辑内容"
-          break
+          throw "未知的节点，无法编辑内容";
+          break;
         }
       }
     },
     editRemove(node = null) {
-      node = node ?? this.contentMenu.node
-      Editor.remove(node) // TODO: 不安全
+      node = node ?? this.contentMenu.node;
+      Editor.remove(node); // TODO: 不安全
     },
     editRemoveUnderline(node = null) {
-      node = node ?? this.contentMenu.node
-      Editor.removeUnderlineOfChord(node)
+      node = node ?? this.contentMenu.node;
+      EditorAction.removeUnderlineOfChord(node);
     },
     editAddUnderline(node = null) {
-      node = node ?? this.contentMenu.node
-      Editor.addUnderlineForChord(node)
-    }
+      node = node ?? this.contentMenu.node;
+      EditorAction.addUnderlineForChord(node);
+    },
   },
   watch: {
-    "layout.toolWidthPercentage": function() {
-      this.layout.toolWidthPercentage = Math.min(70, Math.max(10, this.layout.toolWidthPercentage))
-    }
-  }
+    "layout.toolWidthPercentage": function () {
+      this.layout.toolWidthPercentage = Math.min(
+        70,
+        Math.max(10, this.layout.toolWidthPercentage)
+      );
+    },
+  },
 };
 
 // import { getQueryVariable } from "./modules/webCommon.js"
@@ -1222,17 +1250,6 @@ export default {
 //                 g_CursorInputControl.stop()
 //             }
 //         })
-
-//         // 播放
-//         $sheet.on("click", "chord, chord_pure", (e)=>{
-//             let $element = $(e.currentTarget)
-//             let chordName = ($element.prop("nodeName") == "CHORD" ? $element.find("chord_name").text() : $element.text())
-//             g_UkulelePlayer.playChord(g_ChordManager.getChord(chordName), 0.5, 0.2)
-//         })
-
-//         // 插入的右键菜单
-//         $("#editor_context_menu_insert_pos").children().bind("click", (e)=>this.onInsertPosClick(e))
-//         $("#editor_context_menu_insert_type").children().bind("click", (e)=>this.onInsertTypeClick(e))
 //     }
 
 //     onChordDragStart(e) {
@@ -1503,159 +1520,6 @@ export default {
 //     }
 // }
 
-// var g_EditorControl = null
-
-// window.onload = function () {
-//     $g_Sheet = $("#sheet")
-//     g_EditorControl = new EditorControl($g_Sheet)
-
-//     // 检查环境
-//     if (document.body.clientWidth / document.body.clientHeight < 0.8) { // 竖屏
-//         document.documentElement.style.setProperty('--base-font-size', "4vw")
-//         $(document.body).attr("env", "mobile")
-//     }
-//     else {
-//         $(document.body).attr("env", "pc")
-//     }
-
-//     setupLayoutEvent()
-//     setupRawLyricEvent()
-//     setupToolsEvent()
-//     setupDragLoadEvent()
-
-//     let fileName = getQueryVariable("sheet")
-//     if (!fileName) console.error("未加载曲谱")
-//     else loadSheetFromUrl(`./sheets/${fileName}.sheetEdit`)
-// }
-
-// function loadSheetFromUrl(url) {
-//     return $.get({
-//         url: encodeURI(url),
-//         success: function (data, status) {
-//             loadSheet(data)
-//         },
-//         error: function(){
-//             $("#song_title").text("未找到曲谱")
-//     　　},
-//     })
-// }
-
-// function loadSheet(str) {
-//     let parsedSheet = new DigitalSheet(str)
-//     vmSheet.title = parsedSheet.getUniqueValue("title")
-//     vmSheet.singer = parsedSheet.getUniqueValue("singer")
-//     vmSheet.originalKey = parsedSheet.getUniqueValue("originalKey")
-//     vmSheet.sheetKey = parsedSheet.getUniqueValue("sheetKey")
-//     vmChordTool.attachedChords = parsedSheet.getArrayValue("attachedChords")
-
-//     let $sheet = parsedSheet.getSheetElement()
-//     $sheet = createSheetFromParseSheet($sheet)
-//     $g_Sheet.children().trigger("fit")
-// }
-
-// function createSheetFromParseSheet($sheet) {
-//     $g_Sheet.empty()
-
-//     function createFromElement(element) {
-//         let list = []
-//         let $e = $(element)
-//         if (element.nodeType === 3) {
-//             for(let char of element.nodeValue) {
-//                 if (char == "\n")
-//                     list.push($(`<newline>⇲</newline>`))
-//                 else
-//                     list.push($(`<char>${char}</char>`))
-//             }
-//         }
-//         else if ($e.is("newline")) {
-//             list.push($(`<newline>⇲</newline>`))
-//         }
-//         else if ($e.is("underline, underline_pure")) {
-//             let $underline = $e.clone()
-//             $underline.empty()
-//             $e.contents().each(function(){
-//                 for(let $eChild of createFromElement(this)) {
-//                     $underline.append($eChild)
-//                 }
-//             })
-//             list.push($underline)
-//         }
-//         else list.push($e)
-
-//         return list
-//     }
-
-//     $sheet.each(function(){
-//         for(let $e of createFromElement(this)) {
-//             $g_Sheet.append($e)
-//         }
-//     })
-// }
-
-// var vmSheet = new Vue({
-//     el: '#sheet_block',
-//     data: {
-//         title: "加载中...",
-//         singer: "————",
-//         originalKey: "C",
-//         sheetKey: "C",
-//     },
-//     methods: {
-//         loadSheetFromFile() {
-//             let input = document.createElement('input');
-//             input.type = 'file';
-//             input.accept = ".sheet,.sheetEdit"
-//             input.onchange = e => {
-//                 let file = e.target.files[0];
-//                 let fileReader = new FileReader()
-//                 fileReader.onload = ()=> loadSheet(fileReader.result)
-//                 fileReader.readAsText(file)
-//             }
-//             input.click();
-//             input.remove()
-//         },
-
-//         saveSheetToFile() {
-//             let fileData = g_Editor.generateSheetFileData()
-//             let time = new Date().toLocaleDateString().replace(/\//g, "_")
-
-//             let blob = new Blob([fileData], {type: 'text/plain'})
-//             let download = document.createElement("a");
-//             download.href = window.URL.createObjectURL(blob)
-//             download.setAttribute('download', `${this.title}-${this.singer}-${time}.sheetEdit`)
-//             download.click()
-//             download.remove()
-//         },
-
-//         sheetKeyChange: function(e){
-//             let newKey = $(e.currentTarget).val()
-//             let oldKey = this.sheetKey
-//             if (newKey == oldKey) return;
-//             let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
-//             if (confirmed) {
-//                 _shiftKey(oldKey, newKey)
-//             }
-//             this.sheetKey = newKey
-//         }
-//     },
-// })
-
-// // 配置布局事件
-// function setupLayoutEvent() {
-//     let $layoutSlider = $("#layout_slider")
-//     $layoutSlider.bind("input", ()=>{
-//         let value = $layoutSlider.val()
-//         value = Math.max(5, Math.min(50, value))
-//         $layoutSlider.val(value)
-//         $("#tools_block").css("width", `${value}%`)
-//         $("#tools_block_fix").css("width", `${value}%`)
-//         $("#sheet_block").css("width", `${100 - value}%`)
-//     })
-
-//     let $helpButton = $("#help_button")
-//     $helpButton.bind("click", ()=>runPresetTip("test"))
-// }
-
 // function setupRawLyricEvent() {
 //     // 开启歌词编辑面板按钮
 //     $("#edit_raw_lyric_button").bind("click", ()=>{
@@ -1681,10 +1545,6 @@ export default {
 //         $("#raw_lyric_panel").hide()
 //     })
 
-// }
-
-// function setupToolsEvent() {
-//     $("#chord_tool_edit_button").bind("click", ()=>vmChordPanel.open())
 // }
 
 // function setupDragLoadEvent() {
@@ -1734,18 +1594,6 @@ export default {
 //     })
 // }
 
-// // 从纯文本歌词创建曲谱
-// function createSheetFromLyric(lyrics) {
-//     $g_Sheet.empty()
-//     let lyricBlocks = lyrics.split("")
-//     for(let char of lyricBlocks) {
-//         if (char == "\n")
-//             $g_Sheet.append($(`<newline>⇲</newline>`))
-//         else
-//             $g_Sheet.append($(`<char>${char}</char>`))
-//     }
-// }
-
 // // 从曲谱提取纯文本歌词
 // function getRawTextFromSheet() {
 //     let lyric = ""
@@ -1762,308 +1610,11 @@ export default {
 //     })
 //     return lyric
 // }
-
-// function drawChordsInElement($e) {
-//     let $chords = $e.find(".prefab_chord")
-//     $chords.each(function(){
-//         let chordName = this.dataset.name
-//         let chord = g_ChordManager.getChord(chordName)
-//         if (chord)
-//             drawChord($(this), chord, chordName)
-//         else
-//             drawChordNotFound($(this), chordName)
-//     })
-//     $chords.trigger("fit")
-// }
-
-// function drawChordsOnElement($e) {
-//     let $chord = $e.filter(".prefab_chord")
-//     if ($chord.length == 0) return;
-//     let chordName = $chord[0].dataset.name
-//     let chord = g_ChordManager.getChord(chordName)
-//     if (chord)
-//         drawChord($chord, chord, chordName)
-//     else
-//         drawChordNotFound($chord, chordName)
-//     $chord.trigger("fit")
-// }
-
-// var vmChordTool = new Vue({
-//     el: '#chord_tool',
-//     data: {
-//         stringNum: 4,
-//         attachedChords: [],
-//     },
-//     methods: {
-//     },
-//     watch: {
-//         attachedChords: function () {
-//             this.$nextTick(()=>{
-//                 drawChordsInElement($("#attached_chord_list"))
-//             });
-//         }
-//     }
-// })
-
-// const g_RecommendChordInCMajor = {
-//     "常用": [ "C", "Dm", "Em", "F", "G", "Am", "E"],
-//     "修饰音": [ "C7", "G7", "E7", "Csus4", "Gsus4", "Gsus2"],
-//     "其他": [ "D", "A", "Fm", "Gm"],
-// }
-
-// var vmChordPanel = new Vue({
-//     el: '#chord_panel',
-//     data: {
-//         key: null,
-//         attachedChords: [],
-//         recommendChords: [],
-//         searchChords: [],
-//         searchText: "",
-
-//         _isDraggingChord: false,
-//         _startDraggingChordIndex: null,
-//         _$draggingChord: null
-//     },
-//     mounted: function(){
-//         $("#chord_panel_attached_chord_list").on("mousedown touchstart", ".prefab_chord", this.dragSortStart)
-//         $("#chord_panel_attached_chord_list").on("mouseover", ".prefab_chord", this.dragSortOver)
-//     },
-//     methods: {
-//         open() {
-//             this.key = $("#sheet_current_key_select").val()
-//             this.attachedChords = _clone(vmChordTool.attachedChords)
-//             this.updateAttachedChords()
-//             this.updateRecommendChords()
-//             $("#chord_panel").show()
-//         },
-//         finish() {
-//             vmChordTool.attachedChords = _clone(this.attachedChords)
-//             this.close()
-//         },
-//         cancel() {
-//             let confirmed = confirm("确认放弃修改的和弦？")
-//             if (!confirmed) return;
-//             this.close()
-//         },
-//         close() {
-//             $("#chord_panel").hide()
-//         },
-//         updateRecommendChords() {
-//             if (this.key) {
-//                 let recommendChords = {}
-//                 for(let type in g_RecommendChordInCMajor) {
-//                     recommendChords[type] = []
-//                     for(let chordName of g_RecommendChordInCMajor[type]) {
-//                         let newChordName = g_ChordManager.shiftKey(chordName, "C", this.key)
-//                         recommendChords[type].push(newChordName)
-//                     }
-//                 }
-//                 this.recommendChords = recommendChords
-//             }
-//             else this.recommendChords = {};
-//         },
-
-//         updateSearchChords(text) {
-//             let searchResult = []
-//             text = text.replace(/\s/g, "")
-
-//             if (text != "") {
-//                 g_ChordManager.traverse((chordName) => {
-//                     if (text == chordName) { // 完全匹配，优先级最大
-//                         searchResult.push({name:chordName, priority: 1})
-//                     }
-//                     else if (g_ChordManager.isAlias(text, chordName)) { // 别名
-//                         searchResult.push({name:chordName, priority: 2})
-//                     }
-//                     else if (chordName.toLowerCase().indexOf(text.toLowerCase()) != -1) { // 大小写不敏感，和弦包含文字
-//                         searchResult.push({name:chordName, priority: 3})
-//                     }
-//                     else if (text.toLowerCase().indexOf(chordName.toLowerCase()) != -1) { // 大小写不敏感，文字包含和弦
-//                         searchResult.push({name:chordName, priority: 4})
-//                     }
-//                 })
-//             }
-
-//             searchResult.sort((a, b) => {
-//                 if (a.priority != b.priority) return a.priority - b.priority;
-//                 else return a.name.localeCompare(b);
-//             })
-
-//             this.searchChords = searchResult.map(e=>e.name)
-//         },
-
-//         updateAttachedChords() {
-//             let $list = $("#chord_panel_attached_chord_list")
-//             $list.empty()
-//             for(let chordName of this.attachedChords) {
-//                 let $chord = $(`<div class="prefab_chord drag_sort" data-name="${chordName}"></div>`)
-//                 $list.append($chord)
-//             }
-//             drawChordsInElement($list)
-//         },
-
-//         isAttached(chordName) {
-//             return this.attachedChords.find(e => e == chordName) != undefined
-//         },
-
-//         addAttachedChord(chordName) {
-//             if (this.isAttached(chordName)) {
-//                 alert(`和弦${chordName}已存在`)
-//                 return
-//             }
-
-//             let $list = $("#chord_panel_attached_chord_list")
-//             let $chord = $(`<div class="prefab_chord" data-name="${chordName}"></div>`)
-//             $list.append($chord)
-//             drawChordsOnElement($chord)
-//             this.attachedChords.push(chordName)
-//         },
-
-//         deleteAttachedChord(index) {
-//             let $list = $("#chord_panel_attached_chord_list")
-//             let $chord = $list.children(`.prefab_chord:eq(${index})`)
-//             $chord.remove()
-//             this.attachedChords.splice(index, 1)
-//         },
-
-//         dragSortStart(e) {
-//             let $e = $(e.currentTarget)
-//             this._isDraggingChord = true
-//             this._$draggingChord = $e
-//             this._startDraggingChordIndex = $e.index()
-
-//             $e.css("opacity", 0.5)
-//             $e.attr("type", "fake")
-//             $("#chord_panel_drag_mark").empty()
-//             $("#chord_panel_drag_mark").append($e.clone())
-//             $("#chord_panel_drag_mark").show()
-//             this.dragSortMove(e)
-
-//             $(document).bind("mousemove touchmove", this.dragSortMove)
-//             $(document).bind("mouseup touchend", this.dragSortEnd)
-//         },
-
-//         dragSortMove(e) {
-//             let [x, y] = _getMouseOrTouchClient(e)
-//             $("#chord_panel_drag_mark").css({
-//                 left: x,
-//                 top: y,
-//             })
-//             // TODO: 对触屏需要判断元素，手动触发over事件
-//         },
-
-//         dragSortOver(e) {
-//             if (this._isDraggingChord) {
-//                 // 更新元素
-//                 let $e = $(e.currentTarget)
-//                 let curIndex = $e.index()
-//                 let draggingIndex = this._$draggingChord.index()
-//                 if (curIndex == draggingIndex) return;
-
-//                 if (curIndex > draggingIndex) $e.after(this._$draggingChord);
-//                 else $e.before(this._$draggingChord);
-//             }
-//         },
-
-//         dragSortEnd() {
-//             if (this._$draggingChord) {
-//                 this._$draggingChord.removeAttr("style")
-//                 this._$draggingChord.removeAttr("type")
-
-//                 let curIndex = this._$draggingChord.index()
-//                 let updatedChords = this.attachedChords
-//                 let chordName = updatedChords.splice(this._startDraggingChordIndex, 1)[0]
-//                 updatedChords.splice(curIndex, 0, chordName)
-//                 this.attachedChords = updatedChords
-//             }
-//             $("#chord_panel_drag_mark").hide()
-//             this._isDraggingChordName = ""
-//             this._isDraggingChord = false
-//             this._startDraggingChordIndex = null
-//             $(document).unbind("mousemove touchmove", this.dragSortMove)
-//             $(document).unbind("mouseup touchend", this.dragSortEnd)
-//             this.updateAttachedChords()
-//         },
-
-//         clickTrashcan() {
-//             let confirmed = confirm("确认删除所有和弦？\n（可以把和弦拖到这里删除哦~）")
-//             if (!confirmed) return;
-//             let $list = $("#chord_panel_attached_chord_list")
-//             $list.empty()
-//             this.attachedChords = []
-//         },
-
-//         dropTrashcan() {
-//             if (!this._isDraggingChord) return;
-//             this._$draggingChord.remove()
-//             this._$draggingChord = null
-//             this.attachedChords.splice(this._startDraggingChordIndex, 1)
-//         }
-//     },
-//     watch: {
-//         recommendChords: function () {
-//             this.$nextTick(()=>{
-//                 drawChordsInElement($("#chord_panel_recommend_chord_list"))
-//             });
-//         },
-//         searchChords: function () {
-//             this.$nextTick(()=>{
-//                 drawChordsInElement($("#chord_panel_search_chord_list"))
-//             });
-//         },
-//         searchText: function() {
-//             this.updateSearchChords(this.searchText)
-//         }
-//     }
-// })
-
-// function _clone(obj) {
-//     return JSON.parse(JSON.stringify(obj))
-// }
-
-// function _getMouseOrTouchClient(e) {
-//     if (e.clientX) {
-//         return [e.clientX, e.clientY]
-//     }
-//     else {
-//         return [e.originalEvent.changedTouches[0].clientX, e.originalEvent.changedTouches[0].clientY]
-//     }
-// }
-
-// function _getTouchOverElement(x, y) {
-//     let element = document.elementFromPoint(x, y);
-//     let $e = $(element)
-//     if ($e.is("char")) return $e;
-//     else if ($e.is("chord:not([type=fake])")) return $e;
-//     else return null;
-// }
-
-// function _getChordTextNode($e) {
-//     return $e.contents().filter(function() {
-//         return this.nodeType === 3;
-//     });
-// }
-
-// function _shiftKey(oldKey, newKey) {
-//     let $chords = $("chord_name,chord_pure")
-//     $chords.each((i, e)=>{
-//         let $chord = $(e)
-//         let originalChord = $chord.text()
-//         let newChord = g_ChordManager.shiftKey(originalChord, oldKey, newKey)
-//         $chord.text(newChord)
-//     })
-
-//     for(let i = 0; i < vmChordTool.attachedChords.length; ++i) {
-//         let newChord = g_ChordManager.shiftKey(vmChordTool.attachedChords[i], oldKey, newKey)
-//         Vue.set(vmChordTool.attachedChords, i, newChord)
-//     }
-// }
 </script>
 
 <style scoped src="./common.css"></style>
 
 <style scoped>
-
 .flex_center {
   display: flex;
   justify-content: center;
