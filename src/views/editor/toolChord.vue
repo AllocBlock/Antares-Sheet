@@ -1,5 +1,5 @@
 <template>
-  <div id="container" :env="getEnv()">
+  <div class="tool_chord" :env="getEnv()">
     <div class="title">和弦工具</div>
     <div class="list">
       <div v-if="chords.length == 0">暂未添加任何和弦</div>
@@ -46,7 +46,7 @@ export default {
 <style scoped src="./common.css"></style>
 
 <style scoped>
-#container {
+.tool_chord {
   width: 100%;
   display: flex;
   flex-direction: column;

@@ -1,5 +1,5 @@
 <template>
-  <div id="container" :env="getEnv()" :style="globalCssVar">
+  <div class="editor" :env="getEnv()" :style="globalCssVar">
     <input
       type="range"
       id="layout_slider"
@@ -8,57 +8,58 @@
       v-model="layout.toolWidthPercentage"
       step="0.1"
     />
-    <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%`">
-      <div id="tools_block_fix">
-        <div id="tools_title" class="title flex_center">工具栏</div>
-        <ToolChord v-model:chords="attachedChords" @dragStart="onChordDragStart"/>
-        <div id="chord_tool_edit_button" class="button" @click="openPanelChord">
-          编辑和弦
+    <div class="flex_center fill" style="flex-direction: column;">
+      <div class="flex_center fill" style="height: 70%;">
+        <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
+          <div id="tools_title" class="title flex_center">工具栏</div>
+          <ToolChord v-model:chords="attachedChords" @dragStart="onChordDragStart" />
+          <div id="chord_tool_edit_button" class="button" @click="openPanelChord">
+            编辑和弦
+          </div>
         </div>
-        <div id="edit_mode_block">
-          <div class="edit_mode">
-            <div>光标模式</div>
-            <input id="toggle_cursor_mode" type="checkbox" class="toggle" />
+        <div class="fill" style="display: flex; justify-content: center; overflow: auto;">
+          <div
+            id="sheet_block"
+            :style="`width: ${100 - layout.toolWidthPercentage}%`"
+          >
+            <input
+              type="text"
+              id="song_title_input"
+              class="input"
+              placeholder="在此处输入歌名"
+              v-model="sheetInfo.title"
+            />
+            <input
+              type="text"
+              id="song_singer_input"
+              class="input"
+              placeholder="在此处输入歌手"
+              v-model="sheetInfo.singer"
+            />
+            <div id="sheet_key_block">
+              <div class="title">原调</div>
+              <WebKeySelector class="select" v-model:value="sheetInfo.originalKey" />
+              <div class="title">选调</div>
+              <WebKeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
+            </div>
+            <div id="sheet_by" class="title">制谱 锦瑟</div>
+            <div class="flex_center">
+              <div id="edit_raw_lyric_button" class="button">编辑歌词</div>
+              <div class="button" @click="saveSheetToFile">保存</div>
+              <div class="button" @click="loadSheetFromFile">载入</div>
+            </div>
+            <WebSheet
+              id="sheet"
+              class="sheet_box"
+              :sheet-tree="sheetInfo.sheetTree"
+              :events="sheetEvents"
+            />
           </div>
         </div>
       </div>
-    </div>
-    <div
-      id="sheet_block"
-      :style="`width: ${100 - layout.toolWidthPercentage}%`"
-    >
-      <input
-        type="text"
-        id="song_title_input"
-        class="input"
-        placeholder="在此处输入歌名"
-        v-model="sheetInfo.title"
-      />
-      <input
-        type="text"
-        id="song_singer_input"
-        class="input"
-        placeholder="在此处输入歌手"
-        v-model="sheetInfo.singer"
-      />
-      <div id="sheet_key_block">
-        <div class="title">原调</div>
-        <WebKeySelector class="select" v-model:value="sheetInfo.originalKey" />
-        <div class="title">选调</div>
-        <WebKeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
+      <div class="flex_center fill" style="height: 30%;">
+        <AudioPlayer />
       </div>
-      <div id="sheet_by" class="title">制谱 锦瑟</div>
-      <div class="flex_center">
-        <div id="edit_raw_lyric_button" class="button">编辑歌词</div>
-        <div class="button" @click="saveSheetToFile">保存</div>
-        <div class="button" @click="loadSheetFromFile">载入</div>
-      </div>
-      <WebSheet
-        id="sheet"
-        class="sheet_box"
-        :sheet-tree="sheetInfo.sheetTree"
-        :events="sheetEvents"
-      />
     </div>
   </div>
 
@@ -134,7 +135,7 @@
 import $ from "jquery";
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
-import { WebPlayer } from "@/utils/webPlayer.js";
+import { WebInstrument } from "@/utils/webInstrument.js";
 import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
@@ -145,10 +146,11 @@ import Chord from "@/components/chord";
 import { get } from "@/utils/request.js";
 import ToolChord from "./toolChord";
 import PanelChordSelector from "./panelChordSelector";
+import AudioPlayer from "./audioPlayer";
 
 let g_ChordManager = new WebChordManager();
-let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator");
+let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
+let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator");
 
 function getInputText(tips, defaultText = "") {
   return prompt(tips, defaultText);
@@ -625,7 +627,8 @@ export default {
     PanelChordSelector,
     Chord,
     WebSheet,
-    WebKeySelector
+    WebKeySelector,
+    AudioPlayer
   },
   data() {
     return {
@@ -924,7 +927,7 @@ export default {
 // import { DigitalSheet } from "./modules/webSheetParser.js"
 // import { ChordManager } from "./modules/webChordManager.js"
 // import { drawChord, drawChordNotFound } from "./modules/webChordRender.js"
-// import { WebPlayer } from "./modules/webPlayer.js"
+// import { WebInstrument } from "./modules/webInstrument.js"
 // import { runPresetTip } from "./modules/webTip.js"
 // import { convertXXX } from "./modules/xxxToSheet.js"
 
@@ -940,7 +943,7 @@ export default {
 
 // let $g_Sheet = null
 // let g_ChordManager = new ChordManager
-// let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele")
+// let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele")
 
 // let g_Editor = new Editor
 
@@ -1661,12 +1664,6 @@ export default {
 <style scoped src="./common.css"></style>
 
 <style scoped>
-.flex_center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .title {
   overflow: hidden;
   white-space: nowrap;
@@ -1748,8 +1745,9 @@ export default {
   outline: yellow 2px dashed;
 }
 
-#container {
+.editor {
   width: 100%;
+  height: 100%;
   display: flex;
 }
 #layout_slider {
@@ -1776,13 +1774,8 @@ body[env="mobile"] #layout_slider {
   background: var(--theme-color);
 }
 #tools_block {
+  position: relative;
   width: 20%;
-  height: 100%;
-}
-#tools_block_fix {
-  position: fixed;
-  left: 0;
-  width: inherit;
   height: 100%;
 
   box-sizing: border-box;
@@ -1791,6 +1784,8 @@ body[env="mobile"] #layout_slider {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto;
+  flex-shrink: 0;flex-shrink: 0;
 
   z-index: 1;
 }
@@ -1798,15 +1793,8 @@ body[env="mobile"] #tools_block {
   width: 0;
   height: 0;
 }
-body[env="mobile"] #tools_block_fix {
-  bottom: 0;
-  width: 100%;
-  height: 20%;
-}
-
 #sheet_block {
   box-sizing: border-box;
-  width: 60%;
   padding: 20px;
   padding-bottom: 50%;
   display: flex;
@@ -1954,19 +1942,6 @@ body[env="mobile"] #sheet_block {
 }
 #edit_raw_lyric_button {
   background: var(--sheet-theme-color);
-}
-
-#edit_mode_block {
-  /* display: none; */
-  display: flex;
-  flex-direction: column;
-}
-body[env="mobile"] #edit_mode_block {
-  display: none;
-}
-.edit_mode {
-  display: flex;
-  align-items: center;
 }
 
 #drag_mark {

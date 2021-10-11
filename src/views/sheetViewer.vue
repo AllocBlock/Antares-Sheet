@@ -59,7 +59,7 @@
 // TODO: 再整一个节拍器，可以随节拍换颜色
 
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
-import { WebPlayer } from "@/utils/webPlayer.js";
+import { WebInstrument } from "@/utils/webInstrument.js";
 import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js"
 import WebSheetParser from "@/utils/webSheetParser"
@@ -70,8 +70,8 @@ import Chord from "@/components/chord"
 import { get } from "@/utils/request.js"
 
 let g_ChordManager = new WebChordManager
-let g_UkulelePlayer = new WebPlayer("Ukulele", "Ukulele")
-let g_OscillatorPlayer = new WebPlayer("Ukulele", "Oscillator")
+let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele")
+let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator")
 
 export default {
   name: "SheetViewer",

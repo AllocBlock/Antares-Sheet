@@ -182,7 +182,7 @@ class StringInstrument {
 /* 
  * 管理音频上下文，创建音源和乐器并连接
  */
-class WebPlayer {
+class WebInstrument {
     constructor(instrumentName = "Ukulele", audioSourceName = "Oscillator") {
         this.audioContext = new AudioContext
 
@@ -325,4 +325,4 @@ function _ToneToFrequency(tone) {
     return frequency
 }
 
-export {WebPlayer}
+export { WebInstrument }
