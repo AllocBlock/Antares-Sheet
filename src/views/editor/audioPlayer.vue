@@ -80,13 +80,7 @@
     </div>
     <div class="audio_button-zone flex_center">
       <div class="audio_button flex_center" @click="togglePlay()">
-        <img
-          v-if="!setting.playing"
-          id="audio_play-icon"
-          src="@/assets/icons/play.svg"
-          type="image/svg+xml"
-        />
-        <img v-else id="audio_pause-icon" src="@/assets/icons/pause.svg" type="image/svg+xml" />
+        <img id="audio_pause-icon" :src="require(`@/assets/icons/${setting.playing ? 'pause' : 'play'}.svg`)" type="image/svg+xml" />
       </div>
       <div class="audio_button flex_center" @click="stop()">
         <img id="audio_stop-icon" src="@/assets/icons/stop.svg" type="image/svg+xml" />
@@ -182,6 +176,7 @@
 import $ from "jquery";
 import Toast from "@/utils/toast";
 import WebAudioPlayer from "@/utils/webAudioPlayer";
+import HotKey from "@/utils/hotKey";
 import { getEnv } from "@/utils/webCommon.js";
 import timeSignatureVue from "../../components/webSheet/pluginTab/timeSignature.vue";
 
@@ -291,6 +286,10 @@ export default {
   created() {
     this.audioPlayer = new WebAudioPlayer
     document.addEventListener("mouseup", this.onMouseUp)
+    HotKey.addListener(" ", false, false, false, (e) => {
+      e.preventDefault()
+      this.togglePlay()
+    })
   },
   methods: {
     getEnv,
@@ -414,42 +413,6 @@ var isMusicSliderMoving = false;
 var isPlayBeforeMoving = false;
 
 var isMarkContextShow = false;
-
-// 性能相关参数
-var musicSliderUpdateTime = 10; // 音乐进度条的刷新间隔，单位毫秒，比较吃CPU
-
-// $(function(){ // 初始化
-//     // 键盘事件
-//     $(document).keydown(function(e){
-//         if (isMarkContextShow){ // 打开编辑菜单时屏蔽按键
-//             return;
-//         }
-//         switch(e.which){
-//             case 32: { // 空格
-//                 if (music != null){ 
-//                     if (music.paused){
-//                         resumeMusic();
-//                     }
-//                     else{
-//                         pauseMusic();
-//                     }
-//                 }
-//                 break;
-//             }
-//             case 81: { // Q键
-//                 prevMark();
-//                 break;
-//             }
-//             case 69: { // E键
-//                 nextMark();
-//                 break;
-//             }
-//             case 87: { // W键
-//                 addMark();
-//                 break;
-//             }
-//         }
-//     });
 
 //     // 禁止切换按钮的键盘事件快捷键
 //     $("input[type=checkbox]").keydown(function(e){
@@ -938,25 +901,6 @@ var musicSliderUpdateTime = 10; // 音乐进度条的刷新间隔，单位毫秒
 </style>
 
 <style scoped>
-html,
-body {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-  min-width: 600px;
-
-  padding: 0;
-  margin: 0;
-  position: relative;
-  color: white;
-  font-family: "微软雅黑";
-
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
 img {
   width: 28px;
   height: 28px;
@@ -989,6 +933,7 @@ a:hover {
   font-size: 12px;
 
   background-color: #24414a;
+  user-select: none;
 }
 
 .audio_hint_cover {
