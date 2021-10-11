@@ -42,55 +42,10 @@
         v-model="sheetInfo.singer"
       />
       <div id="sheet_key_block">
-        <div id="sheet_key" class="title">原调</div>
-        <select
-          id="sheet_original_key_select"
-          class="select"
-          v-model="sheetInfo.originalKey"
-        >
-          <option value="C" selected>C</option>
-          <option value="#C">♯C</option>
-          <option value="bD">♭D</option>
-          <option value="D">D</option>
-          <option value="#D">♯D</option>
-          <option value="bE">♭E</option>
-          <option value="E">E</option>
-          <option value="F">F</option>
-          <option value="#F">♯F</option>
-          <option value="bG">♭G</option>
-          <option value="G">G</option>
-          <option value="#G">♯G</option>
-          <option value="bA">♭A</option>
-          <option value="A">A</option>
-          <option value="#A">♯A</option>
-          <option value="bB">♭B</option>
-          <option value="B">B</option>
-        </select>
-        <div id="sheet_key" class="title">选调</div>
-        <select
-          id="sheet_current_key_select"
-          class="select"
-          :value="sheetInfo.sheetKey"
-          @change="onChangeSheetKey"
-        >
-          <option value="C" selected>C</option>
-          <option value="#C">♯C</option>
-          <option value="bD">♭D</option>
-          <option value="D">D</option>
-          <option value="#D">♯D</option>
-          <option value="bE">♭E</option>
-          <option value="E">E</option>
-          <option value="F">F</option>
-          <option value="#F">♯F</option>
-          <option value="bG">♭G</option>
-          <option value="G">G</option>
-          <option value="#G">♯G</option>
-          <option value="bA">♭A</option>
-          <option value="A">A</option>
-          <option value="#A">♯A</option>
-          <option value="bB">♭B</option>
-          <option value="B">B</option>
-        </select>
+        <div class="title">原调</div>
+        <WebKeySelector class="select" v-model:value="sheetInfo.originalKey" />
+        <div class="title">选调</div>
+        <WebKeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
       </div>
       <div id="sheet_by" class="title">制谱 锦瑟</div>
       <div class="flex_center">
@@ -185,6 +140,7 @@ import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
 import WebSheetParser from "@/utils/webSheetParser";
 import WebSheet from "@/components/webSheet";
+import WebKeySelector from "@/components/keySelector";
 import Chord from "@/components/chord";
 import { get } from "@/utils/request.js";
 import ToolChord from "./toolChord";
@@ -669,6 +625,7 @@ export default {
     PanelChordSelector,
     Chord,
     WebSheet,
+    WebKeySelector
   },
   data() {
     return {

@@ -320,9 +320,6 @@ html, body {
   align-items: center;
 }
 
-#sheet_key {
-}
-
 #sheet_key_shift {
   height: 100%;
   width: 30px;
