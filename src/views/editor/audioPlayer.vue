@@ -55,9 +55,9 @@
       />
 
       <label class="switch">
-        <input type="checkbox" onchange="updateFollowSwitch(this)" />
+        <input type="checkbox" v-model="setting.follow" />
         <span class="slider"></span>
-        <div id="audio_follow-text" class="flex_center">跟随关</div>
+        <div id="audio_follow-text" class="flex_center">跟随{{setting.follow ? "开" : "关"}}</div>
       </label>
     </div>
     <div id="audio_slider_zone" ref="progressSliderZone" @scroll="onScrollProgressSlider">
@@ -215,6 +215,7 @@ export default {
         speed: 1.0,
         volume: 0.5,
         mute: false,
+        follow: false
       },
       timer: {
         curTick: null
@@ -308,6 +309,8 @@ export default {
         if (!this.progressSlider.dragging) {
           let curTick = this.audioPlayer.audio.currentTime
           this.audioInfo.curTick = curTick
+          if (this.setting.follow)
+            this.followTickMark(curTick, "inleft")
         }
         this.timer.curTick = window.requestAnimationFrame(updateCurTick)
       }
@@ -488,6 +491,53 @@ export default {
         return tick;
       }
       return -1;
+    },
+    followTickMark(tick, follow = "none"){
+        const padding = this.progressSlider.padding
+        const waveWidth = this.$refs.progressSlider.clientWidth
+        const sightWidth = this.$refs.progressSliderZone.clientWidth
+        const sightMin = this.getProgressSliderPos()
+        const sightMax = sightMin + sightWidth
+        const tickPos = padding + tick / this.audioInfo.duration * waveWidth;
+        const margin = 20
+        let targetPos = null
+        switch(follow){
+            case "none":{ // 超出范围则平移到可以看见为止
+                if (tickPos < sightMin)
+                  targetPos = tickPos - margin
+                else if (tickPos > sightMax)
+                  targetPos = tickPos - sightWidth + margin
+                break;
+            }
+            case "left":{ // 固定在左侧
+                targetPos = tickPos - margin
+                break;
+            }
+            case "right":{ // 固定在右侧
+                targetPos = tickPos - sightWidth + margin
+                break;
+            }
+            case "center":{ // 固定在中心
+                targetPos = tickPos - sightWidth / 2
+                break;
+            }
+            case "inleft":{ // 保证在屏幕内，左侧半边，到右侧时则强制居中
+                if (tickPos >= sightMin + sightWidth / 2)
+                  targetPos = tickPos - sightWidth / 2
+                else if (tickPos < sightMin)
+                  targetPos = tickPos - margin
+                break;
+            }
+            // case "switchpage":{
+            //     break;
+            // }
+            default:{
+                throw "follow参数错误！";
+                break;
+            }
+        } 
+        if (targetPos != null)
+          this.setProgressSliderPos(targetPos)
     }
   },
   watch: {
@@ -643,64 +693,6 @@ let isMarkContextShow = false;
 //         return left;
 //     }
 //     return -1;
-// }
-
-// /* 保证视野内可以看见tick的位置 */
-// function keepTickInSight(tick, follow = "none"){
-//     let sightWidth = $("#audio_slider_zone").width();
-//     let canvasWidth = $("#audio_slider_zone_scale").width();
-//     let padding = 100;
-//     let cLeft = $("#audio_slider_zone").scrollLeft();
-//     let maxScrollLeft = canvasWidth + 2 * padding - sightWidth;
-
-
-//     let tickPos = padding + tick / musicDuration * canvasWidth;
-//     switch(follow){
-//         case "none":{
-//             if (tickPos < cLeft + padding){ // 处于左侧区域，或左侧看不见的区域
-//                 let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
-//                 $("#audio_slider_zone").scrollLeft(newLeft);
-//             }
-//             else if (tickPos > cLeft + sightWidth - padding){ // 处于左侧区域，或左侧看不见的区域
-//                 let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
-//                 $("#audio_slider_zone").scrollLeft(newLeft);
-//             }
-//             break;
-//         }
-//         case "left":{
-//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
-//             $("#audio_slider_zone").scrollLeft(newLeft);
-//             break;
-//         }
-//         case "right":{
-//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
-//             $("#audio_slider_zone").scrollLeft(newLeft);
-//             break;
-//         }
-//         case "center":{
-//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
-//             $("#audio_slider_zone").scrollLeft(newLeft);
-//             break;
-//         }
-//         case "inleft":{ // 保证在屏幕内，左侧半边，到右侧时则强制居中
-//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
-//             if (tickPos >= cLeft + sightWidth/2){ // 在屏幕右侧，则居中
-//                 $("#audio_slider_zone").scrollLeft(newLeft);
-//             }
-//             else if (tickPos < cLeft){ // 在看不见的左侧，放到最左
-//                 $("#audio_slider_zone").scrollLeft(Math.max(0, Math.min(maxScrollLeft, tickPos)));
-//             }
-
-//             break;
-//         }
-//         // case "switchpage":{
-//         //     break;
-//         // }
-//         default:{
-//             throw "keepTickInSight follow参数错误！";
-//             break;
-//         }
-//     } 
 // }
 
 // let this.loading = false;
