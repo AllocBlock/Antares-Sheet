@@ -60,9 +60,12 @@
         <div id="audio_follow-text" class="flex_center">跟随关</div>
       </label>
     </div>
-    <div id="audio_slider_zone">
-      <div class="audio_slider_blank"></div>
-      <div id="audio_slider_zone_scale" class="flex_center">
+    <div id="audio_slider_zone" ref="progressSliderZone" @scroll="onScrollProgressSlider">
+      <div class="audio_slider_blank" :style="`width: ${progressSlider.padding}px`"></div>
+      <div id="audio_slider_zone_scale" class="flex_center" ref="progressSlider"
+        :style="`width: ${progressSlider.scale * 100}%`"
+        @wheel="onWheelProgressSlider"
+      >
         <canvas id="audio_waveform" width="30000" height="50"></canvas>
         <input
           id="slider_music"
@@ -81,7 +84,7 @@
           </div>
         </div>
       </div>
-      <div class="audio_slider_blank"></div>
+      <div class="audio_slider_blank" :style="`width: ${progressSlider.padding}px`"></div>
     </div>
     <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="togglePlay()">
@@ -132,10 +135,10 @@ const PlaybackSpeedLevels = {
 }
 /* 库函数：base64(dataurl)转binary */
 function base64ToArrayBuffer(base64) {
-  var binary_string = window.atob(base64);
-  var len = binary_string.length;
-  var bytes = new Uint8Array(len);
-  for (var i = 0; i < len; i++) {
+  let binary_string = window.atob(base64);
+  let len = binary_string.length;
+  let bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
     bytes[i] = binary_string.charCodeAt(i);
   }
   return bytes.buffer;
@@ -143,7 +146,7 @@ function base64ToArrayBuffer(base64) {
 
 function drawWaveform(canvas, arrayBuffer, callback) {
   // 使用audiocontext解码音频(ArrayBuffer转AudioBuffer)
-  var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   audioCtx.decodeAudioData(arrayBuffer, cbAudioDecoded).catch(function (error) {
     Toast.show("解码文件失败，请选择正确的音频文件！", 1.5);
     this.loading = false;
@@ -152,39 +155,39 @@ function drawWaveform(canvas, arrayBuffer, callback) {
 
   // 音频解码完毕的回调
   function cbAudioDecoded(buffer) {
-    var pen = canvas.getContext("2d"); // 画笔
+    let pen = canvas.getContext("2d"); // 画笔
     // 关闭抗锯齿
     pen.webkitImageSmoothingEnabled = false;
     pen.mozImageSmoothingEnabled = false;
     pen.imageSmoothingEnabled = false;
 
-    var data = buffer.getChannelData(0); // 第一轨的数据
-    var dataLen = data.length; // 数据个数
+    let data = buffer.getChannelData(0); // 第一轨的数据
+    let dataLen = data.length; // 数据个数
 
     // 设置画布宽度
     $(canvas).attr("width", buffer.duration * 200);
 
     // 绘制参数
-    var width = $(canvas).attr("width");
-    var height = $(canvas).attr("height");
-    var interval = 50; // 采样间隔
-    var sampleCount = Math.floor(dataLen / interval); // 采样数
-    var amp = height / 2; // 振幅是高度的一般（注意音频数据是有正负的,-1.0到1.0）
+    let width = $(canvas).attr("width");
+    let height = $(canvas).attr("height");
+    let interval = 50; // 采样间隔
+    let sampleCount = Math.floor(dataLen / interval); // 采样数
+    let amp = height / 2; // 振幅是高度的一般（注意音频数据是有正负的,-1.0到1.0）
 
     // 开始绘制
     pen.clearRect(0, 0, width, height); // 清空画布
     pen.moveTo(0, amp); // 左侧中点开始
 
-    for (var i = 0; i < sampleCount; i++) {
+    for (let i = 0; i < sampleCount; i++) {
       // 求区间平均值
-      var avg = 0.0;
-      for (var j = 0; j < interval; j++) {
+      let avg = 0.0;
+      for (let j = 0; j < interval; j++) {
         avg += data[(i * interval) + j];
       }
       avg /= interval;
       // 画线
-      var left = (i * interval) / dataLen * width;
-      var top = avg * amp + amp;
+      let left = (i * interval) / dataLen * width;
+      let top = avg * amp + amp;
       pen.lineTo(left, top);
     }
     pen.strokeStyle = "#ffddd3";
@@ -217,7 +220,9 @@ export default {
         curTick: null
       },
       progressSlider: {
-        dragging: false
+        dragging: false,
+        scale: 1.0,
+        padding: 100
       },
       marks: [],
       markContext: {
@@ -436,6 +441,54 @@ export default {
         this.markContext.show = false
       }
     },
+    onWheelProgressSlider(e) {
+      if (e.ctrlKey){
+        let oldScale = this.progressSlider.scale
+        let newScale = oldScale * (e.deltaY > 0 ? 1/1.1 : 1.1);
+        newScale = Math.max(1.0, Math.min(20, newScale))
+        this.progressSlider.scale = newScale
+        // 更新滚动条位置
+        const padding = this.progressSlider.padding
+        const oldWidth = this.$refs.progressSlider.clientWidth
+        const newWidth = this.$refs.progressSlider.clientWidth / oldScale * newScale
+        const cursorTick = this.getTickByCursor(e)
+        const oldPosX = padding + (cursorTick / this.audioInfo.duration) * oldWidth;
+        const offset = oldPosX - this.getProgressSliderPos()
+        const newPosX = padding + (cursorTick / this.audioInfo.duration) * newWidth;
+        const newScrollPos = newPosX - offset
+        this.$nextTick(() => {
+          this.setProgressSliderPos(newScrollPos)
+        })
+      }
+      e.preventDefault();
+    },
+    onScrollProgressSlider(e) {
+      // console.log(e)
+    },
+    getProgressSliderPos() {
+      return this.$refs.progressSliderZone.scrollLeft
+    },
+    setProgressSliderPos(pos) {
+      this.$refs.progressSliderZone.scrollLeft = pos
+    },
+    getTickByCursor(e){
+      if (this.loaded){
+        let x
+        if (e.pageX) { 
+            x = e.pageX; 
+        } 
+        else { 
+            x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft; 
+        }
+        const padding = this.progressSlider.padding
+        let originalPosX = x + this.getProgressSliderPos();
+        let originalPercentage = (originalPosX - padding) / this.$refs.progressSlider.clientWidth
+        let tick = originalPercentage * this.audioInfo.duration;
+        tick = Math.max(0, Math.min(this.audioInfo.duration, tick)); // 范围限制
+        return tick;
+      }
+      return -1;
+    }
   },
   watch: {
     "setting.volume": function () {
@@ -449,13 +502,13 @@ export default {
   }
 };
 
-var music = null
-var currentScale = 1.0;
-var musicDuration = null;
-var isMusicSliderMoving = false;
-var isPlayBeforeMoving = false;
+let music = null
+let currentScale = 1.0;
+let musicDuration = null;
+let isMusicSliderMoving = false;
+let isPlayBeforeMoving = false;
 
-var isMarkContextShow = false;
+let isMarkContextShow = false;
 
 //     // 美化进度条的滚动条
 //     $("#audio_slider_zone").niceScroll({
@@ -472,22 +525,22 @@ var isMarkContextShow = false;
 //     $("#audio_slider_zone").on('mousewheel DOMMouseScroll', function(event, delta) {
 //         if (this.loaded && event.ctrlKey){
 //             //console.log(event);
-//             var normalWidth = $("#part-music").width();
-//             var newScale = currentScale *(1 + delta/20);
+//             let normalWidth = $("#part-music").width();
+//             let newScale = currentScale *(1 + delta/20);
 //             newScale = Math.max(1, Math.min(musicDuration / 10, newScale));
 
 //             $("#audio_slider_zone_scale").css("width", newScale * normalWidth);
 
 //             // 更新滚动条！
 //             // 进度条的滚动条
-//             var $sliderZone = $("#audio_slider_zone");
+//             let $sliderZone = $("#audio_slider_zone");
 //             $sliderZone.getNiceScroll().resize();
 //             // 以鼠标位置为中心缩放..
-//             var marginLeft = parseInt($("#audio_slider_zone").css("margin-left").replace("px", ""));
-//             var padding = 100;
-//             var cursorX = event.pageX - marginLeft; // 要减去margin
+//             let marginLeft = parseInt($("#audio_slider_zone").css("margin-left").replace("px", ""));
+//             let padding = 100;
+//             let cursorX = event.pageX - marginLeft; // 要减去margin
 
-//             var newLeft = (-padding + $sliderZone.scrollLeft() + cursorX) / currentScale * newScale - cursorX + padding;
+//             let newLeft = (-padding + $sliderZone.scrollLeft() + cursorX) / currentScale * newScale - cursorX + padding;
 //             $sliderZone.scrollLeft(newLeft);
 //             currentScale = newScale;
 
@@ -528,9 +581,9 @@ var isMarkContextShow = false;
 //     console.log("哈喽！aloha~");
 // });
 
-// var isMarkDragging = false;
-// var isCopyingMark = false;
-// var $markDrag = null;
+// let isMarkDragging = false;
+// let isCopyingMark = false;
+// let $markDrag = null;
 // /* 事件：鼠标按下标记 */
 // function markMouseDown(e){
 //     //console.log("鼠标左键按下标记");
@@ -570,40 +623,23 @@ var isMarkContextShow = false;
 // function mouseMove(e){
 //     if (isMarkDragging){ // 有正在拖拽的标记
 //         //console.log("鼠标拖拽");
-//         var tick = getTickByCursor(e.pageX);
-//         var left = getMarkLeftByTick($markDrag[0], tick);
+//         let tick = getTickByCursor(e.pageX);
+//         let left = getMarkLeftByTick($markDrag[0], tick);
 
 //         $markDrag.css("left", left);
 //         $markDrag.attr("data-tick", tick.toFixed(5)); // 标记所处的时间
 //     }
 // }
 
-// /* 由鼠标位置计算对应的刻度 */
-// function getTickByCursor(x){
-//     if (this.loaded){
-
-//         var marginLeft = parseInt($("#audio_slider_zone").css("margin-left").replace("px", ""));
-//         var padding = 100;
-//         x = x - marginLeft; // 要减去margin
-//         var leftInSlider = $("#audio_slider_zone").scrollLeft() + x - padding;
-//         var barWidth = $("#audio_slider_zone_scale").width(); // 父物体长度
-
-//         var tick = (leftInSlider / barWidth) * musicDuration;
-//         tick = Math.max(0, Math.min(musicDuration, tick)); // 范围限制
-//         return tick;
-//     }
-//     return -1;
-// }
-
 // /* 由tick计算mark的left */
 // function getMarkLeftByTick(mark, tick){
-//     var $mark = $(mark);
+//     let $mark = $(mark);
 //     if (this.loaded){
-//         var markWidth = $mark.innerWidth();
-//         var percentage = (tick / musicDuration) * 100;
+//         let markWidth = $mark.innerWidth();
+//         let percentage = (tick / musicDuration) * 100;
 //         percentage = Math.max(0, Math.min(100, percentage)); // 限制范围
-//         var offset = markWidth/2;
-//         var left = "calc({0}% - {1}px".format(percentage, offset);
+//         let offset = markWidth/2;
+//         let left = "calc({0}% - {1}px".format(percentage, offset);
 //         return left;
 //     }
 //     return -1;
@@ -611,43 +647,43 @@ var isMarkContextShow = false;
 
 // /* 保证视野内可以看见tick的位置 */
 // function keepTickInSight(tick, follow = "none"){
-//     var sightWidth = $("#audio_slider_zone").width();
-//     var canvasWidth = $("#audio_slider_zone_scale").width();
-//     var padding = 100;
-//     var cLeft = $("#audio_slider_zone").scrollLeft();
-//     var maxScrollLeft = canvasWidth + 2 * padding - sightWidth;
+//     let sightWidth = $("#audio_slider_zone").width();
+//     let canvasWidth = $("#audio_slider_zone_scale").width();
+//     let padding = 100;
+//     let cLeft = $("#audio_slider_zone").scrollLeft();
+//     let maxScrollLeft = canvasWidth + 2 * padding - sightWidth;
 
 
-//     var tickPos = padding + tick / musicDuration * canvasWidth;
+//     let tickPos = padding + tick / musicDuration * canvasWidth;
 //     switch(follow){
 //         case "none":{
 //             if (tickPos < cLeft + padding){ // 处于左侧区域，或左侧看不见的区域
-//                 var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
+//                 let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
 //                 $("#audio_slider_zone").scrollLeft(newLeft);
 //             }
 //             else if (tickPos > cLeft + sightWidth - padding){ // 处于左侧区域，或左侧看不见的区域
-//                 var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
+//                 let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
 //                 $("#audio_slider_zone").scrollLeft(newLeft);
 //             }
 //             break;
 //         }
 //         case "left":{
-//             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
+//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
 //             $("#audio_slider_zone").scrollLeft(newLeft);
 //             break;
 //         }
 //         case "right":{
-//             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
+//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
 //             $("#audio_slider_zone").scrollLeft(newLeft);
 //             break;
 //         }
 //         case "center":{
-//             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
+//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
 //             $("#audio_slider_zone").scrollLeft(newLeft);
 //             break;
 //         }
 //         case "inleft":{ // 保证在屏幕内，左侧半边，到右侧时则强制居中
-//             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
+//             let newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
 //             if (tickPos >= cLeft + sightWidth/2){ // 在屏幕右侧，则居中
 //                 $("#audio_slider_zone").scrollLeft(newLeft);
 //             }
@@ -667,14 +703,14 @@ var isMarkContextShow = false;
 //     } 
 // }
 
-// var this.loading = false;
+// let this.loading = false;
 
-// var sightFollow = false;
+// let sightFollow = false;
 // /* 轮询：根据歌曲进度更新进度条 */
 // function updateMusicSliderAuto(){
 //     if (music != null && !music.paused && !isMusicSliderMoving){ // 音乐已加载，正在播放且没有拖拽进度条
 //         //console.log("音乐更新进度条");
-//         var cTime = music.currentTime;
+//         let cTime = music.currentTime;
 //         // 更新进度条
 //         $("#slider_music").val(cTime);
 //         //$("#slider_music").css('background', bgRaw.format(sliderFrontColor, (cTime/musicDuration)*100));
@@ -815,7 +851,7 @@ a:hover {
   pointer-events: none;
   position: relative;
   background-color: transparent;
-  width: 100px;
+  width: 0;
   height: 100%;
   flex-shrink: 0;
 }
@@ -1074,5 +1110,20 @@ input:checked + .slider:before {
   width: 100%;
   height: 12px;
   bottom: 0;
+}
+
+.audio_hint_cover {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  color: #fdf9e0;
+  font-size: 24px;
+  background-color: rgba(80, 80, 80, 0.8);
+  z-index: 1;
+  transition: background-color 0.3s, color 0.3s;
+}
+.audio_hint_cover:hover {
+  background-color: rgba(100, 100, 100, 0.8);
+  color: #ff625a;
 }
 </style>
