@@ -5,17 +5,17 @@
       class="audio_hint_cover flex_center"
       @click="selectMusic()"
     >{{this.loading ? "加载中..." : (!this.loaded ? "点击加载音乐~" : "加载完成" )}}</div>
-    <div class="audio_button-zone flex_center">
+    <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="addMark()">
         <img src="@/assets/icons/mark.svg" type="image/svg+xml" />
       </div>
-      <div class="audio_button flex_center" @click="prevMark()">
+      <div class="audio_button flex_center" @click="jumpToPrevMark()">
         <img src="@/assets/icons/prevArrow.svg" type="image/svg+xml" />
       </div>
-      <div class="audio_button flex_center" @click="nextMark()">
+      <div class="audio_button flex_center" @click="jumpToNextMark()">
         <img src="@/assets/icons/nextArrow.svg" type="image/svg+xml" />
       </div>
-      <div class="audio_button flex_center" @click="deleteAllMark()">
+      <div class="audio_button flex_center" @click="removeAllMark()">
         <img src="@/assets/icons/trash.svg" type="image/svg+xml" />
       </div>
 
@@ -36,7 +36,7 @@
         max="1.0"
         step="0.01"
         v-model="setting.volume"
-        class="slider-default"
+        class="slider_default"
       />
 
       <div class="audio_button-with-text flex_center" @click="resetSpeed()">
@@ -51,7 +51,7 @@
         step="1"
         v-model="setting.speedLevel"
         @input="updateSpeed()"
-        class="slider-default"
+        class="slider_default"
       />
 
       <label class="switch">
@@ -60,12 +60,12 @@
         <div id="audio_follow-text" class="flex_center">跟随关</div>
       </label>
     </div>
-    <div id="audio_slider-zone">
-      <div class="audio_slider-blank"></div>
-      <div id="audio_slider-zone-scale" class="flex_center">
+    <div id="audio_slider_zone">
+      <div class="audio_slider_blank"></div>
+      <div id="audio_slider_zone_scale" class="flex_center">
         <canvas id="audio_waveform" width="30000" height="50"></canvas>
         <input
-          id="slider-music"
+          id="slider_music"
           type="range"
           min="0"
           :max="audioInfo.duration"
@@ -74,11 +74,16 @@
           @mousedown="onProgressSliderMouseDown"
           @change="onChangeProgressSlider()"
         />
-        <div id="audio_mark-table"></div>
+        <div id="audio_mark_table">
+          <div class="audio_mark" :style="getMarkStyle(mark)" v-for="mark in marks" :key="mark" @contextmenu.prevent="onContextMark($event, mark)">
+            <div class="audio_mark-name flex_center">{{mark.text}}</div>
+            <div class="audio_mark-pin"></div>
+          </div>
+        </div>
       </div>
-      <div class="audio_slider-blank"></div>
+      <div class="audio_slider_blank"></div>
     </div>
-    <div class="audio_button-zone flex_center">
+    <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="togglePlay()">
         <img id="audio_pause-icon" :src="require(`@/assets/icons/${setting.playing ? 'pause' : 'play'}.svg`)" type="image/svg+xml" />
       </div>
@@ -86,89 +91,22 @@
         <img id="audio_stop-icon" src="@/assets/icons/stop.svg" type="image/svg+xml" />
       </div>
 
-      <div id="slider-tick-progress" class="flex_center">
+      <div id="slider_tick_progress" class="flex_center">
         <div id="slider-tick">{{ tickToTimeStr(audioInfo.curTick) }}</div>
         <div id="slider-seperate">/</div>
         <div id="slider-length">{{ tickToTimeStr(audioInfo.duration) }}</div>
       </div>
     </div>
   </div>
-  <div id="mark-context" class="hide">
-    <div id="mark-context-div">
-      <div id="mark-context-name-zone" class="flex_center">
-        <input type="text" id="mark-context-name" onchange="updateMarkName(this)" maxlength="10" />
+  
+  <div id="mark_context" v-show="markContext.show" :style="markContext.style" @mouseenter="onMarkContextMouseenter" @mouseleave="onMarkContextMouseleave">
+    <div id="mark_context_div">
+      <div id="mark_context_name_zone" class="flex_center">
+        <input type="text" id="mark_context_name" v-model="markContext.mark.text" maxlength="10" ref="markContextInput" @blur="onMarkContextBlur"/>
       </div>
-      <div id="mark-context-locate" class="flex_center" @click="markLocateClick()">定位到这里</div>
-      <div id="mark-context-delete" class="flex_center" @click="markDeleteClick()">删除</div>
+      <div id="mark_context_locate" class="flex_center" @click="jumpToMark(markContext.mark); markContext.show = false">定位到这里</div>
+      <div id="mark_context_delete" class="flex_center" @click="removeMark(markContext.mark); markContext.show = false">删除</div>
     </div>
-  </div>
-  <div id="audio_help" class="flex_center hide" @click="hideHelp()">
-    <div id="audio_help-content" class="flex_center">
-      <p style="font-size: 40px; color: #5ea9bc">音乐播放器~ By 锦瑟 2020年4月</p>
-      <div class="audio_help-row flex_center">
-        <div style="width: 50%;">
-          <h1>介绍</h1>
-          <p>这是一个音乐播放器。</p>
-          <p>你可以方便的跳转到指定的进度，并在各个位置添加标记，以及跳转到各个标记。</p>
-          <p style="display: block;">
-            你需要加载本地的音乐文件。如果你不知道去哪儿找的话，可以试试这个网站：
-            <a
-              href="https://defcon.cn/dmusic/"
-              target="_blank"
-            >音乐搜索器</a>
-          </p>
-        </div>
-        <div class="audio_help-sperator"></div>
-        <div style="width: 50%;">
-          <h1>页面布局</h1>
-          <p>上方 - 标题，选择文件</p>
-          <p>中间 - 没啥东西</p>
-          <p>下方 - 进度条、播放控制以及标记功能</p>
-          <h1>功能 和 快捷键</h1>
-          <div class="audio_help-column">
-            <p>
-              <img src="@/assets/icons/mark.svg" type="image/svg+xml" /> 点击添加标记（快捷键W)
-            </p>
-            <p>
-              <img src="@/assets/icons/prevArrow.svg" type="image/svg+xml" />
-              上一个标记（快捷键Q)
-            </p>
-            <p>
-              <img src="@/assets/icons/nextArrow.svg" type="image/svg+xml" />
-              下一个标记（快捷键E)
-            </p>
-            <p>
-              <img src="@/assets/icons/trash.svg" type="image/svg+xml" />
-              删除所有标记
-            </p>
-            <p>
-              <img src="@/assets/icons/volume.svg" type="image/svg+xml" />
-              <img src="@/assets/icons/muted.svg" type="image/svg+xml" />
-              音量/静音
-            </p>
-            <p>
-              <img src="@/assets/icons/speed.svg" type="image/svg+xml" />
-              播放速度
-            </p>
-            <p>
-              <img src="@/assets/icons/play.svg" type="image/svg+xml" />
-              <img src="@/assets/icons/pause.svg" type="image/svg+xml" />
-              播放/暂停（快捷键Space)
-            </p>
-            <p>
-              <img src="@/assets/icons/stop.svg" type="image/svg+xml" />
-              停止
-            </p>
-            <p style="font-weight: bold;">标记上按右键可以打开编辑菜单！</p>
-            <p style="font-weight: bold;">标记上按住Ctrl拖拽可以复制！</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="audio_help-icon-div" @click="showHelp()">
-    <img src="@/assets/icons/help.svg" type="image/svg+xml" />
   </div>
 </template>
 
@@ -280,6 +218,16 @@ export default {
       },
       progressSlider: {
         dragging: false
+      },
+      marks: [],
+      markContext: {
+        show: false,
+        style: {},
+        mouseIn: false,
+        focused: false,
+        mark: {
+          text: '',
+        }
       }
     };
   },
@@ -290,6 +238,9 @@ export default {
       e.preventDefault()
       this.togglePlay()
     })
+    HotKey.addListener("w", false, false, false, () => this.addMark())
+    HotKey.addListener("q", false, false, false, () => this.jumpToPrevMark())
+    HotKey.addListener("e", false, false, false, () => this.jumpToNextMark())
   },
   methods: {
     getEnv,
@@ -331,8 +282,7 @@ export default {
         this.audioInfo.duration = this.audioPlayer.audio.duration
         this.audioPlayer.moveToTick(0)
       }, () => {
-        this.audioPlayer.pause()
-        this.audioPlayer.moveToTick(0)
+        this.pause()
       })
     },
     togglePlay() {
@@ -393,6 +343,99 @@ export default {
       this.setting.speedLevel = 6
       this.updateSpeed()
     },
+    addMark(text = "标记", timeTick = null, overwrite = true) {
+      if (!this.loaded) {
+          Toast.show("请先加载音乐！");
+          return;
+      }
+
+      timeTick = timeTick ? parseFloat(timeTick) : this.audioPlayer.audio.currentTime
+      // 覆盖模式下，如果该位置已经有标记，则覆盖掉
+      if (overwrite){
+        let index = this.marks.findIndex((e) => e.tick == timeTick)
+        if (index >= 0)
+          this.marks.splice(index, 1)
+      }
+      
+      this.marks.push({
+        text: text,
+        tick: timeTick
+      })
+    },
+    getMarkStyle(mark) {
+      let style = {}
+      if (this.loaded) {
+          let percentage = (mark.tick / this.audioInfo.duration) * 100;
+          percentage = Math.max(0, Math.min(100, percentage)); // 限制范围
+          let left = `${percentage}%`
+          style = {left}
+      }
+      return style;
+    },
+    jumpToMark(mark) {
+      this.audioPlayer.audio.currentTime = mark.tick
+      this.audioInfo.curTick = mark.tick
+    },
+    jumpToPrevMark() {
+      let targetTick = this.audioInfo.curTick
+      let resMark = { text: '', tick: 0 }
+      for(let mark of this.marks) {
+        if (mark.tick > resMark.tick && mark.tick < targetTick) {
+          resMark = mark 
+        }
+      }
+      this.jumpToMark(resMark)
+    },
+    jumpToNextMark() {
+      let targetTick = this.audioInfo.curTick
+      let resMark = { text: '', tick: this.audioInfo.duration }
+      for(let mark of this.marks) {
+        if (mark.tick < resMark.tick && mark.tick > targetTick) {
+          resMark = mark 
+        }
+      }
+      this.jumpToMark(resMark)
+    },
+    removeMark(mark) {
+      let index = this.marks.findIndex((e) => e == mark)
+      if (index >= 0)
+        this.marks.splice(index, 1)
+    },
+    removeAllMark() {
+      if (confirm("删除所有标记？")) {
+        this.marks = []
+      }
+    },
+    onContextMark(e, mark) {
+      this.markContext.show = true
+      this.markContext.mark = mark
+      this.markContext.mouseIn = false
+      this.markContext.focused = true
+      let offset = $(e.currentTarget).offset()
+      let width = $(e.currentTarget).width()
+      this.markContext.style = {
+        left: `${offset.left + width / 2}px`,
+        top: `${offset.top - 10}px`,
+      }
+      this.$nextTick(() => {
+        this.$refs.markContextInput.focus()
+      })
+    },
+    onMarkContextBlur() {
+      this.markContext.focused = false
+      if (!this.markContext.mouseIn) {
+        this.markContext.show = false
+      }
+    },
+    onMarkContextMouseenter() {
+      this.markContext.mouseIn = true
+    },
+    onMarkContextMouseleave() {
+      this.markContext.mouseIn = false
+      if (!this.markContext.focused) {
+        this.markContext.show = false
+      }
+    },
   },
   watch: {
     "setting.volume": function () {
@@ -414,13 +457,8 @@ var isPlayBeforeMoving = false;
 
 var isMarkContextShow = false;
 
-//     // 禁止切换按钮的键盘事件快捷键
-//     $("input[type=checkbox]").keydown(function(e){
-//         e.preventDefault();
-//     });
-
 //     // 美化进度条的滚动条
-//     $("#audio_slider-zone").niceScroll({
+//     $("#audio_slider_zone").niceScroll({
 //         cursorcolor: "#ffddd3",// 颜色
 //         cursoropacitymax: 0.8, // 透明度
 //         cursorwidth: "10px", // 宽度
@@ -430,22 +468,22 @@ var isMarkContextShow = false;
 //     });
 
 //     // 播放进度条，滚轮缩放事件
-//     $('#audio_slider-zone').scrollLeft(100); // 移动滚动条到中间
-//     $("#audio_slider-zone").on('mousewheel DOMMouseScroll', function(event, delta) {
+//     $('#audio_slider_zone').scrollLeft(100); // 移动滚动条到中间
+//     $("#audio_slider_zone").on('mousewheel DOMMouseScroll', function(event, delta) {
 //         if (this.loaded && event.ctrlKey){
 //             //console.log(event);
 //             var normalWidth = $("#part-music").width();
 //             var newScale = currentScale *(1 + delta/20);
 //             newScale = Math.max(1, Math.min(musicDuration / 10, newScale));
 
-//             $("#audio_slider-zone-scale").css("width", newScale * normalWidth);
+//             $("#audio_slider_zone_scale").css("width", newScale * normalWidth);
 
 //             // 更新滚动条！
 //             // 进度条的滚动条
-//             var $sliderZone = $("#audio_slider-zone");
+//             var $sliderZone = $("#audio_slider_zone");
 //             $sliderZone.getNiceScroll().resize();
 //             // 以鼠标位置为中心缩放..
-//             var marginLeft = parseInt($("#audio_slider-zone").css("margin-left").replace("px", ""));
+//             var marginLeft = parseInt($("#audio_slider_zone").css("margin-left").replace("px", ""));
 //             var padding = 100;
 //             var cursorX = event.pageX - marginLeft; // 要减去margin
 
@@ -459,7 +497,7 @@ var isMarkContextShow = false;
 //     });
 
 //     // 播放进度条，双击事件
-//     $("#audio_slider-zone").dblclick(function() {
+//     $("#audio_slider_zone").dblclick(function() {
 //         // 双击播放
 //         if (this.loaded && music.paused){
 //             resumeMusic();
@@ -469,18 +507,18 @@ var isMarkContextShow = false;
 //     });
 
 //     // 标签右键菜单事件
-//     $contextMenu = $("#mark-context");
+//     $contextMenu = $("#mark_context");
 
 //     // 标签输入框失去焦点
-//     $("#mark-context-name").blur(function(){ // 失去焦点则隐藏菜单
+//     $("#mark_context_name").blur(function(){ // 失去焦点则隐藏菜单
 //         hideMarkContext();
 //     });
 
 //     // 标签输入框键盘
-//     $("#mark-context-name").keydown(function(e){
+//     $("#mark_context_name").keydown(function(e){
 //         switch(e.which){
 //             case 13: { // 回车
-//                 $("#mark-context-name")[0].blur(); // 输入完成，自动失去焦点
+//                 $("#mark_context_name")[0].blur(); // 输入完成，自动失去焦点
 //                 break;
 //             }
 //         }
@@ -489,136 +527,6 @@ var isMarkContextShow = false;
 //     // :)
 //     console.log("哈喽！aloha~");
 // });
-
-
-// /* 添加标记 */
-// function addMark(text = "标记", timeTick = null, overwrite = true){
-//     if (music == null){
-//         Toast.show("请先加载音乐！");
-//         return;
-//     }
-
-//     // 默认放置到当前位置
-//     if (timeTick == null) timeTick = music.currentTime; 
-//     else timeTick = parseFloat(timeTick);
-
-//     // 覆盖模式下，如果该位置已经有标记，则覆盖掉
-//     if (overwrite){
-//         $(".audio_mark").each(function(){
-//             if ($(this).attr("data-tick") == timeTick){ 
-//                 $(this).remove();
-//             }
-//         })
-//     }
-
-
-//     var $markTable = $("#audio_mark-table");
-
-//     var $mark = $("<div class=\"audio_mark\"></div>");
-//     var $markName = $("<div class=\"audio_mark-name flex_center\">{0}</div>".format(text));
-//     var $markPin = $("<div class=\"audio_mark-pin\"></div>");
-//     $mark.append($markName);
-//     $mark.append($markPin);
-//     // 绑定事件
-//     $mark.contextmenu(markContextClick);
-//     $mark.mousedown(markMouseDown);
-
-//     // 放置标记
-//     $markTable.append($mark); // 先添加，否则不会渲染，也就不知道元素宽度
-
-//     var left = getMarkLeftByTick($mark[0], timeTick);
-//     var top = 0;
-
-//     $mark.css("left", left);
-//     $mark.css("top", top);
-
-//     // 附加信息
-//     $mark.attr("data-tick", timeTick.toFixed(5)); // 标记所处的时间, toFixed解决精度问题！
-
-//     // 特效
-//     $mark.hide();
-//     $mark.fadeIn(150);
-
-//     // 返回标记
-//     return $mark;
-// }
-
-// /* 删除标记 */
-// function deleteMark($mark){
-//     $mark.css("pointer-events", "none"); // 先关闭按键响应
-//     $mark.fadeOut(200, function(){
-//         $mark.remove();
-//     })
-// }
-
-// /* 删除所有标记 */
-// function deleteAllMark(){
-//     if (confirm("删除所有标记？")){
-//         deleteMark($(".audio_mark"));
-//     }
-// }
-
-// /* 上一个标记 */
-// function prevMark(){
-//     if (this.loaded){
-//         var $targetMark = null;
-//         var cTime = music.currentTime.toFixed(5);
-//         $(".audio_mark").each(function(){
-//             //console.log(cTime, $(this).attr("data-tick"), $targetMark == null?"":$targetMark.attr("data-tick"));
-//             var cDataTick = parseFloat($(this).attr("data-tick"));
-//             var tDataTick = $targetMark == null ? null : parseFloat($targetMark.attr("data-tick"));
-//             if (cDataTick < cTime){
-//                 if ($targetMark == null || cDataTick > tDataTick){
-//                     $targetMark = $(this);
-//                 }
-//             }
-//         })
-//         if ($targetMark == null){
-//             keepTickInSight(0);
-//             moveToTick(0);
-//         }
-//         else{
-//             keepTickInSight($targetMark.attr("data-tick"));
-//             moveToTick($targetMark.attr("data-tick"));
-//         }
-//     }
-// }
-// /* 下一个标记 */
-// function nextMark(){
-//     if (this.loaded){
-//         var $targetMark = null;
-//         var cTime = music.currentTime.toFixed(5);
-//         $(".audio_mark").each(function(){
-//             //console.log(cTime, $(this).attr("data-tick"), $targetMark == null?"":$targetMark.attr("data-tick"));
-//             var cDataTick = parseFloat($(this).attr("data-tick"));
-//             var tDataTick = $targetMark == null ? null : parseFloat($targetMark.attr("data-tick"));
-//             if (cDataTick > cTime){
-//                 if ($targetMark == null || cDataTick < tDataTick){
-//                     $targetMark = $(this);
-//                 }
-//             }
-//         })
-//         if ($targetMark != null){
-//             keepTickInSight($targetMark.attr("data-tick"));
-//             moveToTick($targetMark.attr("data-tick"));
-//         }
-//     }
-// }
-
-// /* 事件：移动到标记 */
-// function markLocateClick(){
-//     if ($currentMark != null){
-//         var cTime = $currentMark.attr("data-tick");
-//         music.currentTime = cTime;
-//         $("#slider-music").val(cTime);
-//         $("#slider-tick").text(tickToText(cTime));
-//     }
-// }
-// /* 事件：删除标记 */
-// function markDeleteClick(){
-//     deleteMark($currentMark);
-//     $currentMark = null;
-// }
 
 // var isMarkDragging = false;
 // var isCopyingMark = false;
@@ -669,57 +577,16 @@ var isMarkContextShow = false;
 //         $markDrag.attr("data-tick", tick.toFixed(5)); // 标记所处的时间
 //     }
 // }
-// var $currentMark = null;
-// /* 事件：标记上右键 */
-// function markContextClick(e){
-//     //console.log("点击了右键");
-//     e.preventDefault(); // 禁止默认右键菜单
-
-//     $currentMark = $(this);
-
-//     // 设置右键菜单
-//     $contextMenu = $("#mark-context");
-//     $contextMenuName = $("#mark-context-name");
-//     $contextMenuName.val($currentMark.text());
-//     // 移动右键菜单
-//     // var left = $(this).offset().left - $(this).width()/2;
-//     // var top = $(this).offset().top - $contextMenu.height()/2 - 20;
-//     var left = $currentMark.offset().left + $currentMark.innerWidth()/2 - $contextMenu.width()/2;
-//     left = Math.max(0, Math.min($(document).width() - $contextMenu.width(), left)); // 防止超出屏幕
-//     var top = $currentMark.offset().top - $contextMenu.height() - 20;
-//     $contextMenu.css("left", left);
-//     $contextMenu.css("top", top);
-//     // 显示右键菜单
-//     isMarkContextShow = true;
-//     $contextMenu.stop(true, true).show().animate({opacity: 1}, 200); 
-//     // 文本框获取焦点
-//     $contextMenuName[0].focus();
-// }
-// /* 更新事件：更新编辑框 */
-// function updateMarkName(input){
-//     if ($currentMark == null) return;
-//     $currentMark.children(".audio_mark-name").text($(input).val());
-//     var tick = $currentMark.attr("data-tick"); // 使用data-tick, 可能有误差...
-//     $currentMark.css("left", getMarkLeftByTick($currentMark[0], tick)); 
-// }
-// /* 隐藏右键菜单 */
-// function hideMarkContext(){
-//     isMarkContextShow = false;
-//     $contextMenu.stop(true, true).animate({opacity: 0}, 300, function(){
-//         $contextMenu.hide();
-//     });
-// }
-
 
 // /* 由鼠标位置计算对应的刻度 */
 // function getTickByCursor(x){
 //     if (this.loaded){
 
-//         var marginLeft = parseInt($("#audio_slider-zone").css("margin-left").replace("px", ""));
+//         var marginLeft = parseInt($("#audio_slider_zone").css("margin-left").replace("px", ""));
 //         var padding = 100;
 //         x = x - marginLeft; // 要减去margin
-//         var leftInSlider = $("#audio_slider-zone").scrollLeft() + x - padding;
-//         var barWidth = $("#audio_slider-zone-scale").width(); // 父物体长度
+//         var leftInSlider = $("#audio_slider_zone").scrollLeft() + x - padding;
+//         var barWidth = $("#audio_slider_zone_scale").width(); // 父物体长度
 
 //         var tick = (leftInSlider / barWidth) * musicDuration;
 //         tick = Math.max(0, Math.min(musicDuration, tick)); // 范围限制
@@ -744,10 +611,10 @@ var isMarkContextShow = false;
 
 // /* 保证视野内可以看见tick的位置 */
 // function keepTickInSight(tick, follow = "none"){
-//     var sightWidth = $("#audio_slider-zone").width();
-//     var canvasWidth = $("#audio_slider-zone-scale").width();
+//     var sightWidth = $("#audio_slider_zone").width();
+//     var canvasWidth = $("#audio_slider_zone_scale").width();
 //     var padding = 100;
-//     var cLeft = $("#audio_slider-zone").scrollLeft();
+//     var cLeft = $("#audio_slider_zone").scrollLeft();
 //     var maxScrollLeft = canvasWidth + 2 * padding - sightWidth;
 
 
@@ -756,36 +623,36 @@ var isMarkContextShow = false;
 //         case "none":{
 //             if (tickPos < cLeft + padding){ // 处于左侧区域，或左侧看不见的区域
 //                 var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
-//                 $("#audio_slider-zone").scrollLeft(newLeft);
+//                 $("#audio_slider_zone").scrollLeft(newLeft);
 //             }
 //             else if (tickPos > cLeft + sightWidth - padding){ // 处于左侧区域，或左侧看不见的区域
 //                 var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
-//                 $("#audio_slider-zone").scrollLeft(newLeft);
+//                 $("#audio_slider_zone").scrollLeft(newLeft);
 //             }
 //             break;
 //         }
 //         case "left":{
 //             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - padding));
-//             $("#audio_slider-zone").scrollLeft(newLeft);
+//             $("#audio_slider_zone").scrollLeft(newLeft);
 //             break;
 //         }
 //         case "right":{
 //             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos + padding - sightWidth));
-//             $("#audio_slider-zone").scrollLeft(newLeft);
+//             $("#audio_slider_zone").scrollLeft(newLeft);
 //             break;
 //         }
 //         case "center":{
 //             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
-//             $("#audio_slider-zone").scrollLeft(newLeft);
+//             $("#audio_slider_zone").scrollLeft(newLeft);
 //             break;
 //         }
 //         case "inleft":{ // 保证在屏幕内，左侧半边，到右侧时则强制居中
 //             var newLeft = Math.max(0, Math.min(maxScrollLeft, tickPos - sightWidth/2));
 //             if (tickPos >= cLeft + sightWidth/2){ // 在屏幕右侧，则居中
-//                 $("#audio_slider-zone").scrollLeft(newLeft);
+//                 $("#audio_slider_zone").scrollLeft(newLeft);
 //             }
 //             else if (tickPos < cLeft){ // 在看不见的左侧，放到最左
-//                 $("#audio_slider-zone").scrollLeft(Math.max(0, Math.min(maxScrollLeft, tickPos)));
+//                 $("#audio_slider_zone").scrollLeft(Math.max(0, Math.min(maxScrollLeft, tickPos)));
 //             }
 
 //             break;
@@ -800,22 +667,6 @@ var isMarkContextShow = false;
 //     } 
 // }
 
-
-// /* 显示音乐播放器加载提示 */
-// function showMusicCover(){
-//     $("#audio_hint-cover").stop(true, true).show().animate({opacity: 1}, 500); // 主要是更改文件时
-// }
-// /* 隐藏音乐播放器加载提示 */
-// function hideMusicCover(){
-//     $("#audio_hint-cover").css("pointer-events", "none"); // 暂时关闭事件
-//     $("#audio_hint-cover").stop(true, true).animate({opacity: 0}, 500, function(){
-//         $("#audio_hint-cover").hide();
-//         $("#audio_hint-cover").text("点击加载音乐~");
-//         $("#audio_hint-cover").removeClass("pointer-events"); // 暂时关闭事件
-//     }); // 主要是更改文件时
-// }
-
-
 // var this.loading = false;
 
 // var sightFollow = false;
@@ -825,8 +676,8 @@ var isMarkContextShow = false;
 //         //console.log("音乐更新进度条");
 //         var cTime = music.currentTime;
 //         // 更新进度条
-//         $("#slider-music").val(cTime);
-//         //$("#slider-music").css('background', bgRaw.format(sliderFrontColor, (cTime/musicDuration)*100));
+//         $("#slider_music").val(cTime);
+//         //$("#slider_music").css('background', bgRaw.format(sliderFrontColor, (cTime/musicDuration)*100));
 //         // 更新文本
 //         $("#slider-tick").text(tickToText(cTime));
 
@@ -852,48 +703,6 @@ var isMarkContextShow = false;
 //         // 提示
 //         Toast.show("视角跟随进度条 - 关闭");
 //     }
-// }
-
-// /* 文件拖拽 */
-
-// document.addEventListener("dragover", eventMuted);
-// document.addEventListener("dragenter", eventMuted);
-// document.addEventListener("dragleave", eventMuted);
-// function eventMuted(e){
-//     e.preventDefault();
-// }
-
-// document.addEventListener("drop", eventFileDrop)
-// function eventFileDrop(e){
-//     //console.log("拖放文件", e);
-//     e.preventDefault();
-
-//     if (this.loading){
-//         Toast.show("等一下~正在加载上一个文件~");
-//         return;
-//     }
-//     // 检查是否是文件
-//     if (e.dataTransfer.files.length == 0){
-//         return;
-//     }
-//     var file = e.dataTransfer.files[0];
-
-//     // 显示并改变文本
-//     $("#audio_hint-cover").text("加载中...");
-//     showMusicCover();
-
-//     // 加载音乐
-//     loadMusic(file);
-// }
-
-// /* 开启帮助面板 */
-// function showHelp(){
-//     $("#audio_help").fadeIn(200);
-// }
-
-// /* 关闭帮助面板 */
-// function hideHelp(){
-//     $("#audio_help").fadeOut(300);
 // }
 </script>
 
@@ -936,83 +745,7 @@ a:hover {
   user-select: none;
 }
 
-.audio_hint_cover {
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  color: #fdf9e0;
-  font-size: 24px;
-  background-color: rgba(80, 80, 80, 0.8);
-  z-index: 1;
-  transition: background-color 0.3s, color 0.3s;
-}
-.audio_hint_cover:hover {
-  background-color: rgba(100, 100, 100, 0.8);
-  color: #ff625a;
-}
-#audio_help {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: #ffddd3;
-  z-index: 5;
-}
-#audio_help-content {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  flex-direction: column;
-}
-#audio_help-content p {
-  margin: 3px 0;
-  display: flex;
-  align-items: center;
-}
-#audio_help-content img {
-  margin: 0 10px 0 0;
-}
-#audio_help-content h1 {
-  font-size: 24px;
-  color: white;
-  margin: 5px 0;
-}
-.audio_help-column {
-  display: flex;
-  flex-direction: column;
-  align-items: left;
-}
-.audio_help-row {
-  width: 80%;
-}
-.audio_help-sperator {
-  position: relative;
-  width: 2px;
-  height: 80%;
-  background-color: white;
-  margin: 0 10px;
-  opacity: 0.5;
-}
-
-#audio_help-icon-div {
-  pointer-events: all;
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  left: 5px;
-  bottom: 5px;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-#audio_help-icon-div:hover {
-  opacity: 1;
-}
-#audio_help-icon-div img {
-  width: 30px;
-  height: 30px;
-}
-
-.audio_button-zone {
+.audio_button_zone {
   width: 100%;
   height: 40px;
   overflow: hidden;
@@ -1068,16 +801,17 @@ a:hover {
   width: 28px;
   height: 28px;
 }
-#audio_slider-zone {
+#audio_slider_zone {
   position: relative;
   width: calc(100% - 40px);
   height: 100px;
   margin: 0 20px;
+  overflow-x: scroll;
 
   display: flex;
   flex-wrap: nowrap;
 }
-.audio_slider-blank {
+.audio_slider_blank {
   pointer-events: none;
   position: relative;
   background-color: transparent;
@@ -1085,7 +819,7 @@ a:hover {
   height: 100%;
   flex-shrink: 0;
 }
-#audio_slider-zone-scale {
+#audio_slider_zone_scale {
   position: relative;
   width: 100%;
   height: 100%;
@@ -1093,7 +827,7 @@ a:hover {
   top: 0;
   flex-shrink: 0;
 }
-#audio_mark-table {
+#audio_mark_table {
   pointer-events: none;
   width: calc(100% - 2px); /* 减去滑块宽度，避免百分比缩放导致的细微错位 */
   height: 100%;
@@ -1104,6 +838,9 @@ a:hover {
   min-width: 20px;
   height: 24px;
   position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateX(-50%);
   border-radius: 10px;
   background-color: #614840;
   pointer-events: all; /* 父物体取消了，但可以单独设置子物体！*/
@@ -1126,14 +863,15 @@ a:hover {
   background-color: #5b4e5b;
   opacity: 0.9;
 }
-#mark-context {
+#mark_context {
   position: absolute;
   width: 120px;
   z-index: 8;
   font-size: 14px;
-  opacity: 0.5;
+  transform: translate(-50%, -100%);
+  color: white;
 }
-#mark-context-div {
+#mark_context_div {
   width: 100%;
   height: 100%;
   display: flex;
@@ -1143,7 +881,7 @@ a:hover {
   border-radius: 4px;
   overflow: hidden;
 }
-#mark-context-name-zone {
+#mark_context_name_zone {
   width: 80%;
   height: 40px;
 
@@ -1153,7 +891,7 @@ a:hover {
   font-size: 6px;
   color: #aaa;
 }
-#mark-context-name {
+#mark_context_name {
   position: absolute;
   outline: none;
   border: 0;
@@ -1164,25 +902,27 @@ a:hover {
   font-size: 18px;
   color: #ffddd3;
 }
-#mark-context-locate {
+#mark_context_locate {
   width: 80%;
   height: 30px;
   border-bottom: 1.5px solid #d5c2d5;
   margin: 5px 0;
   opacity: 0.8;
+  cursor: pointer;
 }
-#mark-context-locate:hover {
+#mark_context_locate:hover {
   color: #d5c2d5;
   opacity: 1;
 }
-#mark-context-delete {
+#mark_context_delete {
   width: 80%;
   height: 30px;
   border-bottom: 1.5px solid #ff625a;
   margin: 5px 0;
   opacity: 0.8;
+  cursor: pointer;
 }
-#mark-context-delete:hover {
+#mark_context_delete:hover {
   color: #ff625a;
   opacity: 1;
 }
@@ -1194,16 +934,16 @@ a:hover {
   height: 100%;
 }
 
-#slider-tick-progress {
+#slider_tick_progress {
   position: relative;
   height: 28px;
   margin: 0 5px;
   font-size: 16px;
 }
-#slider-tick-progress div {
+#slider_tick_progress div {
   margin: 0 2px;
 }
-.slider-padding {
+.slider_padding {
   position: relative;
   width: 100px;
   height: 100%;
@@ -1220,7 +960,7 @@ a:hover {
 }
 
 /* 默认滑动条样式 */
-.slider-default {
+.slider_default {
   -webkit-appearance: none; /* 移除默认样式 */
   width: 100%;
 
@@ -1228,14 +968,14 @@ a:hover {
   margin: 10px 0;
   border-radius: 4px;
 }
-.slider-default:focus {
+.slider_default:focus {
   /* 获取焦点后 */
   outline: none;
 }
-.slider-default::-webkit-slider-runnable-track {
+.slider_default::-webkit-slider-runnable-track {
   /* 轨道的样式 */
 }
-.slider-default::-webkit-slider-thumb {
+.slider_default::-webkit-slider-thumb {
   /* 滑块的样式 */
   -webkit-appearance: none; /* 移除默认样式 */
   background-color: #ffddd3;
@@ -1246,7 +986,7 @@ a:hover {
 }
 
 /* 播放进度条样式 */
-#slider-music {
+#slider_music {
   position: relative;
 
   -webkit-appearance: none; /* 移除默认样式 */
@@ -1255,11 +995,11 @@ a:hover {
   margin: 0;
   background-color: transparent;
 }
-#slider-music:focus {
+#slider_music:focus {
   /* 获取焦点后 */
   outline: none;
 }
-#slider-music::-webkit-slider-thumb {
+#slider_music::-webkit-slider-thumb {
   /* 滑块的样式 */
   -webkit-appearance: none; /* 移除默认样式 */
   background-color: #e62c69;
