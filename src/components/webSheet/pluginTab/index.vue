@@ -52,9 +52,13 @@ export default {
     this.tab = parseTab(this.node.content)
     this.updateTabLayout()
 
+    let timer = null
+    const delay = 200
     this.tabResizeObserver = new ResizeObserver(entries => {
-      console.log('resize layout')
-      this.updateTabLayout()
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        this.updateTabLayout()
+      }, delay)
     })
     this.tabResizeObserver.observe(this.$refs['tabBox'])
   },
@@ -66,7 +70,6 @@ export default {
       let width = this.$refs['tabBox'].clientWidth
       const BarEspectWidth = 300
       let BarNum = Math.max(1, Math.round(width / BarEspectWidth))
-      console.log(BarNum)
 
       for (let i = 0; i < this.tab.bars.length; i += BarNum) {
         let row = []
