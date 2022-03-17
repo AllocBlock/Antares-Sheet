@@ -54,55 +54,6 @@ export default {
   overflow-y: auto;
 }
 
-#container[env="mobile"] {
-  bottom: 0;
-  height: 10%;
-  left: 0;
-  width: 100%;
-  background-color: #000000aa;
-  flex-direction: column;
-}
-#container[env="mobile"] input {
-  flex-shrink: 0;
-  width: 60%;
-}
-#container[env="mobile"] {
-  padding: 0 15% 0 15%;
-  left: 0;
-  width: 70%;
-  top: auto;
-  bottom: 0;
-  height: 100%;
-  transform: none;
-  background-color: rgba(155, 117, 59, 0.87);
-
-  overflow-y: scroll;
-}
-#container[env="mobile"]::before {
-  content: "";
-  position: fixed;
-  background: rgb(124, 74, 74);
-  left: 0;
-  bottom: 0;
-  height: 20%;
-  width: 10%;
-}
-#container[env="mobile"]::after {
-  content: "";
-  position: fixed;
-  background: rgb(124, 74, 74);
-  right: 0;
-  bottom: 0;
-  height: 20%;
-  width: 10%;
-}
-#container[env="mobile"] .prefab_chord {
-  position: relative;
-  width: 180px;
-  height: 240px;
-  margin: 15px;
-}
-
 .tool {
   width: 100%;
   border-top: 2px white solid;
@@ -151,3 +102,18 @@ export default {
 }
 
 </style>
+
+<style scoped lang="scss">
+#container[env="mobile"] {
+  .prefab_chord {
+    position: relative;
+    width: 180px;
+    height: 240px;
+    margin: 15px;
+  }
+
+  input {
+    flex-shrink: 0;
+    width: 60%;
+  }
+}</style>

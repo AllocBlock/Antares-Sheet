@@ -30,6 +30,7 @@ const customTags = [
   "underline",
   "underline-pure",
   "text",
+  "newline"
 ]
 
 module.exports = {

@@ -121,13 +121,13 @@ export default {
           click: (node) => {
             this.playChord(g_ChordManager.getChord(node.chord))
           },
-          mouseenter: (node) => {
-            this.tipChord.show = true
-            this.tipChord.chord = g_ChordManager.getChord(node.chord)
-          },
-          mouseleave: (node) => {
-            this.tipChord.show = false
-          }
+          // mouseenter: (node) => {
+          //   this.tipChord.show = true
+          //   this.tipChord.chord = g_ChordManager.getChord(node.chord)
+          // },
+          // mouseleave: (node) => {
+          //   this.tipChord.show = false
+          // }
         },
         mark: {
           click: (node) => {

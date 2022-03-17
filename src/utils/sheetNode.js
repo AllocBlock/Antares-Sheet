@@ -7,6 +7,7 @@ export const ENodeType = {
   Mark: "标记",
   Underline: "下划线",
   UnderlinePure: "纯下划线",
+  NewLine: "换行",
   PluginType: "插件"
 }
 
@@ -14,6 +15,7 @@ export class SheetNode {
   constructor(type) {
     this.type = type
     this.children = []
+    this.style = {}
   }
 }
 

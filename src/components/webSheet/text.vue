@@ -1,5 +1,5 @@
 <template>
-  <text v-on="localEvents">{{node.content}}</text>
+  <text v-on="localEvents" :style="node.style ?? {}">{{node.content}}</text>
 </template>
 
 <script>
