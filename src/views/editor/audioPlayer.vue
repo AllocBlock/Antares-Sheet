@@ -1,5 +1,5 @@
 <template>
-  <div class="audio_player">
+  <div class="audio_player" v-if="show">
     <div
       v-show="this.loading || !this.loaded"
       class="audio_hint_cover flex_center"
@@ -59,6 +59,11 @@
         <span class="slider"></span>
         <div id="audio_follow-text" class="flex_center">跟随{{setting.follow ? "开" : "关"}}</div>
       </label>
+
+      
+      <div class="audio_button flex_center" @click="close()" style="position: absolute; right: 0; z-index: 2;">
+        <img src="@/assets/icons/close.svg" type="image/svg+xml" />
+      </div>
     </div>
     <div id="audio_slider_zone" ref="progressSliderZone" @scroll="onScrollProgressSlider">
       <div class="audio_slider_blank" :style="`width: ${progressSlider.padding}px`"></div>
@@ -237,7 +242,14 @@ export default {
       }
     };
   },
+  props: {
+    show: {
+      type: Boolean,
+      required: true
+    },
+  },
   created() {
+    console.log("Loading [Audio Player]")
     this.audioPlayer = new WebAudioPlayer
     document.addEventListener("mouseup", this.onMouseUp)
     HotKey.addListener(" ", false, false, false, (e) => {
@@ -250,6 +262,9 @@ export default {
   },
   methods: {
     getEnv,
+    close() {
+      this.$emit("update:show", false)
+    },
     tickToTimeStr(tick) {
       let second = Math.floor(tick); // 取整
       let minute = Math.floor(second / 60); // 计算分钟
