@@ -1,6 +1,9 @@
 <template>
-  <div id="container" :env="getEnv()">
-    <div id="tools_block_1" class="tools_block" :style="globalCssVar">
+  <div id="container" :env="getEnv()" :style="globalCssVar">
+    <div id="cover">
+      <div>{{ loadStateString }}</div>
+    </div>
+    <div id="tools_block_1" class="tools_block">
       <div id="scale_block">
         <div class="tools_text">缩放</div>
         <input
@@ -61,8 +64,9 @@
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
 import WebChordManager from "@/utils/webChordManager.js";
-import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import WebSheetParser from "@/utils/webSheetParser"
+import { ELoadState } from "@/utils/common"
 
 import Metronome from "@/components/metronome"
 import WebSheet from "@/components/webSheet"
@@ -93,7 +97,10 @@ export default {
         "--page-size": "100%", 
       },
       env: "pc",
-      loaded: false,
+      load: {
+        params: {},
+        state: ELoadState.Loading,
+      },
       scale: 1,
       autoScroll: {
         started: false,
@@ -113,24 +120,25 @@ export default {
       },
       sheetEvents: {
         text: {
-          click: (node) => {
+          click: (e, node) => {
             console.log("text", node)
           }
         },
         chord: {
-          click: (node) => {
+          click: (e, node) => {
+            console.log(node)
             this.playChord(g_ChordManager.getChord(node.chord))
           },
-          // mouseenter: (node) => {
-          //   this.tipChord.show = true
-          //   this.tipChord.chord = g_ChordManager.getChord(node.chord)
-          // },
-          // mouseleave: (node) => {
-          //   this.tipChord.show = false
-          // }
+          mouseenter: (e, node) => {
+            this.tipChord.show = true
+            this.tipChord.chord = g_ChordManager.getChord(node.chord)
+          },
+          mouseleave: (e, node) => {
+            this.tipChord.show = false
+          }
         },
         mark: {
-          click: (node) => {
+          click: (e, node) => {
             console.log("mark", node)
           },
         }
@@ -144,14 +152,32 @@ export default {
       }
     }
   },
+  computed: {
+    loadStateString: function () {
+      switch (this.load.state) {
+        case ELoadState.Loading: return "加载中...";
+        case ELoadState.Loaded: return "加载完成";
+        case ELoadState.Failed: return "曲谱解析失败，请重试";
+        case ELoadState.Empty: return this.load.params.sheetName ? `未找到指定文件 [${this.load.params.sheetName}]` : "未指定曲谱文件";
+        default: return "未知状态";
+      }
+    }
+  },
   mounted() {
     this.changeScale()
 
     let sheetName = getQueryVariable("sheet")
+    if (!sheetName) {
+      this.load.state = ELoadState.Empty
+      return
+    }
+
+    this.load.params.sheetName = sheetName
     get(`sheets/${sheetName}.sheet`).then((res) => {
       let rootNode = WebSheetParser.parse(res)
       console.log(rootNode)
       if (!rootNode) {
+        this.load.state = ELoadState.Failed
         throw "曲谱解析失败！"
       }
       this.sheetInfo.title = rootNode.title
@@ -163,13 +189,18 @@ export default {
       this.sheetInfo.rhythms = rootNode.rhythms
       this.sheetInfo.sheetTree = rootNode
       this.sheetInfo.originalSheetKey = rootNode.sheetKey
-      this.loaded = true
+      this.load.state = ELoadState.Loaded
+      this.hideCover()
     }).catch((e) => {
-      console.error("加载失败", e)
+      this.load.state = ELoadState.Failed
+      console.error("曲谱获取失败：", e)
     })
   },
   methods: {
     getEnv,
+    hideCover() {
+      $("#cover").fadeOut(1000)
+    },
     changeScale() {
       const env = getEnv()
       let scale = parseFloat(this.scale);
@@ -251,6 +282,8 @@ export default {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
           node.chord = g_ChordManager.shiftKey(node.chord, offset)
+        } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
+          node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.sheetKey);
         }
       })
     }
@@ -282,13 +315,27 @@ html, body {
   align-items: center;
 }
 
+#cover {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: wheat;
+  color: var(--sheet-theme-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 50px;
+  letter-spacing: 5px;
+  z-index: 100;
+}
+
 #sheet {
-  padding-bottom: 50%;
   display: flex;
   flex-direction: column;
 }
 
 .title {
+  flex-shrink: 0;
   overflow: hidden;
   white-space: nowrap;
   word-break: break-all;
@@ -357,7 +404,7 @@ html, body {
 
 #sheet_body_block {
   margin-top: 10px;
-
+  margin-bottom: 50vh;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;

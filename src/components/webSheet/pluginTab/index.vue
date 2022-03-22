@@ -1,5 +1,5 @@
 <template>
-  <tab-box ref="tabBox" :style="globalCssVar">
+  <tab-box ref="tabBox" :style="globalCssVar" :state="tabState">
     <TabRow
       v-for="(row, rowIndex) in tabRows"
       :key="row"
@@ -44,9 +44,15 @@ export default {
       default: function () {
         let node = new SheetNode(ENodeType.Text);
         node.content = "未知节点";
+        node.valid = true;
         return node;
       },
     },
+  },
+  computed: {
+    tabState: function() {
+      return this.node.valid ? "valid" : "invalid";
+    }
   },
   mounted() {
     this.tab = parseTab(this.node.content)
@@ -130,11 +136,11 @@ tab-box {
   user-select: none;
 }
 
-tab-box[state="disabled"] > * {
+tab-box[state="invalid"] > * {
   filter: blur(4px);
 }
 
-tab-box[state="disabled"]::before {
+tab-box[state="invalid"]::before {
   content: "";
   position: absolute;
   left: -8px;
@@ -146,7 +152,7 @@ tab-box[state="disabled"]::before {
   z-index: 2;
 }
 
-tab-box[state="disabled"]:after {
+tab-box[state="invalid"]:after {
   content: "指法谱不可用";
   position: absolute;
   left: 0;

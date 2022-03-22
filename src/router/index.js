@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Index from '@/views/index.vue'
 import Test from '@/views/test.vue'
-import SheetViewer from '@/views/sheetViewer.vue'
+import SheetViewer from '@/views/viewer'
 import SheetEditor from '@/views/editor'
 
 const routes = [

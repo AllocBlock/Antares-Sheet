@@ -1,5 +1,5 @@
 <template>
-  <div class="audio_player" v-if="show">
+  <div class="audio_player">
     <div
       v-show="this.loading || !this.loaded"
       class="audio_hint_cover flex_center"

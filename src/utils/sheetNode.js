@@ -8,7 +8,12 @@ export const ENodeType = {
   Underline: "下划线",
   UnderlinePure: "纯下划线",
   NewLine: "换行",
-  PluginType: "插件"
+  Plugin: "插件"
+}
+
+export const EPluginType = {
+  Unknown: 0,
+  Tab: 1,
 }
 
 export class SheetNode {

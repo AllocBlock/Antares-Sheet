@@ -1,5 +1,5 @@
 <template>
-  <SheetNodePlugin v-if="node.type == ENodeType.PluginType" :node="node" :events="events" />
+  <SheetNodePlugin v-if="node.type == ENodeType.Plugin" :node="node" :events="events" />
   <SheetNodeUnderline v-else-if="node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure" :node="node" :events="events" />
   <SheetNodeChord v-else-if="node.type == ENodeType.Chord || node.type == ENodeType.ChordPure" :node="node" :events="events" />
   <SheetNodeMark v-else-if="node.type == ENodeType.Mark" :node="node" :events="events" />

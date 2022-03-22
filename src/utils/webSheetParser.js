@@ -1,4 +1,12 @@
-import { SheetNode, ENodeType, createUnknownNode } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, EPluginType, createUnknownNode } from "@/utils/sheetNode.js"
+
+function toPluginTypeEnum(str) {
+  str = str.toLowerCase()
+  switch(str) {
+    case "tab": return EPluginType.Tab;
+    default: return EPluginType.Unknown;
+  }
+}
 
 const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{word}
 const ReMark = /!\(([^)]*)\)/ // !(content)
@@ -37,9 +45,14 @@ const splitMethods = [
       return match
     },
     createNodeFunc: (match) => {
-      let pluginNode = new SheetNode(ENodeType.PluginType)
-      pluginNode.pluginType = match[1]
+      let pluginNode = new SheetNode(ENodeType.Plugin)
+      pluginNode.pluginType = toPluginTypeEnum(match[1])
       pluginNode.content = match[2]
+
+      // tab
+      if (pluginNode.pluginType == EPluginType.Tab)
+        pluginNode.valid = true
+
       return pluginNode
     }
   },
