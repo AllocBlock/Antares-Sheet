@@ -1,20 +1,20 @@
 <template>
   <div id="container">
     <div class="flex-center">节拍器</div>
-    <div id="control" @click="onClickControl">{{ this.started ? "❚❚" : "▶" }}</div>
+    <div id="control" @click="togglePlay">{{ this.started ? "❚❚" : "▶" }}</div>
     <div id="bpm_block">
       <div
         id="bpm_decrease"
-        @click="onClickBpmDecrease()"
-        @mousedown="onLongPressStart(onClickBpmDecrease)"
+        @click="decreaseBpm()"
+        @mousedown="onLongPressStart(decreaseBpm)"
       >
         -
       </div>
-      <input type="text" id="bpm_input" v-model="bpm" />
+      <input type="text" id="bpm_input" v-model="bpm" @input="updateBpm"/>
       <div 
         id="bpm_increase"
-        @click="onClickBpmIncrease()"
-        @mousedown="onLongPressStart(onClickBpmIncrease)"
+        @click="increaseBpm()"
+        @mousedown="onLongPressStart(increaseBpm)"
       >
         +
       </div>
@@ -36,8 +36,11 @@ export default {
       longPressing: false,
     };
   },
+  mounted() {
+    this.updateBpm()
+  },
   methods: {
-    onClickControl() {
+    togglePlay() {
       if (!this.started && !this.metronome.isReady()) {
         alert("节拍器加载未完成，请稍后");
         return;
@@ -54,15 +57,15 @@ export default {
       this.metronome.bpm = bpm;
       this.bpm = bpm;
     },
-    onInputBpm() {
+    updateBpm() {
       let bpm = parseInt(this.bpm) ?? 60;
       this.setBpm(bpm);
     },
-    onClickBpmDecrease() {
+    decreaseBpm() {
       let bpm = (parseInt(this.bpm) ?? 60) - 1;
       this.setBpm(bpm);
     },
-    onClickBpmIncrease() {
+    increaseBpm() {
       let bpm = (parseInt(this.bpm) ?? 60) + 1;
       this.setBpm(bpm);
     },

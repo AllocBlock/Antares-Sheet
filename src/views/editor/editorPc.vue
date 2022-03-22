@@ -640,11 +640,9 @@ export default {
   data() {
     return {
       globalCssVar: {
-        "--base-font-size": "18px",
         "--sheet-font-size": "var(--base-font-size)",
         "--title-base-font-size": "calc(var(--base-font-size) * 1.8)",
         "--title-scale": "1",
-        "--theme-color": "#e9266a",
         "--sheet-theme-color": "var(--theme-color)",
         "--tip-text-background-color": "var(--theme-color)",
         "--tip-button-background-color": "seagreen",

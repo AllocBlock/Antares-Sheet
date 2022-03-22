@@ -3,7 +3,8 @@
     <div id="cover">
       <div>{{ loadStateString }}</div>
     </div>
-    <div id="tools_block_1" class="tools_block">
+
+    <div id="tools_sheet_control" class="tools_block" v-if="tools.sheetControl.enable">
       <div id="scale_block">
         <div class="tools_text">缩放</div>
         <input
@@ -11,11 +12,11 @@
           type="range"
           step="0.01"
           min="0.2"
-          max="5"
-          v-model="scale"
+          max="2.0"
+          v-model="tools.sheetControl.scale"
           @input="changeScale()"
         />
-        <div id="scale_text" class="tools_text">{{parseFloat(scale).toFixed(1)}}</div>
+        <div id="scale_text" class="tools_text">{{parseFloat(tools.sheetControl.scale).toFixed(1)}}</div>
       </div>
       <div id="auto_scroll_block">
         <div class="tools_text">自动滚动</div>
@@ -25,23 +26,24 @@
           step="0.1"
           min="0"
           max="10"
-          v-model="autoScroll.speed"
+          v-model="tools.sheetControl.autoScroll.speed"
           @input="changeAutoScrollSpeed()"
         />
-        <div id="auto_scroll_text" class="tools_text">{{autoScroll.speed ? `x${parseFloat(autoScroll.speed).toFixed(1)}` : "停止"}}</div>
+        <div id="auto_scroll_text" class="tools_text">{{tools.sheetControl.autoScroll.speed ? `x${parseFloat(tools.sheetControl.autoScroll.speed).toFixed(1)}` : "停止"}}</div>
       </div>
     </div>
 
-    <div id="tools_block_2" class="tools_block">
+    <Chord id="tip_chord" v-if="env == 'pc' && tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" />
+
+    <div id="tools_player" class="tools_block" v-if="tools.player.enable">
       <Metronome />
-      <select id="instrument_combo" v-model="player.instrument">
+      <select id="instrument_combo" v-model="tools.player.instrument">
         <option value="Oscillator">振荡器</option>
         <option value="Ukulele">尤克里里音源</option>
       </select>
     </div>
-
+    
     <div id="sheet">
-      <Chord id="chord" v-if="env == 'pc'" :style="`opacity: ${tipChord.show ? 1 : 0}`" :chord="tipChord.chord" />
       <div id="song_title" class="title">{{sheetInfo.title}}</div>
       <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
       <div id="sheet_key_block">
@@ -53,6 +55,24 @@
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
       <WebSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
+      <div id="sheet_padding"></div>
+    </div>
+    
+    <div id="sidebar">
+      <div id="sidebar_fixed">
+        <div class="sidebar_block" @click="tools.tipChord.enable = !tools.tipChord.enable" :class="getSidebarStateClass(tools.tipChord.enable)">
+          <img src="@/assets/icons/bubble.svg" type="image/svg+xml" />
+          <div class="sidebar_block_text">提示和弦</div>
+        </div>
+        <div class="sidebar_block" @click="tools.player.enable = !tools.player.enable" :class="getSidebarStateClass(tools.player.enable)">
+          <img src="@/assets/icons/player.svg" type="image/svg+xml" />
+          <div class="sidebar_block_text">播放器</div>
+        </div>
+        <div class="sidebar_block" @click="tools.sheetControl.enable = !tools.sheetControl.enable" :class="getSidebarStateClass(tools.sheetControl.enable)">
+          <img src="@/assets/icons/layout.svg" type="image/svg+xml" />
+          <div class="sidebar_block_text">滚动缩放</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -86,11 +106,9 @@ export default {
     return {
       globalCssVar: {
         "font-size": "var(--base-font-size)", 
-        "--base-font-size": "18px", 
         "--sheet-font-size": "var(--base-font-size)", 
         "--title-base-font-size": "30px", 
-        "--title-scale": "1", 
-        "--theme-color": "#e9266a", 
+        "--title-scale": "1",
         "--chord-renderer-theme-color": "white", 
         "--chord-renderer-font-color": "black", 
         "--sheet-theme-color": "var(--theme-color)", 
@@ -100,12 +118,6 @@ export default {
       load: {
         params: {},
         state: ELoadState.Loading,
-      },
-      scale: 1,
-      autoScroll: {
-        started: false,
-        speed: 0.0,
-        timer: null
       },
       sheetInfo: {
         title: '加载中',
@@ -130,11 +142,11 @@ export default {
             this.playChord(g_ChordManager.getChord(node.chord))
           },
           mouseenter: (e, node) => {
-            this.tipChord.show = true
-            this.tipChord.chord = g_ChordManager.getChord(node.chord)
+            this.tools.tipChord.show = true
+            this.tools.tipChord.chord = g_ChordManager.getChord(node.chord)
           },
           mouseleave: (e, node) => {
-            this.tipChord.show = false
+            this.tools.tipChord.show = false
           }
         },
         mark: {
@@ -143,12 +155,25 @@ export default {
           },
         }
       },
-      tipChord: {
-        show: false,
-        chord: {}
-      },
-      player: {
-        instrument: "Oscillator"
+      tools: {
+        tipChord: {
+          enable: true,
+          show: false,
+          chord: {}
+        },
+        player: {
+          enable: true,
+          instrument: "Oscillator"
+        },
+        sheetControl: {
+          enable: true,
+          scale: 1,
+          autoScroll: {
+            started: false,
+            speed: 0.0,
+            timer: null
+          },
+        }
       }
     }
   },
@@ -161,7 +186,7 @@ export default {
         case ELoadState.Empty: return this.load.params.sheetName ? `未找到指定文件 [${this.load.params.sheetName}]` : "未指定曲谱文件";
         default: return "未知状态";
       }
-    }
+    },
   },
   mounted() {
     this.changeScale()
@@ -203,17 +228,18 @@ export default {
     },
     changeScale() {
       const env = getEnv()
-      let scale = parseFloat(this.scale);
+      let scale = parseFloat(this.tools.sheetControl.scale);
       let defaultFontSize, defaultTitleFontSize, unit
       if (env == "pc") {
-        defaultFontSize = 18
-        defaultTitleFontSize = 30
+        defaultFontSize = 20
+        defaultTitleFontSize = 32
         unit = "px"
       } else {
         defaultFontSize = 4
         defaultTitleFontSize = 8
         unit = "vw"
       }
+      console.log(`${defaultFontSize * scale}${unit}`)
       document.documentElement.style.setProperty(
         "--base-font-size",
         `${defaultFontSize * scale}${unit}`
@@ -224,12 +250,14 @@ export default {
       );
     },
     changeAutoScrollSpeed() {
-      if (!this.autoScroll.started) {
+      if (!this.tools.sheetControl.autoScroll.started) {
         this.startAutoScroll()
       }
     },
     startAutoScroll() {
       let that = this
+      let autoScroll = that.tools.sheetControl.autoScroll
+      const sheetElement = $("#sheet")[0]
       function scroll(amount) {
         console.log("scroll")
         document.documentElement.scrollTop += amount
@@ -238,11 +266,11 @@ export default {
 
       let lastTimeStamp = new Date().getTime()
       function scrollLoop() {
-        let speed = that.autoScroll.speed
+        let speed = autoScroll.speed
         if (speed == 0) {
-          window.cancelAnimationFrame(that.autoScroll.timer)
-          that.autoScroll.timer = null
-          that.autoScroll.started = false
+          window.cancelAnimationFrame(autoScroll.timer)
+          autoScroll.timer = null
+          autoScroll.started = false
           return
         }
         const delay = 100 / speed
@@ -252,9 +280,9 @@ export default {
           scroll(amount)
           lastTimeStamp = curTimeStamp
         }
-        that.autoScroll.timer = window.requestAnimationFrame(scrollLoop)
+        autoScroll.timer = window.requestAnimationFrame(scrollLoop)
       }
-      this.autoScroll.started = true
+      autoScroll.started = true
       scrollLoop()
     },
     playChord(chord) {
@@ -262,7 +290,7 @@ export default {
       let volume = 0.5;
       let duration = (1 / bpm) * 60 * 4;
       let player = null;
-      switch (this.player.instrument) {
+      switch (this.tools.player.instrument) {
         case "Oscillator":
           player = g_OscillatorPlayer;
           break;
@@ -286,6 +314,9 @@ export default {
           node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.sheetKey);
         }
       })
+    },
+    getSidebarStateClass(state) {
+      return state ? "" : "sidebar_disabled";
     }
   }
 }
@@ -298,7 +329,7 @@ html, body {
 }
 </style>
 
-<style scoped>
+<style scoped lang="scss">
 ::selection {
   background: var(--theme-color);
 }
@@ -311,8 +342,6 @@ html, body {
   font-size: var(--base-font-size);
 
   display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 #cover {
@@ -326,12 +355,77 @@ html, body {
   align-items: center;
   font-size: 50px;
   letter-spacing: 5px;
-  z-index: 100;
+  z-index: 20;
+  margin-right: auto;
+}
+
+#sidebar {
+  --fold-width: 60px;
+  --full-width: 160px;
+
+  width: var(--fold-width);
+  height: 100%;
+  flex-shrink: 0;
+
+  #sidebar_fixed {
+    position: fixed;
+    z-index: 11;
+    top: 0;
+    right: calc(var(--fold-width) - var(--full-width));
+    height: 100%;
+    width: var(--full-width);
+    background-color: var(--sheet-theme-color);
+    
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    overflow: hidden;
+    color: white;
+    opacity: 0.3;
+    user-select: none;
+
+    transition: right 0.2s ease-out, opacity 0.2s ease-out;
+    img {
+      width: 30px;
+      height: 30px;
+      margin: calc((var(--fold-width) - 30px) / 2);
+    }
+
+    .sidebar_block {
+      width: 100%;
+      height: var(--fold-width);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      
+      * {
+        flex-shrink: 0;
+      }
+
+      .sidebar_block_text {
+        margin-right: auto;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    &:hover {
+      right: 0px;
+      opacity: 1;
+    }
+  }
 }
 
 #sheet {
   display: flex;
   flex-direction: column;
+  padding-left: 20px;
+  padding-right: 20px;
+  box-sizing: border-box;
+
+  * {
+    flex-shrink: 0;
+  }
 }
 
 .title {
@@ -385,8 +479,6 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-
-  transition: all 0.2s ease-out;
 }
 
 #sheet_key_shift_up:hover,
@@ -403,11 +495,15 @@ html, body {
 }
 
 #sheet_body_block {
+  width: 100%;
   margin-top: 10px;
-  margin-bottom: 50vh;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
+}
+
+#sheet_padding {
+  height: 50vh;
 }
 
 .sheet_body {
@@ -416,13 +512,14 @@ html, body {
   width: 100%;
 }
 
-#chord {
+#tip_chord {
   position: fixed;
   right: 40px;
   top: 30px;
   height: 200px;
   width: 150px;
   transition: opacity 0.2s ease-out;
+  pointer-events: none;
 
   z-index: 10;
 }
@@ -441,8 +538,8 @@ html, body {
   color: black;
 }
 
-#tools_block_2 {
-  right: 10px;
+#tools_player {
+  right: 90px;
   width: 160px;
   top: 40%;
   flex-direction: column;
@@ -458,6 +555,8 @@ html, body {
 #scale_slider {
   flex-grow: 1;
   margin: 10px 0;
+  
+  height: 300px;
 }
 
 #auto_scroll_block {
@@ -470,6 +569,7 @@ html, body {
 #auto_scroll_slider {
   flex-grow: 1;
   margin: 10px 0;
+  height: 300px;
 }
 
 #page_type_block {
@@ -529,7 +629,6 @@ html, body {
   top: 50%;
   left: 50%;
   opacity: 0;
-  transition: all 0.2s ease-out;
 }
 
 :deep(chord:hover chord-ruby::before),
@@ -538,73 +637,81 @@ html, body {
 }
 </style>
 
-<style scoped>
+<style scoped lang="scss">
 /* pc */
-#container[env="pc"] #sheet {
-  width: calc(100% - 400px);
-}
+#container[env="pc"] {
+  #sheet {
+    width: 100%;
+    margin: 0 200px;
+  }
 
-#container[env="pc"] .tools_text {
-  width: 100%;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-  font-size: 20px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  .tools_text {
+    width: 100%;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-#container[env="pc"] #tools_block_1 {
-  top: 25%;
-  height: 50%;
-  left: 10px;
-  width: 160px;
-}
+  #tools_sheet_control {
+    top: 25%;
+    left: 10px;
+    width: 160px;
+  }
 
-#container[env="pc"] #scale_slider {
-  -webkit-appearance: slider-vertical;
-}
+  #scale_slider {
+    -webkit-appearance: slider-vertical;
+  }
 
-#container[env="pc"] #auto_scroll_slider {
-  -webkit-appearance: slider-vertical;
+  #auto_scroll_slider {
+    -webkit-appearance: slider-vertical;
+  }
+
+  .sidebar_disabled {
+    opacity: 0.3;
+  }
 }
 </style>
 
-<style scoped>
+<style scoped lang="scss">
 /* mobile */
-#container[env="mobile"] #sheet {
-  width: 90%;
-}
+#container[env="mobile"] {
+  #sheet {
+    width: 90%;
+  }
 
-#container[env="mobile"] .tools_text {
-  width: 200px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 4vw;
-}
+  .tools_text {
+    width: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4vw;
+  }
 
-#container[env="mobile"] #tools_block_1 {
-  bottom: 0;
-  height: 10%;
-  left: 0;
-  width: 100%;
-  background-color: #000000aa;
-  flex-direction: column;
-}
-#container[env="mobile"] #tools_block_1 input {
-  flex-shrink: 0;
-  width: 60%;
-}
-#container[env="mobile"] #tools_block_2 {
-  display: none;
-}
-#container[env="mobile"] #scale_block {
-  flex-direction: row;
-}
+  #tools_sheet_control {
+    bottom: 0;
+    height: 10%;
+    left: 0;
+    width: 100%;
+    background-color: #000000aa;
+    flex-direction: column;
+  }
+  #tools_sheet_control input {
+    flex-shrink: 0;
+    width: 60%;
+  }
+  #tools_player {
+    display: none;
+  }
+  #scale_block {
+    flex-direction: row;
+  }
 
-#container[env="mobile"] #auto_scroll_block {
-  flex-direction: row;
+  #auto_scroll_block {
+    flex-direction: row;
+  }
 }
 </style>

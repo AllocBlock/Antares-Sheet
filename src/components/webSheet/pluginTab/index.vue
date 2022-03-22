@@ -167,5 +167,6 @@ tab-box[state="invalid"]:after {
   align-items: center;
   overflow: hidden;
   z-index: 3;
+  text-align: center;
 }
 </style>

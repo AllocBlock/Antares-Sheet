@@ -3,6 +3,12 @@
 </template>
 
 <style>
+:root {
+  --theme-color: #e9266a;
+  --theme-color-rgb: 233, 38, 106;
+  --base-font-size: 18px;
+}
+
 html,
 body {
   width: 100%;
@@ -76,6 +82,6 @@ a:focus {
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(var(--theme-color-rgb), 0.8);
 }
 </style>

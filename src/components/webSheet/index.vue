@@ -21,11 +21,11 @@ export default {
     return {
       globalCssVar: {
         // "--sheet-theme-color": "black",
-        "--sheet-theme-color": "#e9266a",
-        "--sheet-font-size": "30px",
+        "--sheet-theme-color": "var(--theme-color)",
+        "--sheet-font-size": "var(--base-font-size)",
         "--sheet-underline-color": "var(--sheet-theme-color)",
-        "--sheet-line-height": "calc(var(--sheet-font-size) + 20px)",
-        "--sheet-line-thickness": "calc(var(--sheet-font-size) * 0.07)" /* 各种下划线的粗细 */
+        "--sheet-line-height": "calc(var(--sheet-font-size) * 2.2)",
+        "--sheet-line-thickness": "calc(var(--sheet-font-size) * 0.1)" /* 各种下划线的粗细 */
       },
     };
   },
@@ -47,8 +47,8 @@ export default {
 
 <style>
 .container {
-  width: 100%;
-  height: 100%;
+  width: inherit;
+  height: inherit;
   word-wrap: break-word;
   user-select: none;
   letter-spacing: 1px;
