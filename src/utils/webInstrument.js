@@ -1,3 +1,4 @@
+import { loadFileBuffer } from "@/utils/audio.js"
 const ResourceDir = "/resources"
 
 const AudioSourceLibrary = [
@@ -30,9 +31,13 @@ class AudioSource {
         this.type = "none"
     }
 
-    readAudioFiles(fileList, basicTone) { // TODO: 要不把文件名里也加上音符信息吧，basicTone这样不直观
-        if (!fileList)
-            throw "音频文件列表为空"
+    readAudioFiles(fileList, basicTone, callbacks = {}) { // TODO: 要不把文件名里也加上音符信息吧，basicTone这样不直观
+        if (callbacks.onLoadStart) callbacks.onLoadStart()
+        if (!fileList) {
+            errMsg = "音频文件列表为空";
+            if (callbacks.onFailed) callbacks.onFailed(errMsg);
+            throw errMsg;
+        }
 
         this.type = "sample"
         this.basicTone = basicTone
@@ -43,17 +48,21 @@ class AudioSource {
             let loadedAudioNum = 0
 
             for(let i = 0; i < fileList.length; ++i) {
-                that._loadFileBuffer(fileList[i]).then((buffer)=>{
+                loadFileBuffer(fileList[i]).then((buffer)=>{
                     that.audioContext.decodeAudioData(buffer, (audioBuffer)=>{
                         loadedAudioNum++
                         that.audioBuffers[i] = audioBuffer
+                        if (callbacks.onLoadProgress) callbacks.onLoadProgress(loadedAudioNum / audioNum);
 
                         if (audioNum == loadedAudioNum) {
-                            console.log("音源加载完成", fileList)
+                            console.log("%c乐器音源加载完成", "color: green")
                             that.loaded = true
+                            if (callbacks.onLoaded) callbacks.onLoaded();
                         }
                     }, (error)=>{
-                        throw "解码音频失败：" + error
+                        errMsg = "解码音频失败：" + error;
+                        if (callbacks.onFailed) callbacks.onFailed(errMsg);
+                        throw errMsg;
                     })
                     
                 })
@@ -61,10 +70,15 @@ class AudioSource {
         })
     }
 
-    createOscillator(duration) {
+    createOscillator(duration, callbacks = {}) {
+        if (callbacks.onLoadStart) callbacks.onLoadStart()
+
         this.type = "oscillator"
         this.oscillatorDuration = duration
         this.loaded = true
+
+        if (callbacks.onLoadProgress) callbacks.onLoadProgress(1.0);
+        if (callbacks.onLoaded) callbacks.onLoaded();
         console.log("振荡器音源配置完成")
     }
 
@@ -119,18 +133,6 @@ class AudioSource {
             }
         }
     }
-
-    _loadFileBuffer(url) {
-        return new Promise(function(resolve, reject){
-            fetch(url).then(result => result.blob()).then(blob => {
-                var reader = new FileReader()
-                reader.onloadend = ()=>{
-                    resolve(reader.result)
-                }
-                reader.readAsArrayBuffer(blob)
-            })
-        })
-    }
 }
 
 class StringInstrument {
@@ -183,8 +185,8 @@ class StringInstrument {
  * 管理音频上下文，创建音源和乐器并连接
  */
 class WebInstrument {
-    constructor(instrumentName = "Ukulele", audioSourceName = "Oscillator") {
-        this.audioContext = new AudioContext
+    constructor(instrumentName = "Ukulele", audioSourceName = "Oscillator", callbacks = {}) {
+        this.audioContext = new AudioContext()
 
         // 创建乐器
         let instrumentInfo = InstrumentLibrary.find(e=>e.name == instrumentName)
@@ -203,16 +205,20 @@ class WebInstrument {
         this.audioSource = new AudioSource(this.audioContext)
 
         if (audioSourceName == "Oscillator") {
-            this.audioSource.createOscillator(5)
+            this.audioSource.createOscillator(5, callbacks)
         }
         else {
             let audioSourceInfo = AudioSourceLibrary.find(e=>e.name == audioSourceName)
-            if (!audioSourceInfo) throw `未找到音源：${audioSource}`;
+            if (!audioSourceInfo) {
+                let errMsg = `未找到音源：${audioSource}`;
+                if (callbacks.onFailed) callbacks.onFailed(errMsg);
+                throw errMsg;
+            }
             let fileList = []
             for(let i = 0 ; i <= audioSourceInfo.maxId; ++i) {
                 fileList.push(audioSourceInfo.dir + i + ".mp3")
             }
-            this.audioSource.readAudioFiles(fileList, audioSourceInfo.audioStartTone)
+            this.audioSource.readAudioFiles(fileList, audioSourceInfo.audioStartTone, callbacks)
         }
     }
 

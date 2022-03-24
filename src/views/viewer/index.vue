@@ -1,5 +1,5 @@
 <template>
-  <div id="container" :env="getEnv()" :style="globalCssVar">
+  <div id="viewer" :env="env" :style="globalCssVar">
     <div id="cover">
       <div>{{ loadStateString }}</div>
     </div>
@@ -36,8 +36,13 @@
     <Chord id="tip_chord" v-if="env == 'pc' && tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" />
 
     <div id="tools_player" class="tools_block" v-if="tools.player.enable">
-      <Metronome />
-      <select id="instrument_combo" v-model="tools.player.instrument">
+      <transition name="fade">
+        <div id="load_cover" v-show="showPlayerLoadCover">
+          <div>{{ toolsPlayerLoadingText }}</div>
+        </div>
+      </transition>
+      <Metronome ref="metronome"/>
+      <select id="instrument_combo" v-model="tools.player.instrument.audioSource">
         <option value="Oscillator">振荡器</option>
         <option value="Ukulele">尤克里里音源</option>
       </select>
@@ -93,9 +98,8 @@ import WebSheet from "@/components/webSheet"
 import Chord from "@/components/chord"
 import { get } from "@/utils/request.js"
 
-let g_ChordManager = new WebChordManager
-let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele")
-let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator")
+let g_ChordManager = null
+let g_UkulelePlayer = null
 
 export default {
   name: "SheetViewer",
@@ -163,7 +167,16 @@ export default {
         },
         player: {
           enable: true,
-          instrument: "Oscillator"
+          instrument: {
+            type: "Ukulele",
+            audioSource: "Oscillator",
+            update: true,
+          },
+          metronome: {
+            update: true,
+          },
+          loadState: ELoadState.Loading,
+          loadProgress: 0.0,
         },
         sheetControl: {
           enable: true,
@@ -187,8 +200,24 @@ export default {
         default: return "未知状态";
       }
     },
+    toolsPlayerLoadingText: function () {
+      switch (this.tools.player.loadState) {
+        case ELoadState.Loading: return "加载中...";
+        case ELoadState.Loaded: return "加载完成";
+        case ELoadState.Failed: return "音源加载失败，请重试";
+        default: return "未知错误：播放器遁入了虚空...";
+      }
+    },
+    showPlayerLoadCover() {
+      return this.tools.player.loadState != ELoadState.Loaded;
+    }
   },
   mounted() {
+    // init global var
+    g_ChordManager = new WebChordManager
+    this.loadPlayer()
+
+    // setup
     this.changeScale()
 
     let sheetName = getQueryVariable("sheet")
@@ -220,9 +249,19 @@ export default {
       this.load.state = ELoadState.Failed
       console.error("曲谱获取失败：", e)
     })
+
+    this.env = getEnv()
+
+    let that = this
+    // print event
+    window.onbeforeprint = () => {
+      that.env = "printing"
+    }
+    window.onafterprint = () => {
+      that.env = getEnv()
+    } 
   },
   methods: {
-    getEnv,
     hideCover() {
       $("#cover").fadeOut(1000)
     },
@@ -289,18 +328,8 @@ export default {
       const bpm = 120
       let volume = 0.5;
       let duration = (1 / bpm) * 60 * 4;
-      let player = null;
-      switch (this.tools.player.instrument) {
-        case "Oscillator":
-          player = g_OscillatorPlayer;
-          break;
-        case "Ukulele":
-          player = g_UkulelePlayer;
-          break;
-        default:
-          throw "未知错误";
-      }
-      player.playChord(chord, volume, duration);
+      if (g_UkulelePlayer && g_UkulelePlayer.audioSource.loaded)
+        g_UkulelePlayer.playChord(chord, volume, duration);
     },
     shiftKey(offset) {
       let curKey = this.sheetInfo.sheetKey;
@@ -317,6 +346,66 @@ export default {
     },
     getSidebarStateClass(state) {
       return state ? "" : "sidebar_disabled";
+    },
+    loadPlayer() {
+      let that = this
+
+      let resNum = 0
+      if (this.tools.player.instrument.update) resNum++;
+      if (this.tools.player.metronome.update) resNum++;
+      let progressList = new Array(resNum).fill(0.0)
+      let loadedResNum = 0
+
+      function createCallbacks(i) {
+        return {
+          onLoadStart: function() {
+            if (that.tools.player.loadState == ELoadState.Failed) return;
+            that.tools.player.loadState = ELoadState.Loading
+            progressList[i] = 0.0
+          },
+          onLoadProgress: function(progress) {
+            progressList[i] = progress
+            let allProgress = progressList.reduce((p, c) => p + c) / resNum
+            // console.log("loading progress " + allProgress)
+            that.tools.player.loadProgress = allProgress
+          },
+          onLoaded: function() {
+            loadedResNum++;
+            that.tools.player.loadProgress = 1.0
+            if (loadedResNum == resNum) {
+              // console.log("end loading")
+              that.tools.player.loadState = ELoadState.Loaded
+            }
+          },
+          onFailed: function() {
+            that.tools.player.loadState = ELoadState.Failed
+          }
+        }
+      }
+      
+      let curIndex = 0;
+      
+      if (this.tools.player.instrument.update) {
+        let callbacks = createCallbacks(curIndex);
+        g_UkulelePlayer = new WebInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
+        
+        this.tools.player.instrument.update = false;
+        curIndex++;
+      }
+      if (this.tools.player.metronome.update) {
+        let callbacks = createCallbacks(curIndex);
+        that.$refs['metronome'].load(callbacks)
+        
+        this.tools.player.metronome.update = false;
+        curIndex++;
+      }
+     
+    }
+  },
+  watch: {
+    "tools.player.instrument.audioSource": function() {
+      this.tools.player.instrument.update = true
+      this.loadPlayer()
     }
   }
 }
@@ -334,7 +423,7 @@ html, body {
   background: var(--theme-color);
 }
 
-#container {
+#viewer {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -543,6 +632,24 @@ html, body {
   width: 160px;
   top: 40%;
   flex-direction: column;
+  user-select: none;
+
+  #load_cover {
+    position: absolute;
+    z-index: 11;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(var(--theme-color-rgb), 0.8);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 30px;
+  }
 }
 
 #scale_block {
@@ -581,6 +688,21 @@ html, body {
 
 #paper_size_slider {
   display: none;
+}
+</style>
+
+<style>
+.fade-enter{
+	opacity: 0;
+}
+.fade-enter-active{
+	transition: opacity 0.1s;
+}
+.fade-leave-to{
+	opacity: 0;
+}
+.fade-leave-active{
+	transition: opacity 1s;
 }
 </style>
 
@@ -639,7 +761,7 @@ html, body {
 
 <style scoped lang="scss">
 /* pc */
-#container[env="pc"] {
+#viewer[env="pc"] {
   #sheet {
     width: 100%;
     margin: 0 200px;
@@ -678,7 +800,7 @@ html, body {
 
 <style scoped lang="scss">
 /* mobile */
-#container[env="mobile"] {
+#viewer[env="mobile"] {
   #sheet {
     width: 90%;
   }
@@ -712,6 +834,19 @@ html, body {
 
   #auto_scroll_block {
     flex-direction: row;
+  }
+}
+</style>
+
+<style scoped lang="scss">
+/* mobile */
+#viewer[env="printing"] {
+  #sheet {
+    width: 100%;
+  }
+
+  #sidebar, #tools_sheet_control, #tools_player, #tip_chord, #sheet_padding {
+    display: none;
   }
 }
 </style>

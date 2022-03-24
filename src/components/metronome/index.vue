@@ -1,5 +1,5 @@
 <template>
-  <div id="container">
+  <div id="metronome">
     <div class="flex-center">节拍器</div>
     <div id="control" @click="togglePlay">{{ this.started ? "❚❚" : "▶" }}</div>
     <div id="bpm_block">
@@ -29,7 +29,7 @@ export default {
   name: "Metronome",
   data() {
     return {
-      metronome: new WebMetronome(),
+      metronome: null,
       started: false,
       bpm: 60,
       longPressTimer: null,
@@ -37,9 +37,12 @@ export default {
     };
   },
   mounted() {
-    this.updateBpm()
   },
   methods: {
+    load(callbacks) {
+      this.metronome = new WebMetronome(callbacks)
+      this.updateBpm()
+    },
     togglePlay() {
       if (!this.started && !this.metronome.isReady()) {
         alert("节拍器加载未完成，请稍后");
@@ -99,7 +102,7 @@ export default {
 </script>
 
 <style scoped>
-#container {
+#metronome {
   padding: 10px;
   display: flex;
   flex-direction: column;

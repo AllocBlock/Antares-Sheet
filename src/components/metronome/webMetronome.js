@@ -1,3 +1,4 @@
+import { loadFileBuffer } from "@/utils/audio.js"
 const ResourceDir = "/resources/"
 
 const MetronomeLibrary = [
@@ -9,7 +10,7 @@ const MetronomeLibrary = [
 ]
 
 export default class WebMetronome {
-  constructor() {
+  constructor(callbacks = {}) {
     this.loaded = false
     this.bpm = 120
     this.pattern = "-..."
@@ -18,44 +19,39 @@ export default class WebMetronome {
     this.audioContext = new AudioContext
     this.playingSources = []
 
-    this.loadAudios()
+    this.loadAudios(callbacks)
   }
 
-  loadAudios() {
+  loadAudios(callbacks = {}) {
+    if (callbacks.onLoadStart) callbacks.onLoadStart()
     var that = this
     return new Promise(function (resolve, reject) {
       let audioNum = 2
       let loadedAudioNum = 0
 
-      that._loadFileBuffer(that.accentFile).then((buffer) => {
-        that.audioContext.decodeAudioData(buffer, (audioBuffer) => {
-          loadedAudioNum++
-          that.accent = audioBuffer
-
-          if (audioNum == loadedAudioNum) {
-            console.log("节拍器加载完成")
-            that.loaded = true
-            resolve()
-          }
-        }, (error) => {
-          throw "解码音频失败：" + error
+      let loadSource = function(fileName, memberKey) {
+        loadFileBuffer(fileName).then((buffer) => {
+          that.audioContext.decodeAudioData(buffer, (audioBuffer) => {
+            loadedAudioNum++
+            that[memberKey] = audioBuffer
+            if (callbacks.onLoadProgress) callbacks.onLoadProgress(loadedAudioNum / audioNum);
+  
+            if (audioNum == loadedAudioNum) {
+              if (callbacks.onLoaded) callbacks.onLoaded();
+              console.log("%c节拍器加载完成", "color: green")
+              that.loaded = true
+              resolve()
+            }
+          }, (error) => {
+            errMsg =  "解码音频失败：" + error;
+            if (callbacks.onFailed) callbacks.onFailed(errMsg);
+            throw errMsg;
+          })
         })
-      })
+      }
 
-      that._loadFileBuffer(that.tapFile).then((buffer) => {
-        that.audioContext.decodeAudioData(buffer, (audioBuffer) => {
-          loadedAudioNum++
-          that.tap = audioBuffer
-
-          if (audioNum == loadedAudioNum) {
-            console.log("节拍器加载完成")
-            that.loaded = true
-            resolve()
-          }
-        }, (error) => {
-          throw "解码音频失败：" + error
-        })
-      })
+      loadSource(that.accentFile, "accent");
+      loadSource(that.tapFile, "tap");
     })
   }
 
@@ -109,17 +105,5 @@ export default class WebMetronome {
       }
       that.playingSources[i] = source
     }
-  }
-
-  _loadFileBuffer(url) {
-    return new Promise(function (resolve, reject) {
-      fetch(url).then(result => result.blob()).then(blob => {
-        var reader = new FileReader()
-        reader.onloadend = () => {
-          resolve(reader.result)
-        }
-        reader.readAsArrayBuffer(blob)
-      })
-    })
   }
 }
