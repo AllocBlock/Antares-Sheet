@@ -12,8 +12,8 @@
 </template>
 
 <script>
-import TabNoteBase from "./noteBase";
-import TabNoteConnect from "./noteConnect";
+import TabNoteBase from "./noteBase.vue";
+import TabNoteConnect from "./noteConnect.vue";
 
 export default {
   name: "TabNote",

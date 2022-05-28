@@ -1,28 +1,18 @@
 <template>
   <Chord style="width: 300px; height: 400px" :chord="chord" />
   <Metronome />
-  <WebSheet style="width: 100%; height: 600px" :sheet-text="sheetText" />
+  <WebSheet style="width: 100%; height: 600px" :sheet-tree="sheetTree" />
 </template>
 
 <script>
-import Chord from "@/components/chord";
-import WebSheet from "@/components/webSheet";
-import Metronome from "@/components/metronome";
-import ChordManager from "@/utils/webChordManager";
+import Chord from "@/components/chord/index.vue";
+import WebSheetParser from "@/utils/webSheetParser.js";
+import WebSheet from "@/components/webSheet/index.vue";
+import Metronome from "@/components/metronome/index.vue";
+import ChordManager from "@/utils/webChordManager.js";
 
 const g_ChordManager = new ChordManager();
-
-export default {
-  name: "Test",
-  components: {
-    Chord, WebSheet, Metronome
-  },
-  data() {
-    return {
-      chord: {
-        name: "Test",
-      },
-      sheetText: `
+const g_SheetText = `
 $title 诺亚方舟
 $singer 五月天
 $by 锦瑟
@@ -74,10 +64,20 @@ $
 [D]让 诺亚[E]方舟 航向[Gm]了 海平[D]线  [D]让 诺亚[E]方舟 航向[Gm]了 换日[D]线
 [D]让 诺亚[E]方舟 航向[Gm]了 天际[D]线  [D]让 诺亚[E]方舟 航向[Gm]了 无[D]限
 
-!(尾奏) ![D] !{![Esus4] ![E]} ![Gm] ![D]`,
+!(尾奏) ![D] !{![Esus4] ![E]} ![Gm] ![D]`
+
+export default {
+  name: "Test",
+  components: {
+    Chord, WebSheet, Metronome
+  },
+  data() {
+    return {
+      chord: null,
+      sheetTree: WebSheetParser.parse(g_SheetText),
     };
   },
-  mounted() {
+  created() {
     // this.chord = g_ChordManager.getChord("#Cm")
     this.chord = {
       name: "Fm",

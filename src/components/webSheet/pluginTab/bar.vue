@@ -19,9 +19,9 @@
 </template>
 
 <script>
-import TabNote from "./note"
-import TabTimeSignature from "./timeSignature"
-import TabRepeat from "./repeat"
+import TabNote from "./note.vue"
+import TabTimeSignature from "./timeSignature.vue"
+import TabRepeat from "./repeat.vue"
 
 export default {
   name: "TabBar",

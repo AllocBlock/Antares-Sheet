@@ -8,8 +8,8 @@
 </template>
 
 <script>
-import Chord from "@/components/chord"
-import SheetNodeRoot from "./root"
+import Chord from "@/components/chord/index.vue"
+import SheetNodeRoot from "./root.vue"
 import { SheetNode } from "@/utils/sheetNode.js"
 
 export default {

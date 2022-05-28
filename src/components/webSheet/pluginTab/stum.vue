@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import TabSvg from './svg'
+import TabSvg from './svg.vue'
 
 export default {
   name: "TabStum",

@@ -27,7 +27,7 @@
 </template>
 
 <script>
-import TabStum from './stum'
+import TabStum from './stum.vue'
 
 export default {
   name: "TabNoteBase",

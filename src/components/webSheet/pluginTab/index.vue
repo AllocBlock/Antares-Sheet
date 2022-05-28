@@ -12,9 +12,9 @@
 </template>
 
 <script>
-import { SheetNode } from "@/utils/sheetNode";
-import { parseTab } from "./tabParser";
-import TabRow from "./row";
+import { SheetNode } from "@/utils/sheetNode.js";
+import { parseTab } from "./tabParser.js";
+import TabRow from "./row.vue";
 
 export default {
   name: "Tab",

@@ -141,12 +141,12 @@ import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
 import WebSheetParser from "@/utils/webSheetParser";
-import WebSheet from "@/components/webSheet";
-import WebKeySelector from "@/components/keySelector";
-import Chord from "@/components/chord";
+import WebSheet from "@/components/webSheet/index.vue";
+import WebKeySelector from "@/components/keySelector.vue";
+import Chord from "@/components/chord/index.vue";
 import { get } from "@/utils/request.js";
-import ToolChord from "./toolChord";
-import PanelChordSelector from "./panelChordSelector";
+import ToolChord from "./toolChord.vue";
+import PanelChordSelector from "./panelChordSelector.vue";
 
 let g_ChordManager = new WebChordManager();
 let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
@@ -635,7 +635,7 @@ export default {
     Chord,
     WebSheet,
     WebKeySelector,
-    "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer'))
+    "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {
     return {

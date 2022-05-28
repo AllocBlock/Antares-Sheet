@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import TabNoteBase from "./noteBase";
+import TabNoteBase from "./noteBase.vue";
 
 export default {
   name: "TabNoteConnect",

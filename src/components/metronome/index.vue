@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import WebMetronome from "./webMetronome";
+import WebMetronome from "./webMetronome.js";
 
 export default {
   name: "Metronome",

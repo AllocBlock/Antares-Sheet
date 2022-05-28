@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Index from '@/views/index.vue'
 import Test from '@/views/test.vue'
-import SheetViewer from '@/views/viewer'
-import SheetEditor from '@/views/editor'
+import SheetViewer from '@/views/viewer/index.vue'
+import SheetEditor from '@/views/editor/index.vue'
 
 const routes = [
   {
@@ -21,7 +21,7 @@ const routes = [
     component: SheetViewer
   },
   {
-    path: '/editor',
+    path: '/editor/index.vue',
     name: 'SheetEditor',
     component: SheetEditor
   },
@@ -33,7 +33,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory('/'),
   routes
 })
 

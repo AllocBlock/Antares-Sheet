@@ -3,8 +3,8 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType, EPluginType } from '@/utils/sheetNode';
-import SheetNodePluginTab from './pluginTab/index';
+import { SheetNode, ENodeType, EPluginType } from '@/utils/sheetNode.js';
+import SheetNodePluginTab from './pluginTab/index.vue';
 
 export default {
   name: "SheetNodePlugin",

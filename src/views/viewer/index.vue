@@ -83,19 +83,18 @@
 </template>
 
 <script type="module">
-// TODO: 突然想到，给不同和弦加上颜色是不是很炫酷
-// TODO: 再整一个节拍器，可以随节拍换颜色
 
+import $ from "jquery";
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
 import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
-import WebSheetParser from "@/utils/webSheetParser"
-import { ELoadState } from "@/utils/common"
+import WebSheetParser from "@/utils/webSheetParser.js"
+import { ELoadState } from "@/utils/common.js"
 
-import Metronome from "@/components/metronome"
-import WebSheet from "@/components/webSheet"
-import Chord from "@/components/chord"
+import Metronome from "@/components/metronome/index.vue"
+import WebSheet from "@/components/webSheet/index.vue"
+import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
 
 let g_ChordManager = null

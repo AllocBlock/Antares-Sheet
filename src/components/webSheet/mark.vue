@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode';
+import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
 export default {
   name: "SheetNodeMark",
   data() {

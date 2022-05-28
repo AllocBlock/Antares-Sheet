@@ -17,8 +17,8 @@
 </template>
 
 <script>
-import TabBar from "./bar"
-import TabClef from "./clef"
+import TabBar from "./bar.vue"
+import TabClef from "./clef.vue"
 
 export default {
   name: "TabRow",
@@ -49,7 +49,7 @@ export default {
     },
   },
   created() {
-    this.stringNum = this.globalConfig.getInt("stringNum") ?? 4
+    this.stringNum = this.globalConfig ? this.globalConfig.getInt("stringNum") ?? 4 : 4
   },
   methods: {
     hasClef() {

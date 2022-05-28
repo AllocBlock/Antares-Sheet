@@ -9,14 +9,14 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode';
-import SheetNodeError from './error';
-import SheetNodeChord from './chord';
-import SheetNodeMark from './mark';
-// const SheetNodeUnderline = () => import('./underline');
-import SheetNodePlugin from './plugin';
-import SheetNodeText from './text';
-import SheetNodeNewLine from './newline';
+import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+import SheetNodeError from './error.vue';
+import SheetNodeChord from './chord.vue';
+import SheetNodeMark from './mark.vue';
+// const SheetNodeUnderline = () => import('./underline.vue');
+import SheetNodePlugin from './plugin.vue';
+import SheetNodeText from './text.vue';
+import SheetNodeNewLine from './newline.vue';
 
 export default {
   name: "SheetNodeGeneral",

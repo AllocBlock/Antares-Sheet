@@ -1,3 +1,5 @@
+let gNextId = 1
+
 export const ENodeType = {
   Unknown: "未知",
   Root: "根",
@@ -18,9 +20,13 @@ export const EPluginType = {
 
 export class SheetNode {
   constructor(type) {
+    this.id = gNextId++
     this.type = type
+    this.parent = null
     this.children = []
     this.style = {}
+    this.index = 0
+    this.element = null
   }
 }
 
@@ -31,6 +37,7 @@ export var createUnknownNode = function(content, parent = null) {
   return node
 }
 
+// DFS / child first
 export function traverseNode(node, callback) {
   for(let childNode of node.children)
     traverseNode(childNode, callback)

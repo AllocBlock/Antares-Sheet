@@ -4,8 +4,8 @@
 
 <script>
 import { getEnv } from "@/utils/webCommon.js";
-import SheetEditorPc from "./editorPc";
-import SheetEditorMobile from "./editorMobile";
+import SheetEditorPc from "./editorPc.vue";
+import SheetEditorMobile from "./editorMobile.vue";
 
 export default {
   name: "SheetEditor",

@@ -120,9 +120,9 @@
 
 <script>
 import $ from "jquery";
-import Toast from "@/utils/toast";
-import WebAudioPlayer from "@/utils/webAudioPlayer";
-import HotKey from "@/utils/hotKey";
+import Toast from "@/utils/toast.js";
+import WebAudioPlayer from "@/utils/webAudioPlayer.js";
+import HotKey from "@/utils/hotKey.js";
 import { getEnv } from "@/utils/webCommon.js";
 import timeSignatureVue from "../../components/webSheet/pluginTab/timeSignature.vue";
 

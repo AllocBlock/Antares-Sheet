@@ -5,9 +5,9 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode';
-// import SheetNodeGeneral from './general';
-// const SheetNodeGeneral = () => import('./general');
+import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+// import SheetNodeGeneral from './general.vue';
+// const SheetNodeGeneral = () => import('./general.vue');
 
 export default {
   name: "SheetNodeUnderline",

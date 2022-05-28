@@ -109,7 +109,7 @@
 <script>
 import $ from 'jquery'
 import WebChordManager from "@/utils/webChordManager.js";
-import Chord from "@/components/chord";
+import Chord from "@/components/chord/index.vue";
 import { clone, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 
 let g_ChordManager = new WebChordManager();

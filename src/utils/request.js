@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // 全局使用的request，统一处理请求失败的操作
-const g_BaseUrl = process.env.VUE_APP_BASE_API
+const g_BaseUrl = import.meta.env.VITE_APP_BASE_URL
 
 // 设置默认前缀，之后的请求都不需要加了
 axios.defaults.baseURL = g_BaseUrl

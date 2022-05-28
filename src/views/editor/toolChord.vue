@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import Chord from "@/components/chord";
+import Chord from "@/components/chord/index.vue";
 import { getEnv } from "@/utils/webCommon.js";
 
 export default {

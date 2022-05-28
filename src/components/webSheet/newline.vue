@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { SheetNode } from '@/utils/sheetNode';
+import { SheetNode } from '@/utils/sheetNode.js';
 
 export default {
   name: "SheetNodeNewLine",

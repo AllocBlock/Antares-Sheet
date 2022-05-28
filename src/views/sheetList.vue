@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { get } from "@/utils/request";
+import { get } from "@/utils/request.js";
 
 export default {
   name: "SheetList",

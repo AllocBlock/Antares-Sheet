@@ -1,18 +1,18 @@
 <template>
   <div class="container" ref="container" :style="getGlobalCssVar()">
-    <ChordError v-if="error || !chord" />
+    <ChordError v-if="error" />
     <div v-else class="chord" :style="calChordStyle()">
-      <div class="name" ref="name" :style="`font-size: ${chordLayout.titleFontSize}px`">{{chord.name}}</div>
+      <div class="name" ref="name" :style="`font-size: ${chordLayout.titleFontSize}px`">{{formattedChord.name}}</div>
       <div class="graph" ref="graph">
-        <div v-if="isFretMarkVisable()" class="start_fret flex-center" :style="getFretMarkStyle()">{{chord.startFret}}</div>
+        <div v-if="isFretMarkVisable()" class="start_fret flex-center" :style="getFretMarkStyle()">{{formattedChord.startFret}}</div>
         <div class="board" :style="getChordPadding()" ref="board">
-          <div v-for="string in chord.disabledStrings" :key="string" class="cross" :style="getDisabledMarkStyle(string)"/>
+          <div v-for="string in formattedChord.disabledStrings" :key="string" class="cross" :style="getDisabledMarkStyle(string)"/>
           <div class="fret fret_bold" style="top: 0" />
-          <div v-for="i in chord.fretNum" :key="i" class="fret" :style="`top: ${i / chord.fretNum * 100}%`" />
-          <div v-for="i in chord.stringNum" :key="i" :class="`string ${(chord.stringNum - i + 1) == chord.rootString ? 'string_root' : ''}`" :style="`left: ${(i - 1) / (chord.stringNum - 1) * 100}%`"></div>
+          <div v-for="i in formattedChord.fretNum" :key="i" class="fret" :style="`top: ${i / formattedChord.fretNum * 100}%`" />
+          <div v-for="i in formattedChord.stringNum" :key="i" :class="`string ${(formattedChord.stringNum - i + 1) == formattedChord.rootString ? 'string_root' : ''}`" :style="`left: ${(i - 1) / (formattedChord.stringNum - 1) * 100}%`"></div>
           <div class="fingerings">
             <div
-              v-for="fingering in chord.fingerings"
+              v-for="fingering in formattedChord.fingerings"
               :key="fingering"
               class="fingering"
               :style="calFingeringStyle(fingering)"
@@ -29,8 +29,7 @@
 </template>
 
 <script>
-import $ from "jquery";
-import ChordError from "./error";
+import ChordError from "./error.vue";
 
 const MinChordGraphHeight = 400, MinChordGraphWidth = 300;
 const FingerNameList = ["1", "2", "3", "4", "T"];
@@ -44,8 +43,9 @@ export default {
     return {
       error: false,
       $chordContainer: null,
-      $graph: null,
-      $board: null,
+      graphSize: {
+        w: 0, h: 0
+      },
       chordLayout: {
         size: {
           width: MinChordGraphWidth,
@@ -60,6 +60,7 @@ export default {
         },
         markSize: 0,
       },
+      formattedChord: null,
     };
   },
   props: {
@@ -79,9 +80,12 @@ export default {
       }
     }
   },
+  created() {
+    this.updateLocalChord()
+  },
   mounted() {
-    this.$data.$chordContainer = $(this.$refs["container"])
-    this.update()
+    this.$data.$chordContainer = this.$refs["container"]
+    this.repaint()
   },
   methods: {
     getGlobalCssVar() {
@@ -96,12 +100,12 @@ export default {
       return fingeringStringNum > 1
     },
     calFingeringStyle(fingering) {
-      const fretInterval = 1 / this.chord.fretNum;
-      const stringInterval = 1 / (this.chord.stringNum - 1);
+      const fretInterval = 1 / this.formattedChord.fretNum;
+      const stringInterval = 1 / (this.formattedChord.stringNum - 1);
       const markSize = this.chordLayout.markSize
       let fingeringStringNum = fingering.endString ? fingering.endString - fingering.startString + 1 : 1
 
-      let top = `calc(${(fingering.fret - this.chord.startFret + 0.5) * fretInterval * 100}% - ${markSize / 2}px)`
+      let top = `calc(${(fingering.fret - this.formattedChord.startFret + 0.5) * fretInterval * 100}% - ${markSize / 2}px)`
       let right = `calc(${(fingering.startString - 1) * stringInterval * 100}% - ${markSize / 2}px)`
       let width = markSize + "px"
       let height = markSize + "px"
@@ -124,64 +128,87 @@ export default {
 
       let chordWidth = this.chordLayout.size.width
       let chordHeight = this.chordLayout.size.height
-      let scaleX = this.$data.$chordContainer.width() / chordWidth
-      let scaleY = this.$data.$chordContainer.height() / chordHeight
+      let scaleX = this.$data.$chordContainer.clientWidth / chordWidth
+      let scaleY = this.$data.$chordContainer.clientHeight / chordHeight
       return {
         width: `${chordWidth}px`,
         height: `${chordHeight}px`,
         transform: `scale(${scaleX}, ${scaleY})`,
       }
     },
-    update() {
+    updateLocalChord()
+    {
       this.error = false;
 
-      let chord = this.chord;
-      chord = this.formatChordInfo(chord);
-      if (!chord || !this.checkChord(chord)) {
+      let curChord = this.formatChordInfo(this.chord);
+      if (!curChord || !this.checkChord(curChord)) {
         this.error = true;
         return;
       }
-
+      this.formattedChord = curChord
+    },
+    repaint() {
       let [width, height] = this.getActualChordGraphLayout()
       this.chordLayout.size.width = width
       this.chordLayout.size.height = height
 
       this.$nextTick(() => {
-        this.$graph = $(this.$refs["graph"])
-        this.$board = $(this.$refs["board"])
+        if (!this.$refs.graph) return;
+
+        this.graphSize.w = this.$refs.graph.clientWidth
+        this.graphSize.h = this.$refs.graph.clientHeight
+
         this.updateTitleFontSize()
         this.updateLayout()
       })
     },
     formatChordInfo(chord) {
+      chord = JSON.parse(JSON.stringify(chord));
+      let res = {};
+
       if (!chord) return null;
-      chord.name = chord.name ? chord.name : "";
-      if (!chord.stringNum) return null;
-      chord.startFret = parseInt(chord.startFret);
+      res.name = chord.name ? chord.name : "";
+      if (!chord.stringNum) return null; res.stringNum = chord.stringNum;
+      res.startFret = parseInt(chord.startFret);
       if (chord.startFret == NaN) return null;
-      chord.fretNum = parseInt(chord.fretNum);
-      if (chord.fretNum == NaN) return null;
-      if (chord.rootString) chord.rootString = parseInt(chord.rootString);
-      if (chord.rootString == NaN) return null;
-      chord.disabledStrings = chord.disabledStrings
+      res.fretNum = parseInt(chord.fretNum);
+      if (res.fretNum == NaN) return null;
+      res.rootString = parseInt(chord.rootString);
+      if (res.rootString == NaN) return null;
+      res.disabledStrings = chord.disabledStrings
         ? chord.disabledStrings
         : [];
       if (!Array.isArray(chord.disabledStrings)) return null;
-      chord.fingerings = chord.fingerings ? chord.fingerings : [];
       if (!Array.isArray(chord.fingerings)) return null;
+      res.fingerings = [];
       for (let i in chord.fingerings) {
-        chord.fingerings[i].fret = parseInt(chord.fingerings[i].fret);
-        if (chord.fingerings[i].fret == NaN) return null;
-        chord.fingerings[i].startString = parseInt(
-          chord.fingerings[i].startString
-        );
-        if (chord.fingerings[i].startString == NaN) return null;
-        chord.fingerings[i].endString = parseInt(chord.fingerings[i].endString);
-        if (chord.fingerings[i].endString == NaN) return null;
+        let fingering = {}
+        fingering.finger = chord.fingerings[i].finger
+        fingering.fret = parseInt(chord.fingerings[i].fret);
+        if (fingering.fret == NaN) return null;
+        fingering.startString = parseInt(chord.fingerings[i].startString);
+        if (fingering.startString == NaN) return null;
+        if (chord.fingerings[i].endString == null) fingering.endString = null;
+        else
+        {
+          fingering.endString = parseInt(chord.fingerings[i].endString);
+          if (fingering.endString == NaN) return null;
+        }
+        res.fingerings.push(fingering);
       }
-      return chord;
+      return res;
     },
     checkChord(chord) {
+      if (!chord) {
+        console.error("和弦为空");
+        return false;
+      }
+
+      if (!chord.stringNum) {
+        console.error("和弦未指定弦数量");
+        return false;
+      }
+
       if (chord.name.length == 0)
         console.warn("和弦渲染：和弦没有指定名称");
       if (chord.stringNum <= 0) {
@@ -271,13 +298,13 @@ export default {
       return true;
     },
     updateTitleFontSize() {
-      let $title = $(this.$refs['name'])
+      let $title = this.$refs['name']
       const width = this.chordLayout.size.width
-      const height = $title.height()
+      const height = $title.clientHeight
       const maxWidth = width * 0.9
       this.chordLayout.titleFontSize = height * 0.9
       this.$nextTick(() => {
-        let curWidth = $title.width()
+        let curWidth = $title.clientWidth
         if (curWidth > maxWidth) {
           // 如果过长则减小字体
           this.chordLayout.titleFontSize = fontSize * (maxWidth / curWidth);
@@ -293,14 +320,14 @@ export default {
       let top = 0.05
       let bottom = 0.1
       // 如果有禁用弦，上方需要预留
-      if (this.chord.disabledStrings.length > 0)
+      if (this.formattedChord.disabledStrings.length > 0)
         top += 0.08
       // 如果要显示品位标记，指板左侧需要预留
       if (this.isFretMarkVisable()) left += 0.05
       // 如果最左/右侧存在指法，则左/右侧需要预留
       let reserveLeft = false, reserveRight = false
-      for(let fingering of this.chord.fingerings) {
-        if (fingering.startString == this.chord.stringNum || fingering.endString == this.chord.stringNum) 
+      for(let fingering of this.formattedChord.fingerings) {
+        if (fingering.startString == this.formattedChord.stringNum || fingering.endString == this.formattedChord.stringNum) 
           reserveLeft = true
         if (fingering.startString == 1) 
           reserveRight = true
@@ -313,10 +340,10 @@ export default {
       }
 
       // 更新按钮大小
-      let fretInterval = 1 / this.chord.fretNum
-      let stringInterval = 1 / (this.chord.stringNum - 1)
-      let graphWidthPx = this.$graph.width()
-      let graphHeightPx = this.$graph.height()
+      let fretInterval = 1 / this.formattedChord.fretNum
+      let stringInterval = 1 / (this.formattedChord.stringNum - 1)
+      let graphWidthPx = this.graphSize.w
+      let graphHeightPx = this.graphSize.h
       let boardWidthPx = graphWidthPx * (1 - left - right);
       let boardHeightPx = graphHeightPx * (1 - top - bottom);
       let markSize = Math.min(
@@ -326,12 +353,12 @@ export default {
       this.chordLayout.markSize = markSize
     },
     isFretMarkVisable() {
-      return this.chord.startFret > 1
+      return this.formattedChord.startFret > 1
     },
     getActualChordGraphLayout() {
       // 获取父元素长宽
-      let parentWidth = this.$data.$chordContainer.width();
-      let parentHeight = this.$data.$chordContainer.height();
+      let parentWidth = this.$data.$chordContainer.clientWidth;
+      let parentHeight = this.$data.$chordContainer.clientHeight;
 
       let actualWidth = parentWidth;
       let actualHeight = parentHeight;
@@ -343,14 +370,12 @@ export default {
       return [actualWidth, actualHeight];
     },
     getFretMarkStyle() {
-      if (!this.$graph) return {}
-
-      const fretInterval = 1 / this.chord.fretNum;
+      const fretInterval = 1 / this.formattedChord.fretNum;
       const padding = this.chordLayout.boardPadding
       let top = padding.top
       const width = 0.1
       let height = fretInterval * (1 - padding.top - padding.bottom)
-      let fontSize = Math.min(this.$graph.width() * width, this.$graph.height() * height) * 0.9
+      let fontSize = Math.min(this.graphSize.w * width, this.graphSize.h * height) * 0.9
       return {
         top: `${top * 100}%`,
         height: `${height * 100}%`,
@@ -370,18 +395,19 @@ export default {
     getDisabledMarkStyle(string) {
       const markSize = 30
       const markThick = markSize / 8
-      const stringInterval = 1 / (this.chord.stringNum - 1);
+      const stringInterval = 1 / (this.formattedChord.stringNum - 1);
       return {
         width: `${markSize}px`,
         height: `${markThick}px`,
         top: `${-markSize * 0.7}px`,
-        left: `${(this.chord.stringNum - string) * stringInterval * 100}%`,
+        left: `${(this.formattedChord.stringNum - string) * stringInterval * 100}%`,
       }
     }
   },
   watch: {
     chord: function () {
-      this.update()
+      this.updateLocalChord()
+      this.repaint()
     },
   },
 };
