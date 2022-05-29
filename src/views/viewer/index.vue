@@ -265,19 +265,19 @@ export default {
       $("#cover").fadeOut(1000)
     },
     changeScale() {
-      const env = getEnv()
       let scale = parseFloat(this.tools.sheetControl.scale);
       let defaultFontSize, defaultTitleFontSize, unit
-      if (env == "pc") {
+      if (this.env == "pc") {
         defaultFontSize = 20
         defaultTitleFontSize = 32
         unit = "px"
-      } else {
+      } else if (this.env == "mobile"){
         defaultFontSize = 4
         defaultTitleFontSize = 8
         unit = "vw"
+      } else {
+        return;
       }
-      console.log(`${defaultFontSize * scale}${unit}`)
       document.documentElement.style.setProperty(
         "--base-font-size",
         `${defaultFontSize * scale}${unit}`
@@ -324,7 +324,7 @@ export default {
       scrollLoop()
     },
     playChord(chord) {
-      const bpm = 120
+      const bpm = this.$refs['metronome'].getBpm() ?? 120;
       let volume = 0.5;
       let duration = (1 / bpm) * 60 * 4;
       if (g_UkulelePlayer && g_UkulelePlayer.audioSource.loaded)

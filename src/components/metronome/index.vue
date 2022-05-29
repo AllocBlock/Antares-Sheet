@@ -10,7 +10,7 @@
       >
         -
       </div>
-      <input type="text" id="bpm_input" v-model="bpm" @input="updateBpm"/>
+      <input type="text" id="bpm_input" v-model="bpm" @change="updateBpm"/>
       <div 
         id="bpm_increase"
         @click="increaseBpm()"
@@ -31,7 +31,7 @@ export default {
     return {
       metronome: null,
       started: false,
-      bpm: 60,
+      bpm: 120,
       longPressTimer: null,
       longPressing: false,
     };
@@ -55,6 +55,9 @@ export default {
         this.metronome.stop();
       }
     },
+    getBpm() {
+      return this.bpm;
+    },
     setBpm(bpm) {
       bpm = Math.max(30, Math.min(240, bpm))
       this.metronome.bpm = bpm;
@@ -63,6 +66,7 @@ export default {
     updateBpm() {
       let bpm = parseInt(this.bpm) ?? 60;
       this.setBpm(bpm);
+      console.log("bpm: ", this.bpm)
     },
     decreaseBpm() {
       let bpm = (parseInt(this.bpm) ?? 60) - 1;

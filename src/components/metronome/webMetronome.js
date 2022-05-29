@@ -11,14 +11,21 @@ const MetronomeLibrary = [
 
 export default class WebMetronome {
   constructor(callbacks = {}) {
-    this.loaded = false
     this.bpm = 120
     this.pattern = "-..."
+    this.audioContext = new AudioContext
+    this.onPlayingSources = new Set()
+    
+    this.state = {
+      curBeatIndex: 0,
+      onBeat: 0, // number of beat in queue to play, like a semaphore
+      nextBeatStartTime: 0,
+      started: false,
+    }
+
+    this.loaded = false
     this.accentFile = MetronomeLibrary[0].accentFile
     this.tapFile = MetronomeLibrary[0].tapFile
-    this.audioContext = new AudioContext
-    this.playingSources = []
-
     this.loadAudios(callbacks)
   }
 
@@ -60,50 +67,68 @@ export default class WebMetronome {
   }
 
   start() {
+    let that = this
     if (!this.loaded)
       return false
     stop()
-    this.counting = true
-    this._playBar(this.audioContext.currentTime)
+    this.state.started = true
+    that.state.onBeat = 1
+
+    function _loop() {
+      if (that.state.onBeat > 0) {
+        that.state.onBeat--
+        that._recordNextBeat()
+      }
+      if (that.state.started)
+        window.requestAnimationFrame(_loop);
+    }
+
+    window.requestAnimationFrame(_loop);
 
     return true
   }
 
   stop() {
-    this.counting = false
-    for (let source of this.playingSources)
+    this.state.started = false
+    this.state.onBeat = 0
+    for (let source of this.onPlayingSources)
       source.stop(this.audioContext.currentTime)
-    this.playingSources = []
+    this.onPlayingSources = []
   }
 
-  _playBar(startTime) {
-    var that = this
+  _recordNextBeat() {
+    if (!this.state.started) return;
 
-    let oneBeatDuration = (1 / this.bpm) * 60
-    let oneBarDuration = oneBeatDuration * this.pattern.length
-    for (let i = 0; i < this.pattern.length; ++i) {
-      let beatType = this.pattern[i]
-      let audioBuffer
-      switch (beatType) {
-        case "-": audioBuffer = this.accent; break;
-        case ".": audioBuffer = this.tap; break;
-        default: throw "不支持的节拍类型：" + beatType
-      }
+    const curIndex = this.state.curBeatIndex % this.pattern.length
+    const curBeat = this.pattern[curIndex]
+    this.state.curBeatIndex = (curIndex + 1) % this.pattern.length
 
-      let source = that.audioContext.createBufferSource()
-      source.buffer = audioBuffer
-      source.connect(that.audioContext.destination)
+    const oneBeatDuration = (1 / this.bpm) * 60
+    const startTime = Math.max(this.state.nextBeatStartTime, this.audioContext.currentTime)
+    this.state.nextBeatStartTime = startTime + oneBeatDuration
+    this._recordBeat(curBeat, startTime, oneBeatDuration)
+  }
 
-      source.start(startTime + i * oneBeatDuration)
-      source.stop(startTime + oneBarDuration)
-      if (i == 0) {
-        source.onended = () => {
-          if (that.counting) {
-            that._playBar(startTime + oneBarDuration)
-          }
-        }
-      }
-      that.playingSources[i] = source
+  _recordBeat(beat, startTime, duration) {
+    let that = this
+    let audioBuffer = null
+    switch (beat) {
+      case "-": audioBuffer = this.accent; break;
+      case ".": audioBuffer = this.tap; break;
+      default: throw "不支持的节拍类型：" + beat
     }
+
+    let source = that.audioContext.createBufferSource()
+    source.buffer = audioBuffer
+    source.connect(that.audioContext.destination)
+
+    source.start(startTime)
+    source.stop(startTime + duration)
+    source.onended = () => {
+      that.state.onBeat++;
+      that.onPlayingSources.delete(source)
+    }
+    
+    that.onPlayingSources.add(source)
   }
 }
