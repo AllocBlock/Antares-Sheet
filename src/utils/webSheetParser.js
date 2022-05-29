@@ -1,4 +1,4 @@
-import { SheetNode, ENodeType, EPluginType, createUnknownNode } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, EPluginType, createUnknownNode, isTreeStructureCorrect } from "@/utils/sheetNode.js"
 
 function toPluginTypeEnum(str) {
   str = str.toLowerCase()
@@ -175,7 +175,7 @@ function parse(sheetText) {
   let rootNode = new SheetNode(ENodeType.Root)
   if (!sheetText) return null
   // 解析标签信息，标签信息具有通用性，可以自定义标签
-  // 如果标签可以是一个值或是数组，数组中的每个值用空格隔开
+  // 标签可以是一个值或是数组，数组中的每个值用空格隔开
   // 如果值中有空格则使用""将值括起来，如果值中有"则在前面加一个反斜杠变成\"
   let index = 0,
     line;
@@ -214,6 +214,10 @@ function parse(sheetText) {
 
   let sheetBody = sheetText.substr(index);
   parseNodes(rootNode, sheetBody)
+
+  if (!isTreeStructureCorrect(rootNode)) {
+    throw "bad tree"
+  }
   return rootNode
 }
 

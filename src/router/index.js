@@ -21,7 +21,7 @@ const routes = [
     component: SheetViewer
   },
   {
-    path: '/editor/index.vue',
+    path: '/editor',
     name: 'SheetEditor',
     component: SheetEditor
   },
