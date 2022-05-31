@@ -9,7 +9,8 @@
       step="0.1"
     />
     <div class="flex_center fill" style="flex-direction: column;">
-      <div class="flex_center fill" style="height: 70%;">
+      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '80' : '100'}%; position: relative;`">
+        <div id="help_button">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
           <ToolChord id="chord_tool" v-model:chords="attachedChords" @dragStart="onChordDragStart" />
@@ -44,87 +45,85 @@
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
-              <div id="edit_raw_lyric_button" class="button">编辑歌词</div>
+              <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
               <div class="button" @click="saveSheetToFile">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
             <WebSheet
-              id="sheet"
-              class="sheet_box"
+              id="sheet_box"
               :sheet-tree="sheetInfo.sheetTree"
               :events="editorMode.componentEvents"
             />
+            <div id="sheet_padding"></div>
           </div>
         </div>
       </div>
-      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '30' : '0'}%; position: relative;`">
-        <div class="flex_center" style="position: absolute; left: 0; top: -30px; width: 50px; height: 30px; background-color: black; color: white; z-index: 10000;" @click="layout.showAudioPlayer = !layout.showAudioPlayer">{{ layout.showAudioPlayer ? "关闭" : "打开" }}</div>
+      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '20' : '0'}%; position: relative;`">
+        <div class="flex_center" v-if="!layout.showAudioPlayer" id="playerOpenTag" @click="layout.showAudioPlayer = true">打开音乐播放器</div>
         <AudioPlayer v-if="layout.showAudioPlayer" v-model:show="layout.showAudioPlayer"/>
       </div>
     </div>
-  </div>
 
-  <div
-    id="editor_context"
-    class="context"
-    v-if="contentMenu.show"
-    :style="contentMenu.style"
-  >
-    <div id="editor_context_menu">
-      <div class="editor_context_menu_item">插入</div>
-      <div class="editor_context_menu_item" @click="editContent()">编辑</div>
-      <div class="editor_context_menu_item" @click="editRemove()">删除</div>
-      <div class="editor_context_menu_item" @click="editAddUnderline()">
-        添加下划线
-      </div>
-      <div class="editor_context_menu_item" @click="editRemoveUnderline()">
-        删除下划线
-      </div>
-      <div class="editor_context_menu_item" @click="editRecoverChord()">
-        恢复和弦为文字
-      </div>
-    </div>
-  </div>
-
-  <div id="editor_context_insert_pos" class="context">
-    <div id="editor_context_menu_insert_pos">
-      <div value="before" class="editor_context_menu_item">前方</div>
-      <div value="after" class="editor_context_menu_item">后方</div>
-    </div>
-  </div>
-
-  <div id="editor_context_insert_type" class="context">
-    <div id="editor_context_menu_insert_type">
-      <div value="info" class="editor_context_menu_item">标记</div>
-      <div value="char" class="editor_context_menu_item">文本</div>
-      <div value="newline" class="editor_context_menu_item">换行</div>
-    </div>
-  </div>
-
-  <div id="drag_mark" v-show="dragChord.is">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
-  <div id="temp_tip">{{editorMode.tip}}</div>
-  <div id="raw_lyric_panel" class="panel" style="display: none">
-    <div id="raw_lyric_container">
-      <div id="raw_lyric_title">在下方输入歌词</div>
-      <textarea id="raw_lyric_textarea"></textarea>
-      <div style="display: flex">
-        <div id="raw_lyric_button_confirm" class="button">确认歌词</div>
-        <div id="raw_lyric_button_cancel" class="button">取消</div>
+    <div
+      id="editor_context"
+      class="context"
+      v-if="contentMenu.show"
+      :style="contentMenu.style"
+    >
+      <div id="editor_context_menu">
+        <div class="editor_context_menu_item">插入</div>
+        <div class="editor_context_menu_item" @click="editContent()">编辑</div>
+        <div class="editor_context_menu_item" @click="editRemove()">删除</div>
+        <div class="editor_context_menu_item" @click="editAddUnderline()">
+          添加下划线
+        </div>
+        <div class="editor_context_menu_item" @click="editRemoveUnderline()">
+          删除下划线
+        </div>
+        <div class="editor_context_menu_item" @click="editRecoverChord()">
+          恢复和弦为文字
+        </div>
       </div>
     </div>
-  </div>
-  <PanelChordSelector
-    id="chord_panel"
-    class="panel"
-    v-model:attachedChords="attachedChords"
-    v-model:show="showChordPanel"
-    :key="sheetInfo.sheetKey"
-  />
-  <div id="drop_hint_panel">
-    <div id="drop_hint_text">拖拽文件加载</div>
-  </div>
 
-  <div id="help_button">?</div>
+    <div id="editor_context_insert_pos" class="context">
+      <div id="editor_context_menu_insert_pos">
+        <div value="before" class="editor_context_menu_item">前方</div>
+        <div value="after" class="editor_context_menu_item">后方</div>
+      </div>
+    </div>
+
+    <div id="editor_context_insert_type" class="context">
+      <div id="editor_context_menu_insert_type">
+        <div value="info" class="editor_context_menu_item">标记</div>
+        <div value="char" class="editor_context_menu_item">文本</div>
+        <div value="newline" class="editor_context_menu_item">换行</div>
+      </div>
+    </div>
+
+    <div id="drag_mark" v-show="dragChord.is">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
+    <div id="temp_tip">{{editorMode.tip}}</div>
+    <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
+      <div id="raw_lyric_container">
+        <div id="raw_lyric_title">在下方输入歌词</div>
+        <textarea id="raw_lyric_textarea" v-model="rawLyricPanel.lyrics"></textarea>
+        <div style="display: flex">
+          <div id="raw_lyric_button_confirm" class="button" @click="confirmLyric">确认歌词</div>
+          <div id="raw_lyric_button_cancel" class="button" @click="rawLyricPanel.show = false">取消</div>
+        </div>
+      </div>
+    </div>
+    <PanelChordSelector
+      id="chord_panel"
+      class="panel"
+      v-model:attachedChords="attachedChords"
+      v-model:show="showChordPanel"
+      :key="sheetInfo.sheetKey"
+    />
+    <div id="drop_hint_panel">
+      <div id="drop_hint_text">拖拽文件加载</div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -146,6 +145,8 @@ import PanelChordSelector from "./panelChordSelector.vue";
 import { defineAsyncComponent } from 'vue'
 import HotKey from "@/utils/hotKey.js";
 
+import { Editor, EditorAction } from "./editor.js";
+
 let gThis = null
 let g_ChordManager = new WebChordManager();
 let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
@@ -154,508 +155,6 @@ let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator");
 function getInputText(tips, defaultText = "") {
   return prompt(tips, defaultText);
 }
-
-const Editor = {
-  isChord(node) {
-    return node
-      ? node.type == ENodeType.Chord || node.type == ENodeType.ChordPure
-      : false;
-  },
-  isUnderline(node) {
-    return node
-      ? node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure
-      : false;
-  },
-  indexOf(node) {
-    if (!node.parent) throw "该节点是根节点";
-    return node.parent.children.findIndex((e) => e === node);
-  },
-  commonAncestor(node1, node2) {
-    let node1Ancestors = [];
-    let tempNode = node1;
-    while (tempNode.parent) {
-      node1Ancestors.push(tempNode.parent);
-      tempNode = tempNode.parent;
-    }
-    tempNode = node2;
-    while (tempNode.parent) {
-      if (node1Ancestors.includes(tempNode.parent)) return tempNode.parent;
-      tempNode = tempNode.parent;
-    }
-    return null;
-  },
-  nextUntil(node1, node2, containStart = false, containEnd = false) {
-    if (node1.parent != node2.parent) throw "元素不同级";
-    return node1.parent.children.slice(
-      this.indexOf(node1) + (containStart ? 0 : 1),
-      this.indexOf(node2) + (containEnd ? 1 : 0)
-    );
-  },
-  parentsOf(node) {
-    let list = [];
-    while (node.parent) {
-      list.push(node.parent);
-      node = node.parent;
-    }
-    return list;
-  },
-  parentUntil(node, target) {
-    // 找到以target为父节点的祖先节点
-    while (node.parent != target) {
-      if (!node.parent) return null;
-      node = node.parent;
-    }
-    return node;
-  },
-  traverseDFS(node, callback) {
-    for (let i = 0; i < node.children.length; ++i) {
-      this.traverseDFS(node.children[i], callback);
-    }
-    callback(node);
-  },
-  traverseNext(node, index, callback) {
-    if (callback(node)) return node;
-    // 继续向后遍历
-    // 已知当前节点、起始索引
-    // 递归调用索引>起始索引的子节点，传入索引=-1，表示该节点需要被完整遍历，不再遍历回父节点
-    // 如果起始索引>-1，且有父节点，递归调用父节点，传入索引=自身索引
-    for (let i = index + 1; i < node.children.length; ++i) {
-      let res = this.traverseNext(node.children[i], -1, callback);
-      if (res) return res;
-    }
-    if (index > -1 && node.parent)
-      return this.traverseNext(node.parent, this.indexOf(node), callback);
-    else return null;
-  },
-  traversePrev(node, index, callback) {
-    if (callback(node)) return node;
-    // 继续向前遍历
-    // 已知当前节点、结束索引
-    // 递归倒序调用索引<结束索引的子节点，传入索引=其孩子数量，表示该节点需要被完整遍历，不再遍历回父节点
-    // 如果起始索引<其孩子数量，且有父节点，递归调用父节点，传入索引=自身索引
-    for (let i = index - 1; i >= 0; --i) {
-      let res = this.traversePrev(node.children[i], node.children[i].children.length, callback);
-      if (res) return res;
-    }
-    if (index < node.children.length && node.parent)
-      return this.traversePrev(node.parent, this.indexOf(node), callback);
-    else return null;
-  },
-  findNextNodeByType(node, type) {
-    return this.traverseNext(node, node.children.length, (n) => n != node && n.type == type);
-  },
-  findPrevNodeByType(node, type) {
-    return this.traversePrev(node, -1, (n) => n != node && n.type == type);
-  },
-  insert(parent, index, data, replace = 0) {
-    if (index < 0) throw "索引错误";
-
-    if (Array.isArray(data)) {
-      for (let newNode of data) newNode.parent = parent;
-      parent.children.splice(index, replace, ...data);
-    } else {
-      data.parent = parent;
-      parent.children.splice(index, replace, data);
-    }
-  },
-  replace(node, data) {
-    this.insert(node.parent, this.indexOf(node), data, 1);
-  },
-  insertAfter(node, data) {
-    this.insert(node.parent, this.indexOf(node) + 1, data, 0);
-  },
-  insertBefore(node, data) {
-    this.insert(node.parent, this.indexOf(node), data, 0);
-  },
-  remove(data) {
-    if (Array.isArray(data)) {
-      for (let node of data) {
-        this.replace(node, []);
-        node.parent = null;
-      }
-    } else {
-      this.replace(data, []);
-      data.parent = null;
-    }
-  },
-  append(parent, data) {
-    this.insert(parent, parent.children.length, data, 0);
-  },
-  prepend(parent, data) {
-    this.insert(parent, 0, data, 0);
-  },
-  createChordNode(content, chordName) {
-    let node = reactive(new SheetNode(ENodeType.Chord));
-    node.content = content;
-    node.chord = chordName;
-    return node;
-  },
-
-  createTextNodes(content) {
-    if (!content) throw "不能创建空文本节点";
-    let nodes = [];
-    for (let char of content) {
-      let node
-      if (char == "\n") {
-        node = reactive(new SheetNode(ENodeType.NewLine));
-      } else {
-        node = reactive(new SheetNode(ENodeType.Text));
-        node.content = char;
-      }
-      nodes.push(node);
-    }
-    return nodes;
-  },
-
-  hasUnderlineToNextChord(chordNode) {
-    if (!Editor.isChord(chordNode)) throw "类型错误";
-    let chordType = chordNode.type;
-    let underlineType;
-    switch (chordType) {
-      case ENodeType.Chord:
-        underlineType = ENodeType.Underline;
-        break;
-      case ENodeType.ChordPure:
-        underlineType = ENodeType.UnderlinePure;
-        break;
-      default:
-        throw "类型错误";
-    }
-
-    let nextChordNode = Editor.findNextNodeByType(chordNode, chordType);
-    if (!nextChordNode) return false
-
-    let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
-    return commonAncestorNode.type == underlineType;
-  },
-
-  // insert($base, $inserted, pos) {
-  //     switch (pos) {
-  //         case "before":
-  //             while(true) {
-  //                 if ($base.is("char")) break; // 文字前面必定可以插入
-  //                 else if ($base.parent().is("underline") && $base.index() == 0) {
-  //                     // 如果非文字，且是下划线的第一个元素，那么移到上一级检测
-  //                     $base = $base.parent();
-  //                     continue;
-  //                 }
-  //                 break;
-  //             }
-  //             $base.before($inserted)
-  //             break;
-  //         case "after":
-  //             while(true) {
-  //                 if ($base.is("char")) break; // 文字后面必定可以插入
-  //                 else if ($base.parent().is("underline") && $base.index() == $base.parent().children().length - 1) {
-  //                     // 如果非文字，且是下划线的最后一个元素，那么移到上一级检测
-  //                     $base = $base.parent();
-  //                     continue;
-  //                 }
-  //                 break;
-  //             }
-  //             $base.after($inserted)
-  //             break;
-  //         default:
-  //             throw "插入位置类型错误"
-  //             break;
-  //     }
-  // },
-
-  insertChar($e, pos) {
-    let newChars = getInputText("插入文字");
-    if (newChars) {
-      let chars = newChars.split("");
-      for (let char of chars) {
-        this.insert($e, `<char>${char}</char>`, pos);
-      }
-    }
-  },
-
-  insertInfo($e, pos) {
-    let text = getInputText("插入标记");
-    if (text) {
-      this.insert($e, `<info>${text}</info>`, pos);
-    }
-  },
-
-  insertLine($e, pos) {
-    this.insert($e, `<newline>⇲</newline>`, pos);
-  },
-
-  elementToFileStr($e) {
-    var that = this;
-    let tagName = $e[0].tagName;
-    switch (tagName) {
-      case "CHAR":
-        return $e.text();
-      case "NEWLINE":
-        return "\n";
-      case "CHORD": {
-        let char = _getChordTextNode($e).text();
-        if (char == "") char = "_";
-        let chordName = $e.find("chord_name").text();
-        return `[${chordName}]${char}`;
-      }
-      case "UNDERLINE": {
-        let $children = $e.children();
-        let str = "{";
-        $children.each(function () {
-          str += that.elementToFileStr($(this));
-        });
-        str += "}";
-        return str;
-      }
-      default:
-        return `[不支持的元素${tagName}]`;
-    }
-  },
-};
-
-const EditorAction = {
-  remove(node) {
-    // 非和弦，直接删除即可
-    if (Editor.isChord(node)) { 
-      this.removeAllUnderlineOnChord(node)
-    }
-    Editor.remove(node) 
-  },
-  updateTextContent(node, newContent) {
-    if (node.type != ENodeType.Text) throw "类型错误，要求文本节点";
-    Editor.replace(node, Editor.createTextNodes(newContent));
-  },
-  updateMarkContent(node, newContent) {
-    if (node.type != ENodeType.Mark) throw "类型错误，要求标记节点";
-    node.content = newContent;
-  },
-  updateChordContent(node, newContent) {
-    if (!Editor.isChord(node)) throw "类型错误，要求和弦节点";
-    if (newContent.length == 0) throw "内容错误，不能为空";
-    node.content = newContent[0];
-    // 找到最近的父节点下划线，要求和弦不在该下划线的末尾
-    let targetNode = node;
-    while (
-      targetNode.parent &&
-      Editor.indexOf(targetNode) == targetNode.parent.children.length - 1
-    ) {
-      targetNode = targetNode.parent;
-    }
-    if (newContent.length > 1) {
-      // TODO: 可能要验证一下目标节点是否正确
-      let textNodes = Editor.createTextNodes(newContent.substr(1));
-      Editor.insertAfter(targetNode, textNodes);
-    }
-  },
-  addUnderlineForChord(chordNode) {
-    if (!Editor.isChord(chordNode)) throw "类型错误";
-    let chordType = chordNode.type;
-    let underlineType;
-    switch (chordType) {
-      case ENodeType.Chord:
-        underlineType = ENodeType.Underline;
-        break;
-      case ENodeType.ChordPure:
-        underlineType = ENodeType.UnderlinePure;
-        break;
-      default:
-        console.error("非和弦不能添加下划线");
-        return;
-    }
-
-    let nextChordNode = Editor.findNextNodeByType(chordNode, chordType);
-    if (!nextChordNode) throw "未找到下一个和弦";
-
-    if (chordNode.parent == nextChordNode.parent) {
-      // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
-      // console.log("s e");
-      let coveredNodes = Editor.nextUntil(chordNode, nextChordNode, true, true);
-      let newUnderlineNode = reactive(new SheetNode(underlineType));
-      Editor.insertBefore(chordNode, newUnderlineNode);
-      Editor.remove(coveredNodes);
-      Editor.append(newUnderlineNode, coveredNodes);
-    } else if (Editor.parentsOf(chordNode).includes(nextChordNode.parent)) {
-      // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
-      // console.log("[s] e");
-      let startUnderlineNode = Editor.parentUntil(
-        chordNode,
-        nextChordNode.parent
-      );
-      let coveredNodes = Editor.nextUntil(
-        startUnderlineNode,
-        nextChordNode,
-        false,
-        true
-      );
-      Editor.remove(coveredNodes);
-      Editor.append(startUnderlineNode, coveredNodes);
-    } else if (Editor.parentsOf(nextChordNode).includes(chordNode.parent)) {
-      // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
-      // console.log("s [e]");
-      let endUnderlineNode = Editor.parentUntil(nextChordNode, chordNode.parent);
-      let coveredNodes = Editor.nextUntil(
-        chordNode,
-        endUnderlineNode,
-        true,
-        false
-      );
-      Editor.remove(coveredNodes);
-      Editor.prepend(endUnderlineNode, coveredNodes);
-    } else {
-      // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
-      // console.log("[s] [e]");
-      let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
-      let startUnderlineNode = Editor.parentUntil(chordNode, commonAncestorNode);
-      let endUnderlineNode = Editor.parentUntil(
-        nextChordNode,
-        commonAncestorNode
-      );
-      let coveredNodes = Editor.nextUntil(
-        startUnderlineNode,
-        endUnderlineNode,
-        false,
-        false
-      );
-      Editor.remove(coveredNodes);
-      Editor.append(startUnderlineNode, coveredNodes);
-      let endUnderlineChildrenNodes = endUnderlineNode.children.map((n) => n); // map创建新数组
-      Editor.remove(endUnderlineChildrenNodes);
-      Editor.append(startUnderlineNode, endUnderlineChildrenNodes);
-      Editor.remove(endUnderlineNode);
-    }
-  },
-  removeUnderlineOfChord(chordNode) {
-    if (!Editor.isChord(chordNode)) throw "类型错误";
-    if (!Editor.isUnderline(chordNode.parent)) throw "和弦不在下划线下，无需删除";
-
-    let chordType = chordNode.type;
-    let underlineType;
-    switch (chordType) {
-      case ENodeType.Chord:
-        underlineType = ENodeType.Underline;
-        break;
-      case ENodeType.ChordPure:
-        underlineType = ENodeType.UnderlinePure;
-        break;
-      default:
-        console.error("非和弦不能添加下划线");
-        return;
-    }
-
-    let nextChordNode = Editor.findNextNodeByType(chordNode, chordType);
-    if (!nextChordNode) throw "未找到下一个和弦";
-
-    let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
-    if (!commonAncestorNode || !Editor.isUnderline(commonAncestorNode))
-      throw "不在下划线下";
-    // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
-    // 起始节点和终止节点一定是兄弟节点
-    let startNode = Editor.parentUntil(chordNode, commonAncestorNode);
-    let endNode = Editor.parentUntil(nextChordNode, commonAncestorNode);
-
-    // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
-    // 否则就要看兄弟节点其前其后是否有和弦节点
-    let beforeStartNodes = startNode.parent.children.slice(
-      0,
-      Editor.indexOf(startNode)
-    );
-    let afterStartNodes = startNode.parent.children.slice(
-      Editor.indexOf(startNode) + 1
-    );
-    let beforeEndNodes = endNode.parent.children.slice(
-      0,
-      Editor.indexOf(endNode)
-    );
-    let afterEndNodes = endNode.parent.children.slice(
-      Editor.indexOf(endNode) + 1
-    );
-    let hasPrev =
-      Editor.isUnderline(startNode) ||
-      beforeStartNodes.filter((n) => n.type == chordType).length > 0;
-    let hasNextNext =
-      Editor.isUnderline(endNode) ||
-      afterEndNodes.filter((n) => n.type == chordType).length > 0;
-
-    if (!hasPrev && !hasNextNext) {
-      // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
-      // console.log("_s e_");
-      Editor.replace(commonAncestorNode, commonAncestorNode.children);
-    } else if (hasPrev && !hasNextNext) {
-      // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
-      // console.log("_xxx s e_");
-      Editor.remove(afterStartNodes);
-      Editor.insertAfter(commonAncestorNode, afterStartNodes);
-    } else if (!hasPrev && hasNextNext) {
-      // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
-      // console.log("_s e xxx_");
-      Editor.remove(beforeEndNodes);
-      Editor.insertBefore(commonAncestorNode, beforeEndNodes);
-    } else {
-      // 前后都有元素，需要从中间断开
-      // console.log("_xxx s e yyy_");
-      let newUnderlineNode = reactive(new SheetNode(underlineType));
-      Editor.insertAfter(commonAncestorNode, newUnderlineNode);
-      Editor.remove(afterStartNodes);
-      Editor.append(newUnderlineNode, afterStartNodes);
-      beforeEndNodes = endNode.parent.children.slice(0, Editor.indexOf(endNode)); // 这一堆被放到新位置的，需要更新，这里实际获取到的是之前after和before的交集
-      Editor.remove(beforeEndNodes);
-      Editor.insertBefore(newUnderlineNode, beforeEndNodes);
-    }
-  },
-
-  removeAllUnderlineOnChord(chordNode) {
-    // 首先对自己进行下划线删除操作，移除自己到后面和弦的下划线
-    while(Editor.hasUnderlineToNextChord(chordNode)) {
-      EditorAction.removeUnderlineOfChord(chordNode)
-    }
-    // 如果还在下划线下，则要删除前面和弦的所有下划线
-    let prevChordNode = Editor.findPrevNodeByType(chordNode, chordNode.type)
-    if (prevChordNode) {
-      while(Editor.hasUnderlineToNextChord(prevChordNode)) {
-        EditorAction.removeUnderlineOfChord(prevChordNode)
-      }
-    }
-  },
-
-  convertToText(node) {
-    if (node.type == ENodeType.Text) return node;
-    else if (Editor.isChord(node)) {
-      this.removeAllUnderlineOnChord(node) // 删除和弦下划线
-
-      let content = node.content
-      if (content == "" || content == " " || content == "_") { // 空和弦，直接删除
-        Editor.remove(node)
-        return null
-      }
-      else {
-        let textNodes = Editor.createTextNodes(node.content)
-        Editor.replace(node, textNodes);
-        return textNodes
-      }
-    }
-    else {
-      throw "类型错误，无法转换该节点为文本节点";
-    }
-  },
-
-  updateChord(node, chordName) {
-    node.chord = chordName
-  },
-
-  convertToChord(node, chordName) {
-    if (Editor.isChord(node)) {
-      this.updateChord(node, chordName);
-      return node
-    }
-    else if (node.type == ENodeType.Text) {
-      let chordNode = Editor.createChordNode(node.content, chordName)
-      Editor.replace(node, chordNode)
-      EditorAction.updateChordContent(chordNode, chordNode.content);
-      return chordNode
-    }
-    else {
-      throw "类型错误，无法转换该节点为和弦节点"
-    }
-  }
-};
 
 // const g_EditEventModeDrag = {
 //   text: {
@@ -844,6 +343,10 @@ export default {
         chord: {},
         chordNode: null,
         originalNode: null
+      },
+      rawLyricPanel: {
+        show: false,
+        lyrics: "",
       },
       layout: {
         toolWidthPercentage: 20,
@@ -1044,7 +547,18 @@ export default {
       if (!confirmed) return
       this.shiftKey(oldKey, newKey)
     },
+    openRawLyricPanel() {
+      this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)
+      this.rawLyricPanel.show = true
+    },
+    confirmLyric() {
+      if (!confirm("是否确认覆盖歌词？此前制作的和弦将全部被删除！！")) return;
 
+      let root = Editor.createRootNode()
+      Editor.append(root, Editor.createTextNodes(this.rawLyricPanel.lyrics))
+      this.sheetInfo.sheetTree = root
+      this.rawLyricPanel.show = false
+    }
   },
   watch: {
     "layout.toolWidthPercentage": function () {
@@ -1062,7 +576,7 @@ export default {
 
 <style scoped src="./common.css"></style>
 
-<style scoped>
+<style scoped lang="scss">
 .title {
   overflow: hidden;
   white-space: nowrap;
@@ -1075,12 +589,13 @@ export default {
   outline: none;
   border: none;
   background-color: transparent;
-}
-.input:focus {
-  outline: 2% solid var(--theme-color);
-}
-.input::placeholder {
-  color: rgb(192, 106, 106);
+
+  &:focus {
+    outline: 2% solid var(--theme-color);
+  }
+  &::placeholder {
+    color: rgb(192, 106, 106);
+  }
 }
 
 .select {
@@ -1090,12 +605,12 @@ export default {
   font-size: var(--base-font-size);
   border: none;
   outline: 2px solid grey;
-}
-.select option {
-  background-color: black;
-}
-.select option:checked {
-  background-color: grey;
+  option {
+    background-color: black;
+  }
+  option:checked {
+    background-color: grey;
+  }
 }
 
 .toggle {
@@ -1111,31 +626,32 @@ export default {
 
   display: flex;
   align-items: center;
-}
-.toggle::before {
-  --ball-size: calc(var(--size) * 0.8);
-  --margin-size: calc((var(--size) - var(--ball-size)) / 2);
-  content: "";
-  position: absolute;
-  width: var(--ball-size);
-  height: var(--ball-size);
-  border-radius: 50%;
-  background: grey;
-  left: var(--margin-size);
-  transition: all 0.2s ease-out;
-}
 
-.toggle:checked {
-  background: #e9266a33;
-}
+  &::before {
+    --ball-size: calc(var(--size) * 0.8);
+    --margin-size: calc((var(--size) - var(--ball-size)) / 2);
+    content: "";
+    position: absolute;
+    width: var(--ball-size);
+    height: var(--ball-size);
+    border-radius: 50%;
+    background: grey;
+    left: var(--margin-size);
+    transition: all 0.2s ease-out;
+  }
 
-.toggle:checked::before {
-  left: calc(100% - var(--ball-size) - var(--margin-size));
-  background: var(--theme-color);
-}
+  &:checked {
+    background: #e9266a33;
+  }
 
-.toggle:focus {
-  outline: none;
+  &:checked::before {
+    left: calc(100% - var(--ball-size) - var(--margin-size));
+    background: var(--theme-color);
+  }
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .editor {
@@ -1143,6 +659,7 @@ export default {
   height: 100%;
   display: flex;
 }
+
 #layout_slider {
   position: fixed;
   width: calc(100% + 14px);
@@ -1154,55 +671,70 @@ export default {
   background-color: transparent;
 
   z-index: 2;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: none;
+    background: var(--theme-color);
+  }
 }
-#layout_slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: none;
-  background: var(--theme-color);
-}
+
 #sheet_block {
   box-sizing: border-box;
   padding: 20px;
-  padding-bottom: 50%;
   display: flex;
   flex-direction: column;
-}
-#song_title_input {
-  height: calc(var(--title-base-font-size) * 2);
-  line-height: calc(var(--title-base-font-size) * 2);
-  font-size: calc(var(--title-base-font-size) * 1.5);
-}
 
-#song_singer_input {
-  height: calc(var(--title-base-font-size) * 0.9);
-  line-height: calc(var(--title-base-font-size) * 0.9);
-  font-size: calc(var(--title-base-font-size) * 0.8);
-  color: #aaaaaa;
-}
+  &>*{
+    flex-shrink: 0;
+  }
 
-#sheet_key_block {
-  margin-top: 10px;
-  line-height: var(--title-base-font-size);
-  font-size: calc(var(--title-base-font-size) * 0.9);
+  #sheet_padding {
+    height: 50vh;
+  }
+  #song_title_input {
+    height: calc(var(--title-base-font-size) * 2);
+    line-height: calc(var(--title-base-font-size) * 2);
+    font-size: calc(var(--title-base-font-size) * 1.5);
+  }
 
-  display: flex;
-  align-items: center;
-}
+  #song_singer_input {
+    height: calc(var(--title-base-font-size) * 0.9);
+    line-height: calc(var(--title-base-font-size) * 0.9);
+    font-size: calc(var(--title-base-font-size) * 0.8);
+    color: #aaaaaa;
+  }
 
-#sheet_by {
-  margin-top: 5px;
-  height: calc(var(--title-base-font-size) * 0.8);
-  line-height: calc(var(--title-base-font-size) * 0.8);
-  font-size: calc(var(--title-base-font-size) * 0.7);
-  color: rgb(156, 156, 156);
-}
+  #sheet_key_block {
+    margin-top: 10px;
+    line-height: var(--title-base-font-size);
+    font-size: calc(var(--title-base-font-size) * 0.9);
 
-#sheet {
-  margin-top: 10px;
-  font-size: var(--base-font-size);
+    display: flex;
+    align-items: center;
+  }
+
+  #sheet_by {
+    margin-top: 5px;
+    height: calc(var(--title-base-font-size) * 0.8);
+    line-height: calc(var(--title-base-font-size) * 0.8);
+    font-size: calc(var(--title-base-font-size) * 0.7);
+    color: rgb(156, 156, 156);
+  }
+
+  #edit_raw_lyric_button {
+    background: var(--sheet-theme-color);
+    color: white;
+  }
+
+  #sheet_box {
+    width: 100%;
+    margin-top: 10px;
+    font-size: var(--base-font-size);
+  }
 }
 
 .context {
@@ -1214,59 +746,58 @@ export default {
   z-index: 20;
 
   border-radius: 10px;
-}
 
-.context::before {
-  position: absolute;
-  content: "";
+  &::before {
+    position: absolute;
+    content: "";
 
-  width: 100%;
-  height: 100%;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: rgb(49, 100, 88);
-  opacity: 0.9;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgb(49, 100, 88);
+    opacity: 0.9;
+  }
 }
 
 #editor_context {
-}
+  #editor_context_menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    padding: 10px;
 
-#editor_context_menu {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  padding: 10px;
+    width: 100%;
+  }
 
-  width: 100%;
-}
+  .editor_context_menu_item {
+    padding: 5% calc(var(--base-font-size));
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+    border-radius: 10px;
 
-.editor_context_menu_item {
-  padding: 5% calc(var(--base-font-size));
-  transition: all 0.2s ease-out;
-  cursor: pointer;
-  border-radius: 10px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
 
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
+    z-index: 21;
 
-  z-index: 21;
-}
-
-.editor_context_menu_item:hover {
-  text-decoration: underline;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 #editor_context_insert_pos {
-}
-#editor_context_menu_insert_pos,
-#editor_context_menu_insert_type {
-  display: flex;
-  height: 30px;
+  #editor_context_menu_insert_pos,
+  #editor_context_menu_insert_type {
+    display: flex;
+    height: 30px;
+  }
 }
 
 .panel {
@@ -1280,34 +811,35 @@ export default {
 }
 
 #raw_lyric_panel {
-}
-#raw_lyric_container {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.8);
-}
-#raw_lyric_title {
-  padding: 20px 0;
-}
-#raw_lyric_textarea {
-  font-family: inherit;
-  color: black;
-  font-size: var(--base-font-size);
-  height: 60%;
-  width: 60%;
-}
-#raw_lyric_button_confirm {
-  background: var(--sheet-theme-color);
-}
-#raw_lyric_button_cancel {
-  background: grey;
-}
-#edit_raw_lyric_button {
-  background: var(--sheet-theme-color);
+  #raw_lyric_container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.8);
+  }
+  #raw_lyric_title {
+    font-size: 20px;
+    padding: 20px 0;
+    color: white;
+  }
+  #raw_lyric_textarea {
+    font-family: inherit;
+    color: black;
+    font-size: var(--base-font-size);
+    height: 60%;
+    width: 60%;
+  }
+  #raw_lyric_button_confirm {
+    background: var(--sheet-theme-color);
+    color: white;
+  }
+  #raw_lyric_button_cancel {
+    background: grey;
+    color: white;
+  }
 }
 
 #drag_mark {
@@ -1324,7 +856,8 @@ export default {
 }
 
 #temp_tip {
-  position: fixed;
+  position: absolute;
+  z-index: 10;
   max-width: 30%;
   min-height: 40px;
   top: 20px;
@@ -1346,24 +879,25 @@ export default {
   height: 100%;
   z-index: 20;
   display: none;
-}
-#drop_hint_text {
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 100px;
-  color: var(--theme-color);
-  user-select: none;
+  #drop_hint_text {
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 100px;
+    color: var(--theme-color);
+    user-select: none;
+  }
 }
 
 #help_button {
-  position: fixed;
+  position: absolute;
   width: 40px;
   height: 40px;
   display: flex;
@@ -1376,10 +910,29 @@ export default {
   background-color: #ff000080;
   opacity: 0.5;
   user-select: none;
+
+  &:hover {
+    opacity: 1;
+  }
 }
 
-#help_button:hover {
-  opacity: 1;
+#playerOpenTag {
+  position: absolute;
+  z-index: 10000;
+  left: 0;
+  top: -30px;
+  height: 30px;
+  padding: 0 5px;
+  user-select: none;
+  cursor: pointer;
+  background-color: var(--sheet-theme-color);
+  color: white;
+  opacity: 0.5;
+  transition: opacity 0.2s ease-out;
+
+  &:hover {
+    opacity: 1.0;
+  }
 }
 </style>
 

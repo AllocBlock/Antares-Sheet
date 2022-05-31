@@ -21,16 +21,16 @@
 
       <div class="audio_button-seperater"></div>
 
-      <div class="audio_button-with-text flex_center" @click="toggleMute()">
-        <img id="audio_volume-icon" src="@/assets/icons/volume.svg" type="image/svg+xml" />
-        <img id="audio_mute-icon" src="@/assets/icons/muted.svg" type="image/svg+xml" class="hide" />
+      <div class="audio_button-with_text flex_center" @click="toggleMute()">
+        <img id="audio_volume_icon" src="@/assets/icons/volume.svg" type="image/svg+xml" />
+        <img id="audio_mute_icon" src="@/assets/icons/muted.svg" type="image/svg+xml" class="hide" />
         <div
-          id="audio_volume-text"
+          id="audio_volume_text"
           class="flex_center"
         >{{ setting.mute ? "静音" : Math.round(setting.volume * 100) + "%" }}</div>
       </div>
       <input
-        id="slider-audio_volume"
+        id="slider_audio_volume"
         type="range"
         min="0"
         max="1.0"
@@ -39,12 +39,12 @@
         class="slider_default"
       />
 
-      <div class="audio_button-with-text flex_center" @click="resetSpeed()">
+      <div class="audio_button-with_text flex_center" @click="resetSpeed()">
         <img src="@/assets/icons/speed.svg" type="image/svg+xml" />
-        <div id="audio_speed-text" class="flex_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
+        <div id="audio_speed_text" class="flex_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
       </div>
       <input
-        id="slider-audio_speed"
+        id="slider_audio_speed"
         type="range"
         min="1"
         max="10"
@@ -57,7 +57,7 @@
       <label class="switch">
         <input type="checkbox" v-model="setting.follow" />
         <span class="slider"></span>
-        <div id="audio_follow-text" class="flex_center">跟随{{setting.follow ? "开" : "关"}}</div>
+        <div id="audio_follow_text" class="flex_center">跟随{{setting.follow ? "开" : "关"}}</div>
       </label>
 
       
@@ -93,16 +93,17 @@
     </div>
     <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="togglePlay()">
-        <img id="audio_pause-icon" :src="require(`@/assets/icons/${setting.playing ? 'pause' : 'play'}.svg`)" type="image/svg+xml" />
+        <img id="audio_play_icon" v-if="!setting.playing" src="@/assets/icons/play.svg" type="image/svg+xml" />
+        <img id="audio_pause_icon" v-else src="@/assets/icons/pause.svg" type="image/svg+xml" />
       </div>
       <div class="audio_button flex_center" @click="stop()">
-        <img id="audio_stop-icon" src="@/assets/icons/stop.svg" type="image/svg+xml" />
+        <img id="audio_stop_icon" src="@/assets/icons/stop.svg" type="image/svg+xml" />
       </div>
 
       <div id="slider_tick_progress" class="flex_center">
-        <div id="slider-tick">{{ tickToTimeStr(audioInfo.curTick) }}</div>
-        <div id="slider-seperate">/</div>
-        <div id="slider-length">{{ tickToTimeStr(audioInfo.duration) }}</div>
+        <div id="slider_tick">{{ tickToTimeStr(audioInfo.curTick) }}</div>
+        <div id="slider_seperate">/</div>
+        <div id="slider_length">{{ tickToTimeStr(audioInfo.duration) }}</div>
       </div>
     </div>
   </div>
@@ -155,7 +156,7 @@ function drawWaveform(canvas, arrayBuffer, callback) {
   audioCtx.decodeAudioData(arrayBuffer, cbAudioDecoded).catch(function (error) {
     Toast.show("解码文件失败，请选择正确的音频文件！", 1.5);
     this.loading = false;
-    $("#audio_hint-cover").text("点击加载音乐~");
+    $("#audio_hint_cover").text("点击加载音乐~");
   });
 
   // 音频解码完毕的回调
@@ -262,6 +263,10 @@ export default {
   },
   methods: {
     getEnv,
+    getUrl(url) {
+      console.log(import.meta.url)
+      return new URL(url, import.meta.url).href
+    },
     close() {
       this.$emit("update:show", false)
     },
@@ -590,7 +595,7 @@ let isMarkContextShow = false;
 //     $("#audio_slider_zone").on('mousewheel DOMMouseScroll', function(event, delta) {
 //         if (this.loaded && event.ctrlKey){
 //             //console.log(event);
-//             let normalWidth = $("#part-music").width();
+//             let normalWidth = $("#part_music").width();
 //             let newScale = currentScale *(1 + delta/20);
 //             newScale = Math.max(1, Math.min(musicDuration / 10, newScale));
 
@@ -722,7 +727,7 @@ let isMarkContextShow = false;
 //         $("#slider_music").val(cTime);
 //         //$("#slider_music").css('background', bgRaw.format(sliderFrontColor, (cTime/musicDuration)*100));
 //         // 更新文本
-//         $("#slider-tick").text(tickToText(cTime));
+//         $("#slider_tick").text(tickToText(cTime));
 
 //         if (sightFollow){
 //             keepTickInSight(cTime, "inleft");
@@ -737,12 +742,12 @@ let isMarkContextShow = false;
 //     //console.log($(switchButton).is(":checked"));
 //     sightFollow = $(switchButton).is(":checked");
 //     if (sightFollow){
-//         $("#audio_follow-text").text("跟随开");
+//         $("#audio_follow_text").text("跟随开");
 //         // 提示
 //         Toast.show("视角跟随进度条 - 开启");
 //     }
 //     else{
-//         $("#audio_follow-text").text("跟随关");
+//         $("#audio_follow_text").text("跟随关");
 //         // 提示
 //         Toast.show("视角跟随进度条 - 关闭");
 //     }
@@ -802,21 +807,21 @@ a:hover {
 
   position: relative;
 }
-.audio_button-with-text {
+.audio_button-with_text {
   width: 40px;
   height: 40px;
   margin: 0 5px;
 
   position: relative;
 }
-.audio_button-with-text img {
+.audio_button-with_text img {
   pointer-events: none;
   position: absolute;
   width: 20px;
   height: 20px;
   top: 4px;
 }
-.audio_button-with-text div {
+.audio_button-with_text div {
   pointer-events: none;
   position: absolute;
   width: 100%;
@@ -830,17 +835,17 @@ a:hover {
   background-color: white;
   margin: 0px 5px;
 }
-#slider-audio_volume {
+#slider_audio_volume {
   position: relative;
   width: 100px;
 }
-#slider-audio_speed {
+#slider_audio_speed {
   position: relative;
   width: 100px;
 }
-#audio_play-icon,
-#audio_pause-icon,
-#audio_stop-icon {
+#audio_play_icon,
+#audio_pause_icon,
+#audio_stop_icon {
   width: 28px;
   height: 28px;
 }
@@ -854,6 +859,11 @@ a:hover {
   display: flex;
   flex-wrap: nowrap;
 }
+
+#audio_slider_zone::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+}
+
 .audio_slider_blank {
   pointer-events: none;
   position: relative;
