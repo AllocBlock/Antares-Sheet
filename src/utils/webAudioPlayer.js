@@ -1,8 +1,15 @@
+import * as Tone from 'tone'
+
 class WebAudioPlayer {
   constructor() {
+    this.audioContext = new AudioContext
     this.loaded = false
     this.loading = false
     this.audio = null
+    this.audioNode = null
+
+    Tone.setContext(this.audioContext);
+    this.pitchShiftNode = new Tone.PitchShift()
   }
 
   isLoaded() {
@@ -31,6 +38,10 @@ class WebAudioPlayer {
       this.audio.ondurationchange = () => cbOnDurationChange();
       this.audio.onended = () => cbOnEnd();
       this.audio.load();
+      this.audioNode = this.audioContext.createMediaElementSource(this.audio)
+
+      Tone.connect(this.audioNode, this.pitchShiftNode)
+      Tone.connect(this.pitchShiftNode, this.audioContext.destination)
     };
     reader.readAsDataURL(file);
   }
@@ -59,6 +70,14 @@ class WebAudioPlayer {
     tick = Math.max(0, Math.min(this.audio.duration, tick));
     this.audio.currentTime = tick;
     return true;
+  }
+
+  setPitchShift(shift) {
+    this.pitchShiftNode.pitch = shift
+  }
+
+  getPitchShift() {
+    return this.pitchShiftNode.pitch
   }
 }
 

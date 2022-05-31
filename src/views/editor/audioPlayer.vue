@@ -21,7 +21,7 @@
 
       <div class="audio_button-seperater"></div>
 
-      <div class="audio_button-with_text flex_center" @click="toggleMute()">
+      <div class="audio_button_with_text flex_center" @click="toggleMute()">
         <img id="audio_volume_icon" src="@/assets/icons/volume.svg" type="image/svg+xml" />
         <img id="audio_mute_icon" src="@/assets/icons/muted.svg" type="image/svg+xml" class="hide" />
         <div
@@ -39,7 +39,7 @@
         class="slider_default"
       />
 
-      <div class="audio_button-with_text flex_center" @click="resetSpeed()">
+      <div class="audio_button_with_text flex_center" @click="resetSpeed()">
         <img src="@/assets/icons/speed.svg" type="image/svg+xml" />
         <div id="audio_speed_text" class="flex_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
       </div>
@@ -52,6 +52,19 @@
         v-model="setting.speedLevel"
         @input="updateSpeed()"
         class="slider_default"
+      />
+
+      <div class="audio_button flex_center" @click="resetDetune()">
+        <img src="@/assets/icons/pitch.svg" type="image/svg+xml" />
+      </div>
+      <input
+        id="slider_audio_detune"
+        type="number"
+        min="-12"
+        max="12"
+        step="1"
+        v-model="setting.detune"
+        @change="updateDetune()"
       />
 
       <label class="switch">
@@ -218,6 +231,7 @@ export default {
       setting: {
         playing: false,
         speedLevel: 6,
+        detune: 0,
         speed: 1.0,
         volume: 0.5,
         mute: false,
@@ -370,6 +384,22 @@ export default {
     resetSpeed() {
       this.setting.speedLevel = 6
       this.updateSpeed()
+    },
+    updateDetune() {
+      let lastShift = this.audioPlayer.getPitchShift()
+      let shift = parseInt(this.setting.detune)
+      if (!isNaN(shift)) {
+        shift = Math.min(12, Math.max(-12, shift))
+        this.audioPlayer.setPitchShift(shift)
+      }
+      else
+        shift = lastShift
+
+      this.setting.detune = shift
+    },
+    resetDetune() {
+      this.setting.detune = 0
+      this.updateDetune()
     },
     addMark(text = "标记", timeTick = null, overwrite = true) {
       if (!this.loaded) {
@@ -807,21 +837,21 @@ a:hover {
 
   position: relative;
 }
-.audio_button-with_text {
+.audio_button_with_text {
   width: 40px;
   height: 40px;
   margin: 0 5px;
 
   position: relative;
 }
-.audio_button-with_text img {
+.audio_button_with_text img {
   pointer-events: none;
   position: absolute;
   width: 20px;
   height: 20px;
   top: 4px;
 }
-.audio_button-with_text div {
+.audio_button_with_text div {
   pointer-events: none;
   position: absolute;
   width: 100%;
