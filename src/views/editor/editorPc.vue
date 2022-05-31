@@ -135,6 +135,7 @@ import WebChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
 import WebSheetParser from "@/utils/webSheetParser";
+import { toSheetFileString } from "@/utils/webSheetWriter";
 import WebSheet from "@/components/webSheet/index.vue";
 import WebKeySelector from "@/components/keySelector.vue";
 import Chord from "@/components/chord/index.vue";
@@ -264,6 +265,7 @@ const g_EditEventModeHotkey = {
       [11, false],
     ]
 
+    // 按下1-7应用对应级数的和弦
     progressionList.forEach(function([shift, isMajor], i) {
       const keyName = (i + 1).toString()
       HotKey.addListener(keyName, false, false, false, (e, [shift, isMajor]) => {
@@ -279,14 +281,35 @@ const g_EditEventModeHotkey = {
         if (!isMajor) chordName += "m"
         gCurOnNode = EditorAction.convertToChord(gCurOnNode, chordName)
       }, [shift, isMajor])
+    })
 
-      HotKey.addListener("`", false, false, false, (e) => {
-        if (!gCurOnNode) return
+    // 按下~移除和弦
+    HotKey.addListener("`", false, false, false, (e) => {
+      if (!gCurOnNode) return
 
-        if (Editor.isChord(gCurOnNode)) {
-          gCurOnNode = EditorAction.convertToText(gCurOnNode)
-        }
-      })
+      if (Editor.isChord(gCurOnNode)) {
+        gCurOnNode = EditorAction.convertToText(gCurOnNode)
+      }
+    })
+
+    // 按下tab快速在前方添加文本节点，而后可以快速添加和弦
+    HotKey.addListener("Tab", false, false, false, (e) => {
+      e.preventDefault()
+      if (!gCurOnNode) return
+      
+      let emptyNode = Editor.createTextNode(" ")
+      Editor.insertBefore(gCurOnNode, emptyNode)
+      gCurOnNode = emptyNode
+    })
+
+    // 按下shift+tab快速在后方添加
+    HotKey.addListener("Tab", false, true, false, (e) => {
+      e.preventDefault()
+      if (!gCurOnNode) return
+      
+      let emptyNode = Editor.createTextNode(" ")
+      Editor.insertAfter(gCurOnNode, emptyNode)
+      gCurOnNode = emptyNode
     })
   }
 }
@@ -329,6 +352,8 @@ export default {
       editorMode: g_EditEventModeHotkey,
       player: {
         instrument: "Oscillator",
+        bpm: 120,
+        stum: true
       },
       contentMenu: {
         show: false,
@@ -360,34 +385,13 @@ export default {
     this.editorMode.init()
   },
   mounted() {
+    let that = this
     this.$dragMark = $("#drag_mark")
 
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
       .then((res) => {
-        let rootNode = reactive(WebSheetParser.parse(res));
-        this.formatSheetTree(rootNode);
-        console.log(rootNode);
-        if (!rootNode) {
-          throw "曲谱解析失败！";
-        }
-        this.sheetInfo.title = rootNode.title;
-        this.sheetInfo.singer = rootNode.singer;
-        this.sheetInfo.by = rootNode.by;
-        this.sheetInfo.originalKey = rootNode.originalKey;
-        this.sheetInfo.sheetKey = rootNode.sheetKey;
-        this.sheetInfo.chords = rootNode.chords;
-        this.sheetInfo.rhythms = rootNode.rhythms;
-        this.sheetInfo.sheetTree = rootNode;
-        this.sheetInfo.originalSheetKey = rootNode.sheetKey;
-        this.$nextTick(() => {
-          this.loaded = true; // 下一帧才设为加载完成，避免触发watch
-        })
-
-        this.attachedChords = this.sheetInfo.chords.map((chordName) =>
-          g_ChordManager.getChord(chordName)
-        );
-        console.log(this.sheetInfo.chords, this.attachedChords);
+        this.loadSheet(res)
       })
       .catch((e) => {
         console.error("加载失败", e);
@@ -411,6 +415,31 @@ export default {
         }
       });
     },
+    loadSheet(sheetText) {
+      let rootNode = reactive(WebSheetParser.parse(sheetText));
+      this.formatSheetTree(rootNode);
+      console.log(rootNode);
+      if (!rootNode) {
+        throw "曲谱解析失败！";
+      }
+      this.sheetInfo.title = rootNode.title ?? "";
+      this.sheetInfo.singer = rootNode.singer ?? "";
+      this.sheetInfo.by = rootNode.by ?? "";
+      this.sheetInfo.originalKey = rootNode.originalKey ?? "C";
+      this.sheetInfo.sheetKey = rootNode.sheetKey ?? "C";
+      this.sheetInfo.chords = rootNode.chords ?? [];
+      this.sheetInfo.rhythms = rootNode.rhythms ?? [];
+      this.sheetInfo.sheetTree = rootNode;
+      this.sheetInfo.originalSheetKey = rootNode.sheetKey;
+      this.$nextTick(() => {
+        this.loaded = true; // 下一帧才设为加载完成，避免触发watch
+      })
+
+      this.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
+        g_ChordManager.getChord(chordName)
+      ) : [];
+      console.log(this.sheetInfo.chords, this.attachedChords);
+    },
     openPanelChord() {
       this.showChordPanel = true;
     },
@@ -426,9 +455,8 @@ export default {
       this.contentMenu.node = null;
     },
     playChord(chord) {
-      const bpm = 120;
       let volume = 0.5;
-      let duration = (1 / bpm) * 60 * 4;
+      let duration = this.player.stum ? 0 : (1 / this.player.bpm) * 60 * 4;
       let player = null;
       switch (this.player.instrument) {
         case "Oscillator":
@@ -558,7 +586,40 @@ export default {
       Editor.append(root, Editor.createTextNodes(this.rawLyricPanel.lyrics))
       this.sheetInfo.sheetTree = root
       this.rawLyricPanel.show = false
-    }
+    },
+    saveSheetToFile() {
+      // TODO: remove un used chord?
+      let fileData = toSheetFileString(
+        this.sheetInfo.sheetTree,
+        this.sheetInfo.title,
+        this.sheetInfo.singer,
+        this.sheetInfo.by,
+        this.sheetInfo.originalKey,
+        this.sheetInfo.sheetKey,
+        this.attachedChords.map(n => n.name),
+      )
+      let time = new Date().toLocaleDateString().replace(/\//g, "_")
+    
+      let blob = new Blob([fileData], {type: 'text/plain'})
+      let download = document.createElement("a");
+      download.href = window.URL.createObjectURL(blob)
+      download.setAttribute('download', `${this.sheetInfo.title}-${this.sheetInfo.singer}-${time}.sheetEdit`)
+      download.click()
+      download.remove()
+    },
+    loadSheetFromFile() {
+      let input = document.createElement('input');
+      input.type = 'file';
+      input.accept = ".sheet,.sheetEdit"
+      input.onchange = e => { 
+        let file = e.target.files[0]; 
+        let fileReader = new FileReader()
+        fileReader.onload = ()=> this.loadSheet(fileReader.result)
+        fileReader.readAsText(file)
+      }
+      input.click();
+      input.remove()
+    },
   },
   watch: {
     "layout.toolWidthPercentage": function () {
@@ -863,12 +924,17 @@ export default {
   top: 20px;
   right: 20px;
   padding: 10px 20px;
-  opacity: 0.6;
 
   background-color: rgba(37, 160, 143, 0.5);
   border-radius: 20px;
   overflow: hidden;
   white-space: pre-wrap;
+
+  opacity: 0.6;
+  transition: opacity 0.2s ease-out;
+  &:hover {
+    opacity: 1.0;
+  }
 }
 
 #drop_hint_panel {

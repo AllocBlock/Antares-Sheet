@@ -68,8 +68,12 @@ export default {
     })
     this.tabResizeObserver.observe(this.$refs['tabBox'])
   },
+  beforeDestroy() {
+    this.tabResizeObserver.disconnect()
+  },
   methods: {
     updateTabLayout() {
+      if (!this.$refs['tabBox']) return
       this.tabRows = []
       this.tabConfig = this.tab.config
 

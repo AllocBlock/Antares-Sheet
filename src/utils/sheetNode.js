@@ -18,6 +18,21 @@ export const EPluginType = {
   Tab: 1,
 }
 
+export function toPluginTypeEnum(str) {
+  str = str.toLowerCase()
+  switch(str) {
+    case "tab": return EPluginType.Tab;
+    default: return EPluginType.Unknown;
+  }
+}
+
+export function toPluginTypeString(pluginTypeEnum) {
+  switch(pluginTypeEnum) {
+    case EPluginType.Tab: return "tab";
+    default: throw "未知的类型"
+  }
+}
+
 export class SheetNode {
   constructor(type, parent = null) {
     this.id = gNextId++

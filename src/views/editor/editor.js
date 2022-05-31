@@ -141,6 +141,16 @@ export const Editor = {
     node.chord = chordName;
     return node;
   },
+
+  createTextNode(char) {
+    if (!char) throw "不能创建空文本节点";
+    if (char.length > 1) throw "编辑器中文本节点仅包含一个文字，请使用其他接口创建多个文本节点"; 
+    if (char == "\n") throw "文本节点不应该包含换行符";
+
+    let node = reactive(new SheetNode(ENodeType.Text));
+    node.content = char;
+    return node;
+  },
   
   // per char per node
   createTextNodes(content) {

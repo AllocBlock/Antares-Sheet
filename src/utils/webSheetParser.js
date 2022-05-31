@@ -1,14 +1,7 @@
-import { SheetNode, ENodeType, EPluginType, createUnknownNode, isTreeStructureCorrect } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, isTreeStructureCorrect } from "@/utils/sheetNode.js"
 
-function toPluginTypeEnum(str) {
-  str = str.toLowerCase()
-  switch(str) {
-    case "tab": return EPluginType.Tab;
-    default: return EPluginType.Unknown;
-  }
-}
-
-const ReChord = /(!?)\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // ![X] | [X] | [X]{word}
+const ReChord = /\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // [X] | [X]{word}
+const ReChordPure = /!\[([^\]]*)\]/ // ![X]
 const ReMark = /!\(([^)]*)\)/ // !(content)
 const splitMethods = [
   {
@@ -96,13 +89,22 @@ const splitMethods = [
     }
   },
   {
+    matcher: ReChordPure, 
+    createNodeFunc: (match) => {
+      let type = ENodeType.ChordPure
+      let chordNode = new SheetNode(type)
+      chordNode.chord = match[1]
+      return chordNode
+    }
+  },
+  {
     matcher: ReChord, 
     createNodeFunc: (match) => {
-      let type = match[1] ? ENodeType.ChordPure : ENodeType.Chord
+      let type = ENodeType.Chord
       let chordNode = new SheetNode(type)
-      chordNode.chord = match[2]
+      chordNode.chord = match[1]
       if (type == ENodeType.Chord)
-        chordNode.content = match[4] ?? match[3] 
+        chordNode.content = match[3] ?? match[2] 
       return chordNode
     }
   },
@@ -136,6 +138,7 @@ function matchSplit(content, matcher, createNode) {
   if (match.index + newContent.length < content.length) {
     splitNodes.push(createUnknownNode(content.substr(match.index + newContent.length)))
   }
+  console.log("split to [", content.substr(0, match.index), newContent, content.substr(match.index + newContent.length))
   return splitNodes
 }
 
