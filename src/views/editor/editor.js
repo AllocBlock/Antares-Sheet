@@ -169,6 +169,19 @@ export const Editor = {
     return nodes;
   },
 
+  createMarkNode(text) {
+    if (!text) throw "不能创建空的标记节点";
+    if (text.indexOf("\n") >= 0) throw "文本节点不应该包含换行符";
+
+    let node = reactive(new SheetNode(ENodeType.Mark));
+    node.content = text;
+    return node;
+  },
+
+  createNewLineNode() {
+    return reactive(new SheetNode(ENodeType.NewLine));
+  },
+
   hasUnderlineToNextChord(chordNode) {
     if (!Editor.isChord(chordNode)) throw "类型错误";
     let chordType = chordNode.type;

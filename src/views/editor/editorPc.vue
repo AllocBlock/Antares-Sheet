@@ -67,37 +67,37 @@
     <div
       id="editor_context"
       class="context"
-      v-if="contentMenu.show"
-      :style="contentMenu.style"
+      v-if="contextMenu.show"
+      :style="contextMenu.style"
     >
       <div id="editor_context_menu">
-        <div class="editor_context_menu_item">插入</div>
+        <div class="editor_context_menu_item" @click="contextMenu.insertState.showInsertPos = true">插入</div>
         <div class="editor_context_menu_item" @click="editContent()">编辑</div>
         <div class="editor_context_menu_item" @click="editRemove()">删除</div>
-        <div class="editor_context_menu_item" @click="editAddUnderline()">
+        <div class="editor_context_menu_item" @click="editAddUnderline()" v-show="contextMenu.enableAddUnderline">
           添加下划线
         </div>
-        <div class="editor_context_menu_item" @click="editRemoveUnderline()">
+        <div class="editor_context_menu_item" @click="editRemoveUnderline()" v-show="contextMenu.enableRemoveUnderline">
           删除下划线
         </div>
-        <div class="editor_context_menu_item" @click="editRecoverChord()">
+        <div class="editor_context_menu_item" @click="editRecoverChord()" v-show="contextMenu.enableRecoverChord">
           恢复和弦为文字
         </div>
       </div>
     </div>
 
-    <div id="editor_context_insert_pos" class="context">
+    <div id="editor_context_insert_pos" class="context" v-if="contextMenu.insertState.showInsertPos" :style="contextMenu.style">
       <div id="editor_context_menu_insert_pos">
-        <div value="before" class="editor_context_menu_item">前方</div>
-        <div value="after" class="editor_context_menu_item">后方</div>
+        <div class="editor_context_menu_item" @click="onClickInsertPos(true)">前方</div>
+        <div class="editor_context_menu_item"  @click="onClickInsertPos(false)">后方</div>
       </div>
     </div>
 
-    <div id="editor_context_insert_type" class="context">
+    <div id="editor_context_insert_type" class="context" v-if="contextMenu.insertState.showInsertType" :style="contextMenu.style">
       <div id="editor_context_menu_insert_type">
-        <div value="info" class="editor_context_menu_item">标记</div>
-        <div value="char" class="editor_context_menu_item">文本</div>
-        <div value="newline" class="editor_context_menu_item">换行</div>
+        <div class="editor_context_menu_item" @click="onClickInsertMark()">标记</div>
+        <div class="editor_context_menu_item" @click="onClickInsertText()">文本</div>
+        <div class="editor_context_menu_item" @click="onClickInsertNewLine()">换行</div>
       </div>
     </div>
 
@@ -229,7 +229,12 @@ const g_EditEventModeHotkey = {
         gThis.playChord(g_ChordManager.getChord(node.chord));
       },
       dblclick: (e, node) => {
-        gThis.editAddUnderline(node);
+        if (!e.shiftKey) {
+          gThis.editAddUnderline(node);
+        }
+        else if (Editor.hasUnderlineToNextChord(node)){
+          gThis.editRemoveUnderline(node);
+        }
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
       mouseenter: (e, node) => {
@@ -355,13 +360,22 @@ export default {
         bpm: 120,
         stum: true
       },
-      contentMenu: {
+      contextMenu: {
         show: false,
         node: null,
         style: {
           left: 0,
           top: 0,
         },
+        insertState: {
+          showInsertPos: false,
+          showInsertType: false,
+          onLeft: true,
+          insertType: ENodeType.Text
+        },
+        enableAddUnderline: false,
+        enableRemoveUnderline: false,
+        enableRecoverChord: false,
       },
       dragChord: {
         is: false,
@@ -445,14 +459,18 @@ export default {
     },
     openContext(e, node) {
       e.preventDefault();
-      this.contentMenu.show = true;
-      this.contentMenu.node = node;
-      this.contentMenu.style.left = `${e.clientX}px`;
-      this.contentMenu.style.top = `${e.clientY}px`;
+      this.contextMenu.show = true;
+      this.contextMenu.node = node;
+      this.contextMenu.style.left = `${e.clientX}px`;
+      this.contextMenu.style.top = `${e.clientY}px`;
+
+      let isChord = Editor.isChord(node);
+      this.contextMenu.enableAddUnderline = isChord;
+      this.contextMenu.enableRemoveUnderline = isChord && Editor.hasUnderlineToNextChord(node);
+      this.contextMenu.enableRecoverChord = isChord;
     },
     closeContext() {
-      this.contentMenu.show = false;
-      this.contentMenu.node = null;
+      this.contextMenu.show = false;
     },
     playChord(chord) {
       let volume = 0.5;
@@ -484,8 +502,8 @@ export default {
       }
     },
     editContent(node = null) {
-      node = node ?? this.contentMenu.node;
-      let newContent = getInputText("新文本", node.content);
+      node = node ?? this.contextMenu.node;
+      let newContent = getInputText("标记内容", node.content);
       if (!newContent) return;
       switch (node.type) {
         case ENodeType.Text: {
@@ -507,19 +525,19 @@ export default {
       }
     },
     editRemove(node = null) {
-      node = node ?? this.contentMenu.node;
+      node = node ?? this.contextMenu.node;
       EditorAction.remove(node);
     },
     editRemoveUnderline(node = null) {
-      node = node ?? this.contentMenu.node;
+      node = node ?? this.contextMenu.node;
       EditorAction.removeUnderlineOfChord(node);
     },
     editRecoverChord(node = null) {
-      node = node ?? this.contentMenu.node;
+      node = node ?? this.contextMenu.node;
       EditorAction.convertToText(node);
     },
     editAddUnderline(node = null) {
-      node = node ?? this.contentMenu.node;
+      node = node ?? this.contextMenu.node;
       EditorAction.addUnderlineForChord(node);
     },
     highlightNode(node) {
@@ -620,6 +638,42 @@ export default {
       input.click();
       input.remove()
     },
+    onClickInsertPos(isOnLeft) {
+      this.contextMenu.insertState.onLeft = isOnLeft;
+      this.contextMenu.insertState.showInsertPos = false;
+      this.contextMenu.insertState.showInsertType = true;
+    },
+    onClickInsertType(type) {
+      this.contextMenu.insertState.showInsertType = false;
+
+      let nodes = null
+      switch(type) {
+        case ENodeType.Text: {
+          let text = prompt("文本内容", "请输出文本")
+          if (!text) return;
+          nodes = Editor.createTextNodes(text)
+          break
+        }
+        case ENodeType.Mark: {
+          let text = prompt("标记内容", "标记")
+          if (!text) return;
+          nodes = Editor.createMarkNode(text)
+          break
+        }
+        case ENodeType.NewLine: {
+          nodes = Editor.createNewLineNode()
+          break
+        }
+      }
+      console.log(this.contextMenu.node)
+      if (this.contextMenu.insertState.onLeft)
+        Editor.insertBefore(this.contextMenu.node, nodes)
+      else
+        Editor.insertAfter(this.contextMenu.node, nodes)
+    },
+    onClickInsertMark() { this.onClickInsertType(ENodeType.Mark) },
+    onClickInsertText() { this.onClickInsertType(ENodeType.Text) },
+    onClickInsertNewLine() { this.onClickInsertType(ENodeType.NewLine) }
   },
   watch: {
     "layout.toolWidthPercentage": function () {
@@ -803,7 +857,6 @@ export default {
   display: flex;
   overflow: hidden;
   user-select: none;
-  overflow: hidden;
   z-index: 20;
 
   border-radius: 10px;
@@ -829,27 +882,9 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    color: white;
     padding: 10px;
 
     width: 100%;
-  }
-
-  .editor_context_menu_item {
-    padding: 5% calc(var(--base-font-size));
-    transition: all 0.2s ease-out;
-    cursor: pointer;
-    border-radius: 10px;
-
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-
-    z-index: 21;
-
-    &:hover {
-      text-decoration: underline;
-    }
   }
 }
 
@@ -858,6 +893,25 @@ export default {
   #editor_context_menu_insert_type {
     display: flex;
     height: 30px;
+  }
+}
+
+.editor_context_menu_item {
+  position: relative;
+  color: white;
+  padding: 5% calc(var(--base-font-size));
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+  border-radius: 10px;
+
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+
+  z-index: 21;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 

@@ -138,7 +138,6 @@ function matchSplit(content, matcher, createNode) {
   if (match.index + newContent.length < content.length) {
     splitNodes.push(createUnknownNode(content.substr(match.index + newContent.length)))
   }
-  console.log("split to [", content.substr(0, match.index), newContent, content.substr(match.index + newContent.length))
   return splitNodes
 }
 
