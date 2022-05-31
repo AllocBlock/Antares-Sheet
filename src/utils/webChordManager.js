@@ -116,29 +116,38 @@ class WebChordManager {
   }
 
   shiftKey(name, param1 = null, param2 = null) {
-    if (!param1 && !param2) throw "参数错误";
-    else if (param1 && !param2) {
-      let semiToneNum = param1
-      let [keyName, suffix] = _splitChord(name)
-      let curKeyIndex = _getKeyIndexByName(name)
-      let newKeyIndex = (curKeyIndex + semiToneNum - 1 + 12) % 12 + 1
-      let newKeyName = _getNameByKeyIndex(newKeyIndex)
-      let newName = newKeyName + suffix
-      return newName
+    if (param1 === null && param2 === null) throw "参数错误";
+    else if (param1 !== null && param2 === null) {
+      return this._shiftKeyByOffset(name, param1)
     }
-    else if (param1 && param1) {
-      let originalTune = param1
-      let newTune = param2
-      let originalKeyIndex = _getKeyIndexByName(originalTune)
-      let newKeyIndex = _getKeyIndexByName(newTune)
-      let offset = newKeyIndex - originalKeyIndex
-      if (offset == 0) return name;
-
-      let newName = this.shiftKey(name, offset)
-      return newName
+    else if (param1 !== null && param2 !== null) {
+      return this._shiftKeyByMode(name, param1, param2)
     }
     else
       throw "参数错误"
+  }
+
+  getDistance(chordName1, chordName2) {
+    return _getKeyIndexByName(chordName2) - _getKeyIndexByName(chordName1)
+  }
+
+  _shiftKeyByOffset(chordName, offset) {
+    let [keyName, suffix] = _splitChord(chordName)
+    let curKeyIndex = _getKeyIndexByName(chordName)
+    let newKeyIndex = (curKeyIndex + offset - 1 + 12) % 12 + 1
+    let newKeyName = _getNameByKeyIndex(newKeyIndex)
+    let newName = newKeyName + suffix
+    return newName
+  }
+
+  _shiftKeyByMode(chordName, originalMode, targetMode) {
+    let originalKeyIndex = _getKeyIndexByName(originalMode)
+    let newKeyIndex = _getKeyIndexByName(targetMode)
+    let offset = newKeyIndex - originalKeyIndex
+    if (offset == 0) return chordName;
+
+    let newName = this._shiftKeyByOffset(chordName, offset)
+    return newName
   }
 
   traverse(func) {
@@ -155,6 +164,16 @@ class WebChordManager {
     let [key2, suffix2] = _splitChord(name2)
     let keyIndex2 = _getKeyIndexByName(name2)
     return keyIndex1 == keyIndex2 && suffix1 == suffix2
+  }
+
+  isMinor(chordName) {
+    const ReHasMinor = /m(?!aj)/
+    let found = (chordName.search(ReHasMinor) >= 0)
+    return found
+  }
+
+  isMajor(chordName) {
+    return !this.isMinor(chordName)
   }
 }
 

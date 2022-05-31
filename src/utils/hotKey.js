@@ -1,9 +1,9 @@
 let g_Listeners = {}
 
-function addListener(key, ctrl, shift, alt, callback) {
+function addListener(key, ctrl, shift, alt, callback, customData = null) {
   if (!g_Listeners[key]) g_Listeners[key] = []
   g_Listeners[key].push({
-    ctrl, shift, alt, callback
+    ctrl, shift, alt, callback, customData
   })
 }
 
@@ -22,7 +22,7 @@ document.addEventListener("keydown", (e) => {
   const alt = e.altKey
   for(let entry of g_Listeners[key] ?? []) {
     if (ctrl == entry.ctrl && shift == entry.shift && alt == entry.alt) {
-      entry.callback(e)
+      entry.callback(e, entry.customData)
     }
   }
 })

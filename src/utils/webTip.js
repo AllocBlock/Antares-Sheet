@@ -81,7 +81,6 @@ class TipAnimator {
     }
 
     showTip(tip) {
-        console.log("显示提示", tip)
         let $e = $(tip.element)
         const TipOffset = 20
         const TipPadding = 10

@@ -41,7 +41,6 @@ const splitMethods = [
       match[0] = content.substr(startIndex, endIndex - startIndex + 1)
       match[1] = pluginType
       match[2] = content.substr(contentStartIndex, endIndex - contentStartIndex)
-      console.log(match)
       return match
     },
     createNodeFunc: (match) => {

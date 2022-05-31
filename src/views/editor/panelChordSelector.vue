@@ -205,7 +205,6 @@ export default {
           list: [],
         });
       }
-      console.log(recommendChords);
       this.recommendChords = recommendChords;
     },
     updateSearchChords() {
@@ -242,7 +241,6 @@ export default {
       });
 
       this.searchChords = searchResult.map(entry => entry.chord);
-      console.log(this.searchChords)
     },
 
     isAttached(chord) {

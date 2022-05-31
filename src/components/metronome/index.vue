@@ -66,7 +66,6 @@ export default {
     updateBpm() {
       let bpm = parseInt(this.bpm) ?? 60;
       this.setBpm(bpm);
-      console.log("bpm: ", this.bpm)
     },
     decreaseBpm() {
       let bpm = (parseInt(this.bpm) ?? 60) - 1;

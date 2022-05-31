@@ -444,7 +444,7 @@ const EditorAction = {
 
     if (chordNode.parent == nextChordNode.parent) {
       // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
-      console.log("s e");
+      // console.log("s e");
       let coveredNodes = Editor.nextUntil(chordNode, nextChordNode, true, true);
       let newUnderlineNode = reactive(new SheetNode(underlineType));
       Editor.insertBefore(chordNode, newUnderlineNode);
@@ -452,7 +452,7 @@ const EditorAction = {
       Editor.append(newUnderlineNode, coveredNodes);
     } else if (Editor.parentsOf(chordNode).includes(nextChordNode.parent)) {
       // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
-      console.log("[s] e");
+      // console.log("[s] e");
       let startUnderlineNode = Editor.parentUntil(
         chordNode,
         nextChordNode.parent
@@ -467,7 +467,7 @@ const EditorAction = {
       Editor.append(startUnderlineNode, coveredNodes);
     } else if (Editor.parentsOf(nextChordNode).includes(chordNode.parent)) {
       // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
-      console.log("s [e]");
+      // console.log("s [e]");
       let endUnderlineNode = Editor.parentUntil(nextChordNode, chordNode.parent);
       let coveredNodes = Editor.nextUntil(
         chordNode,
@@ -479,7 +479,7 @@ const EditorAction = {
       Editor.prepend(endUnderlineNode, coveredNodes);
     } else {
       // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
-      console.log("[s] [e]");
+      // console.log("[s] [e]");
       let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
       let startUnderlineNode = Editor.parentUntil(chordNode, commonAncestorNode);
       let endUnderlineNode = Editor.parentUntil(
@@ -554,21 +554,21 @@ const EditorAction = {
 
     if (!hasPrev && !hasNextNext) {
       // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
-      console.log("_s e_");
+      // console.log("_s e_");
       Editor.replace(commonAncestorNode, commonAncestorNode.children);
     } else if (hasPrev && !hasNextNext) {
       // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
-      console.log("_xxx s e_");
+      // console.log("_xxx s e_");
       Editor.remove(afterStartNodes);
       Editor.insertAfter(commonAncestorNode, afterStartNodes);
     } else if (!hasPrev && hasNextNext) {
       // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
-      console.log("_s e xxx_");
+      // console.log("_s e xxx_");
       Editor.remove(beforeEndNodes);
       Editor.insertBefore(commonAncestorNode, beforeEndNodes);
     } else {
       // 前后都有元素，需要从中间断开
-      console.log("_xxx s e yyy_");
+      // console.log("_xxx s e yyy_");
       let newUnderlineNode = reactive(new SheetNode(underlineType));
       Editor.insertAfter(commonAncestorNode, newUnderlineNode);
       Editor.remove(afterStartNodes);

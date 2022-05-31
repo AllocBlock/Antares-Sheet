@@ -21,10 +21,8 @@ class WebAudioPlayer {
     }
 
     // 加载文件
-    console.log("音频加载", file)
     let reader = new FileReader();
     reader.onload = () => {
-      console.log("音频加载完成")
       this.audio = new Audio();
       // 加载音频
       this.audio.src = reader.result;
