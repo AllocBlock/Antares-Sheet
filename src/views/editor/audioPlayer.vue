@@ -1,10 +1,10 @@
 <template>
   <div class="audio_player">
     <div
-      v-show="this.loading || !this.loaded"
+      v-show="showHintCover"
       class="audio_hint_cover flex_center"
       @click="selectMusic()"
-    >{{this.loading ? "加载中..." : (!this.loaded ? "点击加载音乐~" : "加载完成" )}}</div>
+    >{{hintCoverText}}</div>
     <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="addMark()">
         <img src="@/assets/icons/mark.svg" type="image/svg+xml" />
@@ -84,7 +84,7 @@
         :style="`width: ${progressSlider.scale * 100}%`"
         @wheel="onWheelProgressSlider"
       >
-        <canvas id="audio_waveform" width="30000" height="50"></canvas>
+        <canvas id="audio_waveform" width="30000" height="50" ref="audioWaveCanvas"></canvas>
         <input
           id="slider_music"
           type="range"
@@ -133,12 +133,10 @@
 </template>
 
 <script>
-import $ from "jquery";
-import Toast from "@/utils/toast.js";
 import WebAudioPlayer from "@/utils/webAudioPlayer.js";
 import HotKey from "@/utils/hotKey.js";
 import { getEnv } from "@/utils/webCommon.js";
-import timeSignatureVue from "../../components/webSheet/pluginTab/timeSignature.vue";
+import { ELoadState, getPos, setPos } from "@/utils/common.js"
 
 const PlaybackSpeedLevels = {
   1: 0.5,
@@ -163,66 +161,13 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-function drawWaveform(canvas, arrayBuffer, callback) {
-  // 使用audiocontext解码音频(ArrayBuffer转AudioBuffer)
-  let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  audioCtx.decodeAudioData(arrayBuffer, cbAudioDecoded).catch(function (error) {
-    Toast.show("解码文件失败，请选择正确的音频文件！", 1.5);
-    this.loading = false;
-    $("#audio_hint_cover").text("点击加载音乐~");
-  });
-
-  // 音频解码完毕的回调
-  function cbAudioDecoded(buffer) {
-    let pen = canvas.getContext("2d"); // 画笔
-    // 关闭抗锯齿
-    pen.webkitImageSmoothingEnabled = false;
-    pen.mozImageSmoothingEnabled = false;
-    pen.imageSmoothingEnabled = false;
-
-    let data = buffer.getChannelData(0); // 第一轨的数据
-    let dataLen = data.length; // 数据个数
-
-    // 设置画布宽度
-    $(canvas).attr("width", buffer.duration * 200);
-
-    // 绘制参数
-    let width = $(canvas).attr("width");
-    let height = $(canvas).attr("height");
-    let interval = 50; // 采样间隔
-    let sampleCount = Math.floor(dataLen / interval); // 采样数
-    let amp = height / 2; // 振幅是高度的一般（注意音频数据是有正负的,-1.0到1.0）
-
-    // 开始绘制
-    pen.clearRect(0, 0, width, height); // 清空画布
-    pen.moveTo(0, amp); // 左侧中点开始
-
-    for (let i = 0; i < sampleCount; i++) {
-      // 求区间平均值
-      let avg = 0.0;
-      for (let j = 0; j < interval; j++) {
-        avg += data[(i * interval) + j];
-      }
-      avg /= interval;
-      // 画线
-      let left = (i * interval) / dataLen * width;
-      let top = avg * amp + amp;
-      pen.lineTo(left, top);
-    }
-    pen.strokeStyle = "#ffddd3";
-    pen.stroke();  // 填充
-
-    if (callback) callback()
-  }
-
-}
-
 export default {
   name: "SheetEditorAudioPlayer",
   data() {
     return {
       loading: false,
       loaded: false,
+      loadState: ELoadState.Empty,
       audioPlayer: null,
       audioInfo: {
         duration: 0,
@@ -263,6 +208,20 @@ export default {
       required: true
     },
   },
+  computed: {
+    showHintCover() {
+      return this.loadState != ELoadState.Loaded
+    },
+    hintCoverText() {
+      switch(this.loadState) {
+        case ELoadState.Empty: return "点击加载音乐~";
+        case ELoadState.Failed: return "解码文件失败，请选择正确的音频文件！";
+        case ELoadState.Loaded: return "加载完成！";
+        case ELoadState.Loading: return "加载中...";
+      }
+      return "未知错误";
+    }
+  },
   created() {
     console.log("Loading [Audio Player]")
     this.audioPlayer = new WebAudioPlayer
@@ -277,10 +236,6 @@ export default {
   },
   methods: {
     getEnv,
-    getUrl(url) {
-      console.log(import.meta.url)
-      return new URL(url, import.meta.url).href
-    },
     close() {
       this.$emit("update:show", false)
     },
@@ -290,33 +245,86 @@ export default {
       second = second - minute * 60; // 计算秒数
       return `${(minute).toString().padStart(2, '0')}:${(second).toString().padStart(2, '0')}`;
     },
+    drawWaveform(canvas, arrayBuffer, callback) {
+      let that = this
+      // 使用audiocontext解码音频(ArrayBuffer转AudioBuffer)
+      let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.decodeAudioData(arrayBuffer, cbAudioDecoded).catch(function (error) {
+        that.$toast("解码文件失败，请选择正确的音频文件！", 1.5);
+        this.loadState = ELoadState.Failed
+      });
+
+      // 音频解码完毕的回调
+      function cbAudioDecoded(buffer) {
+        let pen = canvas.getContext("2d"); // 画笔
+        // 关闭抗锯齿
+        pen.webkitImageSmoothingEnabled = false;
+        pen.mozImageSmoothingEnabled = false;
+        pen.imageSmoothingEnabled = false;
+
+        let data = buffer.getChannelData(0); // 第一轨的数据
+        let dataLen = data.length; // 数据个数
+
+        // 设置画布宽度
+        canvas.setAttribute("width", buffer.duration * 200);
+
+        // 绘制参数
+        let width = canvas.getAttribute("width");
+        let height = canvas.getAttribute("height");
+        let interval = 50; // 采样间隔
+        let sampleCount = Math.floor(dataLen / interval); // 采样数
+        let amp = height / 2; // 振幅是高度的一般（注意音频数据是有正负的,-1.0到1.0）
+
+        // 开始绘制
+        pen.clearRect(0, 0, width, height); // 清空画布
+        pen.moveTo(0, amp); // 左侧中点开始
+
+        for (let i = 0; i < sampleCount; i++) {
+          // 求区间平均值
+          let avg = 0.0;
+          for (let j = 0; j < interval; j++) {
+            avg += data[(i * interval) + j];
+          }
+          avg /= interval;
+          // 画线
+          let left = (i * interval) / dataLen * width;
+          let top = avg * amp + amp;
+          pen.lineTo(left, top);
+        }
+        pen.strokeStyle = "#ffddd3";
+        pen.stroke();  // 填充
+
+        if (callback) callback()
+      }
+
+    },
     selectMusic() {
       // 如果正在加载，则暂时禁止选择文件
-      if (this.loading) {
+      if (this.loadState == ELoadState.Loading) {
         return;
       }
       // 打开文件选择框
-      let $fileInput = $("<input type=\"file\">");
-      $fileInput.change((e) => {
-        this.loading = true
+      let input = document.createElement('input');
+      input.type = 'file';
+      input.accept = "audio/*"
+      input.onchange = e => { 
         this.loadAudio(e.currentTarget.files[0]);
-      });
-      $fileInput.click();
+      }
+      input.click();
+      input.remove()
     },
     /* 加载音乐 */
     loadAudio(file) {
       if (file == null) {
-        Toast.show("打开文件失败！");
+        this.$toast("打开文件失败！");
         return;
       }
 
-      this.loaded = false;
-      this.loading = true;
+      this.loadState = ELoadState.Loading;
       this.audioPlayer.load(file, (data) => {
         let base64 = data.replace(/.*base64,/, ""); // DataUrl转Base64
-        drawWaveform($("#audio_waveform")[0], base64ToArrayBuffer(base64), () => {
-          this.loading = false
-          this.loaded = timeSignatureVue
+        drawWaveform(this.$refs.audioWaveCanvas, base64ToArrayBuffer(base64), () => {
+          this.loadState = ELoadState.Loaded
         });
       }, () => {
         this.audioInfo.duration = this.audioPlayer.audio.duration
@@ -326,8 +334,8 @@ export default {
       })
     },
     togglePlay() {
-      if (!this.loaded) {
-        Toast.show("请先加载音乐！");
+      if (this.loadState != ELoadState.Loaded) {
+        this.$toast("请先加载音乐！");
         return;
       }
       if (this.setting.playing) {
@@ -402,9 +410,9 @@ export default {
       this.updateDetune()
     },
     addMark(text = "标记", timeTick = null, overwrite = true) {
-      if (!this.loaded) {
-          Toast.show("请先加载音乐！");
-          return;
+      if (this.loadState != ELoadState.Loaded) {
+        this.$toast("请先加载音乐！");
+        return;
       }
 
       timeTick = timeTick ? parseFloat(timeTick) : this.audioPlayer.audio.currentTime
@@ -422,7 +430,7 @@ export default {
     },
     getMarkStyle(mark) {
       let style = {}
-      if (this.loaded) {
+      if (this.loadState == ELoadState.Loaded) {
           let percentage = (mark.tick / this.audioInfo.duration) * 100;
           percentage = Math.max(0, Math.min(100, percentage)); // 限制范围
           let left = `${percentage}%`
@@ -469,8 +477,8 @@ export default {
       this.markContext.mark = mark
       this.markContext.mouseIn = false
       this.markContext.focused = true
-      let offset = $(e.currentTarget).offset()
-      let width = $(e.currentTarget).width()
+      let offset = getPos(e.currentTarget).offset()
+      let width = e.currentTarget.clientWidth
       this.markContext.style = {
         left: `${offset.left + width / 2}px`,
         top: `${offset.top - 10}px`,
@@ -525,7 +533,7 @@ export default {
       this.$refs.progressSliderZone.scrollLeft = pos
     },
     getTickByCursor(e){
-      if (this.loaded){
+      if (this.loadState != ELoadState.Loaded){
         let x
         if (e.pageX) { 
             x = e.pageX; 
@@ -690,7 +698,7 @@ let isMarkContextShow = false;
 //     if (e.which == 1){ // 左键按下
 //         isMarkDragging = true;
 //         if (e.ctrlKey){ // 复制模式
-//             //Toast.show("复制");
+//             //this.$toast("复制");
 //             isCopyingMark = true;
 //             $markDrag = addMark($(this).text(), $(this).attr("data-tick"), false);
 //         }
@@ -774,12 +782,12 @@ let isMarkContextShow = false;
 //     if (sightFollow){
 //         $("#audio_follow_text").text("跟随开");
 //         // 提示
-//         Toast.show("视角跟随进度条 - 开启");
+//         this.$toast("视角跟随进度条 - 开启");
 //     }
 //     else{
 //         $("#audio_follow_text").text("跟随关");
 //         // 提示
-//         Toast.show("视角跟随进度条 - 关闭");
+//         this.$toast("视角跟随进度条 - 关闭");
 //     }
 // }
 </script>

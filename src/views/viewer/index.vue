@@ -1,8 +1,10 @@
 <template>
   <div id="viewer" :env="env" :style="globalCssVar">
-    <div id="cover">
-      <div>{{ loadStateString }}</div>
-    </div>
+    <transition name="trans_fade_out">
+      <div id="cover" v-show="showLoadCover">
+        <div>{{ loadStateString }}</div>
+      </div>
+    </transition>
 
     <div id="tools_sheet_control" class="tools_block" v-if="tools.sheetControl.enable">
       <div id="scale_block">
@@ -36,7 +38,7 @@
     <Chord id="tip_chord" v-if="env == 'pc' && tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" />
 
     <div id="tools_player" class="tools_block" v-if="tools.player.enable">
-      <transition name="fade">
+      <transition name="trans_fade_out">
         <div id="load_cover" v-show="showPlayerLoadCover">
           <div>{{ toolsPlayerLoadingText }}</div>
         </div>
@@ -83,8 +85,6 @@
 </template>
 
 <script type="module">
-
-import $ from "jquery";
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
 import WebChordManager from "@/utils/webChordManager.js";
@@ -199,6 +199,9 @@ export default {
         default: return "未知状态";
       }
     },
+    showLoadCover() {
+      return this.load.state != ELoadState.Loaded;
+    },
     toolsPlayerLoadingText: function () {
       switch (this.tools.player.loadState) {
         case ELoadState.Loading: return "加载中...";
@@ -243,7 +246,6 @@ export default {
       this.sheetInfo.sheetTree = rootNode
       this.sheetInfo.originalSheetKey = rootNode.sheetKey
       this.load.state = ELoadState.Loaded
-      this.hideCover()
     }).catch((e) => {
       this.load.state = ELoadState.Failed
       console.error("曲谱获取失败：", e)
@@ -261,9 +263,6 @@ export default {
     } 
   },
   methods: {
-    hideCover() {
-      $("#cover").fadeOut(1000)
-    },
     changeScale() {
       let scale = parseFloat(this.tools.sheetControl.scale);
       let defaultFontSize, defaultTitleFontSize, unit
@@ -602,7 +601,7 @@ html, body {
 
 #tip_chord {
   position: fixed;
-  right: 40px;
+  right: 80px;
   top: 30px;
   height: 200px;
   width: 150px;
@@ -690,17 +689,15 @@ html, body {
 }
 </style>
 
-<style>
-.fade-enter{
+<style scoped>
+.trans_fade_out-enter-from, 
+.trans_fade_out-leave-to{
 	opacity: 0;
 }
-.fade-enter-active{
+.trans_fade_out-enter-active{
 	transition: opacity 0.1s;
 }
-.fade-leave-to{
-	opacity: 0;
-}
-.fade-leave-active{
+.trans_fade_out-leave-active{
 	transition: opacity 1s;
 }
 </style>

@@ -107,7 +107,6 @@
 </template>
 
 <script>
-import $ from 'jquery'
 import WebChordManager from "@/utils/webChordManager.js";
 import Chord from "@/components/chord/index.vue";
 import { clone, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
@@ -270,7 +269,7 @@ export default {
       if (!this._isDraggingChord) return;
 
       let [x, y] = getMouseOrTouchClient(e);
-      let $e = $("#chord_sort_drag_mark")
+      let $e = "#chord_sort_drag_mark"
       $e.css({
         left: x,
         top: y

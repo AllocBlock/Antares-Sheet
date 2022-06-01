@@ -101,8 +101,8 @@
       </div>
     </div>
 
-    <div id="drag_mark" v-show="dragChord.is">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
-    <div id="temp_tip">{{editorMode.tip}}</div>
+    <div id="drag_mark" v-show="dragChord.is" ref="dragMark">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
+    <div id="temp_tip" @click="$toast('wow', 3)">{{editorMode.tip}}</div>
     <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
       <div id="raw_lyric_container">
         <div id="raw_lyric_title">在下方输入歌词</div>
@@ -127,7 +127,6 @@
 </template>
 
 <script>
-import $ from "jquery";
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
@@ -147,6 +146,7 @@ import { defineAsyncComponent } from 'vue'
 import HotKey from "@/utils/hotKey.js";
 
 import { Editor, EditorAction } from "./editor.js";
+import { setPos } from "@/utils/common.js";
 
 let gThis = null
 let g_ChordManager = new WebChordManager();
@@ -400,12 +400,11 @@ export default {
   },
   mounted() {
     let that = this
-    this.$dragMark = $("#drag_mark")
 
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
       .then((res) => {
-        this.loadSheet(res)
+        that.loadSheet(res)
       })
       .catch((e) => {
         console.error("加载失败", e);
@@ -559,10 +558,7 @@ export default {
       if (!this.dragChord.is) return
 
       let [x, y] = getMouseOrTouchClient(e);
-      this.$dragMark.css({
-        left: x,
-        top: y
-      })
+      setPos(this.$refs.dragMark, x, y)
     },
     onCursorUp() {
       if (this.dragChord.is) {

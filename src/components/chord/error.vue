@@ -3,8 +3,6 @@
 </template>
 
 <script>
-import $ from 'jquery'
-
 export default {
   name: "ChordError",
   data() {
@@ -17,8 +15,8 @@ export default {
   },
   methods: {
     updateFontSize() {
-      let $e = $(this.$refs['error'])
-      let MinEdge = Math.min($e.width(), $e.height())
+      let e = this.$refs['error']
+      let MinEdge = Math.min(e.clientWidth, e.clientHeight)
       this.fontSize = MinEdge * 0.8
     }
   }

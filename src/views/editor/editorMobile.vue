@@ -116,7 +116,6 @@
 </template>
 
 <script>
-import $ from "jquery";
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
@@ -381,7 +380,7 @@ const Editor = {
         let $children = $e.children();
         let str = "{";
         $children.each(function () {
-          str += that.elementToFileStr($(this));
+          str += that.elementToFileStr(this);
         });
         str += "}";
         return str;
@@ -711,7 +710,7 @@ export default {
       this.layout.vertRatio = 1.0
     }
 
-    this.$dragMark = $("#drag_mark")
+    this.$dragMark = "#drag_mark"
 
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
