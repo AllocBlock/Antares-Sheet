@@ -60,7 +60,7 @@
       </div>
       <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '20' : '0'}%; position: relative;`">
         <div class="flex_center" v-show="!layout.showAudioPlayer" id="playerOpenTag" @click="layout.showAudioPlayer = true">打开音乐播放器</div>
-        <AudioPlayer v-show="layout.showAudioPlayer" @close="layout.showAudioPlayer = false"/>
+        <AudioPlayer v-show="layout.showAudioPlayer" @close="layout.showAudioPlayer = false" v-model:disableHotkey="disablePlayerHotkey"/>
       </div>
     </div>
 
@@ -393,6 +393,11 @@ export default {
         showAudioPlayer: false
       },
     };
+  },
+  computed: {
+    disablePlayerHotkey() {
+      return this.rawLyricPanel.show;
+    }
   },
   created() {
     gThis = this

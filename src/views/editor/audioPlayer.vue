@@ -212,6 +212,12 @@ export default {
       }
     };
   },
+  props: {
+    disableHotkey: {
+      type: Boolean,
+      default: false,
+    }
+  },
   computed: {
     showHintCover() {
       return this.loadState != ELoadState.Loaded
@@ -225,8 +231,8 @@ export default {
       }
       return "未知错误";
     },
-    disableHotkey() {
-      return this.markContext.show
+    enableHotkey() {
+      return !this.markContext.show && !this.disableHotkey
     }
   },
   created() {
@@ -240,12 +246,12 @@ export default {
     function hotkeySwitcher(callback, preventDefault = false) {
       return (e) => {
         if (preventDefault) e.preventDefault()
-        if (that.disableHotkey) return;
+        if (!that.enableHotkey) return;
         callback(e)
       }
     }
 
-    HotKey.addListener(" ", false, false, false, hotkeySwitcher(() => this.togglePlay(), true))
+    HotKey.addListener(" ", false, false, false, hotkeySwitcher(() => this.togglePlay()))
     HotKey.addListener("w", false, false, false, hotkeySwitcher(() => this.addMark()))
     HotKey.addListener("q", false, false, false, hotkeySwitcher(() => this.jumpToPrevMark()))
     HotKey.addListener("e", false, false, false, hotkeySwitcher(() => this.jumpToNextMark()))
