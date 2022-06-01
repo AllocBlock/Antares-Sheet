@@ -251,7 +251,10 @@ export default {
       }
     }
 
-    HotKey.addListener(" ", false, false, false, hotkeySwitcher(() => this.togglePlay()))
+    HotKey.addListener(" ", false, false, false, hotkeySwitcher((e) => {
+      e.preventDefault()
+      this.togglePlay()
+    }))
     HotKey.addListener("w", false, false, false, hotkeySwitcher(() => this.addMark()))
     HotKey.addListener("q", false, false, false, hotkeySwitcher(() => this.jumpToPrevMark()))
     HotKey.addListener("e", false, false, false, hotkeySwitcher(() => this.jumpToNextMark()))
