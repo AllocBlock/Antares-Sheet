@@ -93,7 +93,7 @@ export default class WebMetronome {
     this.state.onBeat = 0
     for (let source of this.onPlayingSources)
       source.stop(this.audioContext.currentTime)
-    this.onPlayingSources = []
+    this.onPlayingSources.clear()
   }
 
   _recordNextBeat() {
