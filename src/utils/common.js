@@ -23,3 +23,13 @@ export function setPos(element, left, top) {
   // update pos by vue is too slow, so use jquery to update directly
   $(element).css({ left, top })
 }
+
+export function getRelativePos(element, pageX, pageY) {
+  let $e = $(element)
+	let left = pageX - $e.offset().left;
+	let top = pageY - $e.offset().top;
+
+  return {
+    left, top
+  }
+}

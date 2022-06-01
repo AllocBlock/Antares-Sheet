@@ -78,7 +78,10 @@
         <img src="@/assets/icons/close.svg" type="image/svg+xml" />
       </div>
     </div>
-    <div id="audio_slider_zone" ref="progressSliderZone" @scroll="onScrollProgressSlider">
+    <div id="audio_slider_zone" ref="progressSliderZone" 
+      @scroll="onScrollProgressSlider"
+      @dblclick="onDblclickProgressSlider"
+    >
       <div class="audio_slider_blank" :style="`width: ${progressSlider.padding}px`"></div>
       <div id="audio_slider_zone_scale" class="flex_center" ref="progressSlider"
         :style="`width: ${progressSlider.scale * 100}%`"
@@ -96,7 +99,7 @@
           @change="onChangeProgressSlider()"
         />
         <div id="audio_mark_table">
-          <div class="audio_mark" :style="getMarkStyle(mark)" v-for="mark in marks" :key="mark" @contextmenu.prevent="onContextMark($event, mark)">
+          <div class="audio_mark" :style="getMarkStyle(mark)" v-for="(mark, i) in marks" :key="mark" @contextmenu.prevent="onContextMark($event, mark)" @mousedown="onMarkMouseDown($event, i)">
             <div class="audio_mark-name flex_center">{{mark.text}}</div>
             <div class="audio_mark-pin"></div>
           </div>
@@ -119,24 +122,26 @@
         <div id="slider_length">{{ tickToTimeStr(audioInfo.duration) }}</div>
       </div>
     </div>
-  </div>
-  
-  <div id="mark_context" v-show="markContext.show" :style="markContext.style" @mouseenter="onMarkContextMouseenter" @mouseleave="onMarkContextMouseleave">
-    <div id="mark_context_div">
-      <div id="mark_context_name_zone" class="flex_center">
-        <input type="text" id="mark_context_name" v-model="markContext.mark.text" maxlength="10" ref="markContextInput" @blur="onMarkContextBlur"/>
+
+    <div id="mark_context" v-show="markContext.show" :style="markContext.style" @mouseenter="onMarkContextMouseenter" @mouseleave="onMarkContextMouseleave">
+      <div id="mark_context_div">
+        <div id="mark_context_name_zone" class="flex_center">
+          <input type="text" id="mark_context_name" v-model="markContext.mark.text" maxlength="10" ref="markContextInput" @blur="onMarkContextBlur" @keydown="onMarkContextKeydown"/>
+        </div>
+        <div id="mark_context_locate" class="flex_center" @click="jumpToMark(markContext.mark); markContext.show = false">定位到这里</div>
+        <div id="mark_context_delete" class="flex_center" @click="removeMark(markContext.mark); markContext.show = false">删除</div>
       </div>
-      <div id="mark_context_locate" class="flex_center" @click="jumpToMark(markContext.mark); markContext.show = false">定位到这里</div>
-      <div id="mark_context_delete" class="flex_center" @click="removeMark(markContext.mark); markContext.show = false">删除</div>
     </div>
   </div>
+  
+  
 </template>
 
 <script>
 import WebAudioPlayer from "@/utils/webAudioPlayer.js";
 import HotKey from "@/utils/hotKey.js";
-import { getEnv } from "@/utils/webCommon.js";
-import { ELoadState, getPos, setPos } from "@/utils/common.js"
+import { getEnv, clone } from "@/utils/webCommon.js";
+import { ELoadState, getPos, getRelativePos } from "@/utils/common.js"
 
 const PlaybackSpeedLevels = {
   1: 0.5,
@@ -163,6 +168,7 @@ function base64ToArrayBuffer(base64) {
 
 export default {
   name: "SheetEditorAudioPlayer",
+  emits: [ "close" ],
   data() {
     return {
       loading: false,
@@ -180,7 +186,7 @@ export default {
         speed: 1.0,
         volume: 0.5,
         mute: false,
-        follow: false
+        follow: false,
       },
       timer: {
         curTick: null
@@ -199,14 +205,12 @@ export default {
         mark: {
           text: '',
         }
+      },
+      markDragState: {
+        isDragging: false,
+        draggingMark: null,
       }
     };
-  },
-  props: {
-    show: {
-      type: Boolean,
-      required: true
-    },
   },
   computed: {
     showHintCover() {
@@ -220,24 +224,36 @@ export default {
         case ELoadState.Loading: return "加载中...";
       }
       return "未知错误";
+    },
+    disableHotkey() {
+      return this.markContext.show
     }
   },
   created() {
+    let that = this
+
     console.log("Loading [Audio Player]")
     this.audioPlayer = new WebAudioPlayer
     document.addEventListener("mouseup", this.onMouseUp)
-    HotKey.addListener(" ", false, false, false, (e) => {
-      e.preventDefault()
-      this.togglePlay()
-    })
-    HotKey.addListener("w", false, false, false, () => this.addMark())
-    HotKey.addListener("q", false, false, false, () => this.jumpToPrevMark())
-    HotKey.addListener("e", false, false, false, () => this.jumpToNextMark())
+    document.addEventListener("mousemove", this.onMouseMove)
+
+    function hotkeySwitcher(callback, preventDefault = false) {
+      return (e) => {
+        if (preventDefault) e.preventDefault()
+        if (that.disableHotkey) return;
+        callback(e)
+      }
+    }
+
+    HotKey.addListener(" ", false, false, false, hotkeySwitcher(() => this.togglePlay(), true))
+    HotKey.addListener("w", false, false, false, hotkeySwitcher(() => this.addMark()))
+    HotKey.addListener("q", false, false, false, hotkeySwitcher(() => this.jumpToPrevMark()))
+    HotKey.addListener("e", false, false, false, hotkeySwitcher(() => this.jumpToNextMark()))
   },
   methods: {
     getEnv,
     close() {
-      this.$emit("update:show", false)
+      this.$emit("close")
     },
     tickToTimeStr(tick) {
       let second = Math.floor(tick); // 取整
@@ -323,7 +339,7 @@ export default {
       this.loadState = ELoadState.Loading;
       this.audioPlayer.load(file, (data) => {
         let base64 = data.replace(/.*base64,/, ""); // DataUrl转Base64
-        drawWaveform(this.$refs.audioWaveCanvas, base64ToArrayBuffer(base64), () => {
+        this.drawWaveform(this.$refs.audioWaveCanvas, base64ToArrayBuffer(base64), () => {
           this.loadState = ELoadState.Loaded
         });
       }, () => {
@@ -380,9 +396,6 @@ export default {
     },
     onProgressSliderMouseDown() {
       this.progressSlider.dragging = true
-    },
-    onMouseUp() {
-      this.progressSlider.dragging = false
     },
     updateSpeed() {
       let speedLevel = parseInt(this.setting.speedLevel)
@@ -477,7 +490,7 @@ export default {
       this.markContext.mark = mark
       this.markContext.mouseIn = false
       this.markContext.focused = true
-      let offset = getPos(e.currentTarget).offset()
+      let offset = getPos(e.currentTarget)
       let width = e.currentTarget.clientWidth
       this.markContext.style = {
         left: `${offset.left + width / 2}px`,
@@ -490,6 +503,11 @@ export default {
     onMarkContextBlur() {
       this.markContext.focused = false
       if (!this.markContext.mouseIn) {
+        this.markContext.show = false
+      }
+    },
+    onMarkContextKeydown(e) {
+      if (e.key == "Enter") {
         this.markContext.show = false
       }
     },
@@ -526,6 +544,13 @@ export default {
     onScrollProgressSlider(e) {
       // console.log(e)
     },
+    onDblclickProgressSlider(e) {
+      // 双击播放
+      if (this.loadState == ELoadState.Loaded && !this.setting.playing){
+        this.resume();
+      }
+      e.preventDefault();
+    },
     getProgressSliderPos() {
       return this.$refs.progressSliderZone.scrollLeft
     },
@@ -533,70 +558,108 @@ export default {
       this.$refs.progressSliderZone.scrollLeft = pos
     },
     getTickByCursor(e){
-      if (this.loadState != ELoadState.Loaded){
-        let x
-        if (e.pageX) { 
-            x = e.pageX; 
-        } 
-        else { 
-            x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft; 
-        }
-        const padding = this.progressSlider.padding
-        let originalPosX = x + this.getProgressSliderPos();
-        let originalPercentage = (originalPosX - padding) / this.$refs.progressSlider.clientWidth
-        let tick = originalPercentage * this.audioInfo.duration;
+      if (this.loadState == ELoadState.Loaded){
+        const left = getRelativePos(this.$refs.progressSlider, e.pageX, e.pageY).left
+        const percentage = left / this.$refs.progressSlider.clientWidth
+        let tick = percentage * this.audioInfo.duration;
         tick = Math.max(0, Math.min(this.audioInfo.duration, tick)); // 范围限制
         return tick;
       }
       return -1;
     },
     followTickMark(tick, follow = "none"){
-        const padding = this.progressSlider.padding
-        const waveWidth = this.$refs.progressSlider.clientWidth
-        const sightWidth = this.$refs.progressSliderZone.clientWidth
-        const sightMin = this.getProgressSliderPos()
-        const sightMax = sightMin + sightWidth
-        const tickPos = padding + tick / this.audioInfo.duration * waveWidth;
-        const margin = 20
-        let targetPos = null
-        switch(follow){
-            case "none":{ // 超出范围则平移到可以看见为止
-                if (tickPos < sightMin)
-                  targetPos = tickPos - margin
-                else if (tickPos > sightMax)
-                  targetPos = tickPos - sightWidth + margin
-                break;
-            }
-            case "left":{ // 固定在左侧
-                targetPos = tickPos - margin
-                break;
-            }
-            case "right":{ // 固定在右侧
-                targetPos = tickPos - sightWidth + margin
-                break;
-            }
-            case "center":{ // 固定在中心
-                targetPos = tickPos - sightWidth / 2
-                break;
-            }
-            case "inleft":{ // 保证在屏幕内，左侧半边，到右侧时则强制居中
-                if (tickPos >= sightMin + sightWidth / 2)
-                  targetPos = tickPos - sightWidth / 2
-                else if (tickPos < sightMin)
-                  targetPos = tickPos - margin
-                break;
-            }
-            // case "switchpage":{
-            //     break;
-            // }
-            default:{
-                throw "follow参数错误！";
-                break;
-            }
-        } 
-        if (targetPos != null)
-          this.setProgressSliderPos(targetPos)
-    }
+      const padding = this.progressSlider.padding
+      const waveWidth = this.$refs.progressSlider.clientWidth
+      const sightWidth = this.$refs.progressSliderZone.clientWidth
+      const sightMin = this.getProgressSliderPos()
+      const sightMax = sightMin + sightWidth
+      const tickPos = padding + tick / this.audioInfo.duration * waveWidth;
+      const margin = 20
+      let targetPos = null
+      switch(follow){
+        case "none":{ // 超出范围则平移到可以看见为止
+            if (tickPos < sightMin)
+              targetPos = tickPos - margin
+            else if (tickPos > sightMax)
+              targetPos = tickPos - sightWidth + margin
+            break;
+        }
+        case "left":{ // 固定在左侧
+            targetPos = tickPos - margin
+            break;
+        }
+        case "right":{ // 固定在右侧
+            targetPos = tickPos - sightWidth + margin
+            break;
+        }
+        case "center":{ // 固定在中心
+            targetPos = tickPos - sightWidth / 2
+            break;
+        }
+        case "inleft":{ // 保证在屏幕内，左侧半边，到右侧时则强制居中
+            if (tickPos >= sightMin + sightWidth / 2)
+              targetPos = tickPos - sightWidth / 2
+            else if (tickPos < sightMin)
+              targetPos = tickPos - margin
+            break;
+        }
+        // case "switchpage":{
+        //     break;
+        // }
+        default:{
+            throw "follow参数错误！";
+            break;
+        }
+      } 
+      if (targetPos != null)
+        this.setProgressSliderPos(targetPos)
+    },
+    
+    /* 事件：鼠标按下标记 */
+    onMarkMouseDown(e, index) {
+      if (e.which == 1){ // 左键按下
+        this.markDragState.isDragging = true;
+        let curMark = this.marks[index]
+        if (e.ctrlKey){ // 复制模式
+          let newMark = clone(curMark)
+          this.marks.push(newMark)
+          this.markDragState.draggingMark = newMark
+        }
+        else{
+          this.markDragState.draggingMark = curMark
+        }
+      }
+    },
+
+    /* 事件：鼠标松开 */
+    onMouseUp(e) {
+      if (this.markDragState.isDragging && e.which == 1) { // 左键松开
+        // 检查有无重叠，覆盖重叠的
+        let draggingMark = this.markDragState.draggingMark
+        let duplicateIndex = this.marks.findIndex((mark) => {
+          return mark != draggingMark 
+            && mark.text == draggingMark.text 
+            && Math.abs(mark.tick - draggingMark.tick) < 0.001
+        })
+        if (duplicateIndex >= 0) {
+          console.warn("覆盖原有标记")
+          this.marks.splice(this.marks.indexOf(draggingMark), 1)
+          this.marks[duplicateIndex] = draggingMark
+        }
+      }
+      this.markDragState.isDragging = false
+      this.markDragState.draggingMark = null
+
+      this.progressSlider.dragging = false
+    },
+
+    /* 事件：鼠标移动 */
+    onMouseMove(e){
+      if (this.markDragState.isDragging){ // 有正在拖拽的标记
+        let tick = this.getTickByCursor(e);
+        this.markDragState.draggingMark.tick = tick
+      }
+    },
   },
   watch: {
     "setting.volume": function () {
@@ -609,187 +672,6 @@ export default {
     }
   }
 };
-
-let music = null
-let currentScale = 1.0;
-let musicDuration = null;
-let isMusicSliderMoving = false;
-let isPlayBeforeMoving = false;
-
-let isMarkContextShow = false;
-
-//     // 美化进度条的滚动条
-//     $("#audio_slider_zone").niceScroll({
-//         cursorcolor: "#ffddd3",// 颜色
-//         cursoropacitymax: 0.8, // 透明度
-//         cursorwidth: "10px", // 宽度
-//         cursorborder: "0", // 边框
-//         cursorborderradius: "10px",// 圆角
-//         autohidemode: true // 自动隐藏滚动条
-//     });
-
-//     // 播放进度条，滚轮缩放事件
-//     $('#audio_slider_zone').scrollLeft(100); // 移动滚动条到中间
-//     $("#audio_slider_zone").on('mousewheel DOMMouseScroll', function(event, delta) {
-//         if (this.loaded && event.ctrlKey){
-//             //console.log(event);
-//             let normalWidth = $("#part_music").width();
-//             let newScale = currentScale *(1 + delta/20);
-//             newScale = Math.max(1, Math.min(musicDuration / 10, newScale));
-
-//             $("#audio_slider_zone_scale").css("width", newScale * normalWidth);
-
-//             // 更新滚动条！
-//             // 进度条的滚动条
-//             let $sliderZone = $("#audio_slider_zone");
-//             $sliderZone.getNiceScroll().resize();
-//             // 以鼠标位置为中心缩放..
-//             let marginLeft = parseInt($("#audio_slider_zone").css("margin-left").replace("px", ""));
-//             let padding = 100;
-//             let cursorX = event.pageX - marginLeft; // 要减去margin
-
-//             let newLeft = (-padding + $sliderZone.scrollLeft() + cursorX) / currentScale * newScale - cursorX + padding;
-//             $sliderZone.scrollLeft(newLeft);
-//             currentScale = newScale;
-
-//         }
-//         event.preventDefault(); // 接管
-//         return false;
-//     });
-
-//     // 播放进度条，双击事件
-//     $("#audio_slider_zone").dblclick(function() {
-//         // 双击播放
-//         if (this.loaded && music.paused){
-//             resumeMusic();
-//         }
-//         event.preventDefault(); // 接管
-//         return false;
-//     });
-
-//     // 标签右键菜单事件
-//     $contextMenu = $("#mark_context");
-
-//     // 标签输入框失去焦点
-//     $("#mark_context_name").blur(function(){ // 失去焦点则隐藏菜单
-//         hideMarkContext();
-//     });
-
-//     // 标签输入框键盘
-//     $("#mark_context_name").keydown(function(e){
-//         switch(e.which){
-//             case 13: { // 回车
-//                 $("#mark_context_name")[0].blur(); // 输入完成，自动失去焦点
-//                 break;
-//             }
-//         }
-//     });
-
-//     // :)
-//     console.log("哈喽！aloha~");
-// });
-
-// let isMarkDragging = false;
-// let isCopyingMark = false;
-// let $markDrag = null;
-// /* 事件：鼠标按下标记 */
-// function markMouseDown(e){
-//     //console.log("鼠标左键按下标记");
-//     if (e.which == 1){ // 左键按下
-//         isMarkDragging = true;
-//         if (e.ctrlKey){ // 复制模式
-//             //this.$toast("复制");
-//             isCopyingMark = true;
-//             $markDrag = addMark($(this).text(), $(this).attr("data-tick"), false);
-//         }
-//         else{
-//             $markDrag = $(this);
-//         }
-//     }
-// }
-// /* 事件：鼠标松开 */
-// $(document).mouseup(mouseUp);
-// function mouseUp(e){
-//     if (isMarkDragging && e.which == 1){ // 左键松开
-//         //console.log("鼠标左键松开");
-//         if (isCopyingMark){ // 复制模式
-//             // 检查有无重叠，覆盖重叠的（主要是针对点一下又松开的情况？
-//             $(".audio_mark").each(function(){
-//                 if ($(this)[0] != $markDrag[0] && $(this).attr("data-tick") == $markDrag.attr("data-tick")){ 
-//                     $(this).remove();
-//                 }
-//             })
-//             isCopyingMark = false;
-//         }
-//         isMarkDragging = false;
-//         $markDrag = null;
-
-//     }
-// }
-// /* 事件：鼠标移动 */
-// $(document).mousemove(mouseMove);
-// function mouseMove(e){
-//     if (isMarkDragging){ // 有正在拖拽的标记
-//         //console.log("鼠标拖拽");
-//         let tick = getTickByCursor(e.pageX);
-//         let left = getMarkLeftByTick($markDrag[0], tick);
-
-//         $markDrag.css("left", left);
-//         $markDrag.attr("data-tick", tick.toFixed(5)); // 标记所处的时间
-//     }
-// }
-
-// /* 由tick计算mark的left */
-// function getMarkLeftByTick(mark, tick){
-//     let $mark = $(mark);
-//     if (this.loaded){
-//         let markWidth = $mark.innerWidth();
-//         let percentage = (tick / musicDuration) * 100;
-//         percentage = Math.max(0, Math.min(100, percentage)); // 限制范围
-//         let offset = markWidth/2;
-//         let left = "calc({0}% - {1}px".format(percentage, offset);
-//         return left;
-//     }
-//     return -1;
-// }
-
-// let this.loading = false;
-
-// let sightFollow = false;
-// /* 轮询：根据歌曲进度更新进度条 */
-// function updateMusicSliderAuto(){
-//     if (music != null && !music.paused && !isMusicSliderMoving){ // 音乐已加载，正在播放且没有拖拽进度条
-//         //console.log("音乐更新进度条");
-//         let cTime = music.currentTime;
-//         // 更新进度条
-//         $("#slider_music").val(cTime);
-//         //$("#slider_music").css('background', bgRaw.format(sliderFrontColor, (cTime/musicDuration)*100));
-//         // 更新文本
-//         $("#slider_tick").text(tickToText(cTime));
-
-//         if (sightFollow){
-//             keepTickInSight(cTime, "inleft");
-//         }
-//     }
-// }
-
-// setInterval(updateMusicSliderAuto, musicSliderUpdateTime);
-
-// /* 切换是否跟随的按钮 */
-// function updateFollowSwitch(switchButton){
-//     //console.log($(switchButton).is(":checked"));
-//     sightFollow = $(switchButton).is(":checked");
-//     if (sightFollow){
-//         $("#audio_follow_text").text("跟随开");
-//         // 提示
-//         this.$toast("视角跟随进度条 - 开启");
-//     }
-//     else{
-//         $("#audio_follow_text").text("跟随关");
-//         // 提示
-//         this.$toast("视角跟随进度条 - 关闭");
-//     }
-// }
 </script>
 
 <style scoped src="./common.css">
@@ -955,7 +837,7 @@ a:hover {
   opacity: 0.9;
 }
 #mark_context {
-  position: absolute;
+  position: fixed;
   width: 120px;
   z-index: 8;
   font-size: 14px;
