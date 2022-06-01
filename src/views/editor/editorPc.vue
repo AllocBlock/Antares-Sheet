@@ -436,7 +436,6 @@ export default {
     loadSheet(sheetText) {
       let rootNode = reactive(WebSheetParser.parse(sheetText));
       this.formatSheetTree(rootNode);
-      console.log(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
       }

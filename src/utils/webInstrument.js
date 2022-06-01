@@ -260,6 +260,24 @@ class WebInstrument {
             console.log("乐器音源还未加载完成")
     }
 
+    getFret(chord, string) {
+        if (chord.disabledStrings.includes(string)) // 禁用弦不弹
+            return null;
+
+        let resFret = 0
+
+        for(let fingering of chord.fingerings) { // 根据指法找到品位
+            let fret = fingering.fret
+            let startString = fingering.startString
+            let endString = fingering.endString ? fingering.endString : startString
+
+            if (startString <= string && string <= endString)
+                resFret = Math.max(fret, fret)
+        }
+
+        return resFret
+    }
+
     playString(string, fret, volume = 1.0, delay = 0.0) {
         if (this.type != "string") throw "乐器非有弦乐器，不能调用该函数";
         this.instrument.playString(this.audioSource, string, fret, volume, delay)
@@ -278,10 +296,10 @@ const g_ToneNameMap = {
 
 function  _toneToIndex(tone) { // A0 = 0, C4 = 52
     let res = tone.name.match(/[^b#]+/)
-    if (!res) throw "未知错误";
+    if (!res) throw "未知错误：匹配音调失败";
     let keyWithoutDecoration = res[0]
     let remainIndex = g_ToneNameMap[keyWithoutDecoration]
-    if (remainIndex == undefined) throw "未知错误";
+    if (remainIndex == undefined) throw "未知错误：匹配音调失败";
 
     let hasSharp = false, hasFlat = false
     res = tone.name.match(/#/)
@@ -294,7 +312,7 @@ function  _toneToIndex(tone) { // A0 = 0, C4 = 52
 
     let index = remainIndex + tone.octave * 12
 
-    if (isNaN(index)) throw "未知错误";
+    if (isNaN(index)) throw "未知错误：匹配音调失败";
 
     return index
 }
@@ -312,8 +330,7 @@ function _indexToTone(index) {
             name = "#" + key
         }
     }
-    
-    if (!name) throw "未知错误"
+    if (!name) throw "未知错误：获取音调失败"
 
     return {
         name: name,

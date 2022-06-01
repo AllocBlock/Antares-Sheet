@@ -98,7 +98,7 @@ import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
 
 let g_ChordManager = null
-let g_UkulelePlayer = null
+let g_Player = null
 
 export default {
   name: "SheetViewer",
@@ -141,7 +141,6 @@ export default {
         },
         chord: {
           click: (e, node) => {
-            console.log(node)
             this.playChord(g_ChordManager.getChord(node.chord))
           },
           mouseenter: (e, node) => {
@@ -231,7 +230,6 @@ export default {
     this.load.params.sheetName = sheetName
     get(`sheets/${sheetName}.sheet`).then((res) => {
       let rootNode = WebSheetParser.parse(res)
-      console.log(rootNode)
       if (!rootNode) {
         this.load.state = ELoadState.Failed
         throw "曲谱解析失败！"
@@ -324,10 +322,25 @@ export default {
     },
     playChord(chord) {
       const bpm = this.$refs['metronome'].getBpm() ?? 120;
-      let volume = 0.5;
+      let volume = 1.0;
+
+      // play chord
       let duration = (1 / bpm) * 60 * 4;
-      if (g_UkulelePlayer && g_UkulelePlayer.audioSource.loaded)
-        g_UkulelePlayer.playChord(chord, volume, duration);
+      if (g_Player && g_Player.audioSource.loaded)
+        g_Player.playChord(chord, volume, duration);
+
+      // FIXME: cant record one string more than one otherwise old record will be replaced
+      // play with rhythm
+      // let rhythm = [[1, 2], [3], [1, 2], [3], [1, 2], [3], [1, 2], [3]]
+      // let frets = []
+      // for (let i = 0; i < chord.stringNum; ++i)
+      //   frets.push(g_Player.getFret(chord, i + 1))
+
+      // const perNoteTime = (1 / bpm) * 60 * (4 / rhythm.length) // 均匀分布
+      // rhythm.forEach((note, i) => {
+      //   for (let string of note) 
+      //     g_Player.playString(string, frets[string - 1], volume / chord.stringNum, i * perNoteTime)
+      // })
     },
     shiftKey(offset) {
       let curKey = this.sheetInfo.sheetKey;
@@ -385,7 +398,7 @@ export default {
       
       if (this.tools.player.instrument.update) {
         let callbacks = createCallbacks(curIndex);
-        g_UkulelePlayer = new WebInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
+        g_Player = new WebInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
         
         this.tools.player.instrument.update = false;
         curIndex++;
