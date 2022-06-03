@@ -1,6 +1,10 @@
 import { SheetNode, ENodeType } from "@/utils/sheetNode.js";
 import { reactive } from "vue";
 
+function _getInputText(tips, defaultText = "") {
+  return prompt(tips, defaultText);
+}
+
 export const Editor = {
   isChord(node) {
     return node
@@ -237,7 +241,7 @@ export const Editor = {
   // },
 
   insertChar($e, pos) {
-    let newChars = getInputText("插入文字");
+    let newChars = _getInputText("插入文字");
     if (newChars) {
       let chars = newChars.split("");
       for (let char of chars) {
@@ -247,7 +251,7 @@ export const Editor = {
   },
 
   insertInfo($e, pos) {
-    let text = getInputText("插入标记");
+    let text = _getInputText("插入标记");
     if (text) {
       this.insert($e, `<info>${text}</info>`, pos);
     }
@@ -551,5 +555,39 @@ export const EditorAction = {
     else {
       throw "类型错误，无法转换该节点为和弦节点"
     }
-  }
+  },
+
+  editContent(node) {
+    if (!node) throw "节点为空"
+
+    let newContent = _getInputText("标记内容", node.content);
+    if (!newContent) return;
+    switch (node.type) {
+      case ENodeType.Text: {
+        EditorAction.updateTextContent(node, newContent);
+        break;
+      }
+      case ENodeType.Mark: {
+        EditorAction.updateMarkContent(node, newContent);
+        break;
+      }
+      case ENodeType.Chord: {
+        EditorAction.updateChordContent(node, newContent);
+        break;
+      }
+      default: {
+        throw "未知的节点，无法编辑内容";
+        break;
+      }
+    }
+  },
+
+  highlightNode(node) {
+    node.style.opacity = 0.5
+  },
+
+  unhighlightNode(node) {
+    if (node && node.style && node.style.opacity !== undefined)
+      delete node.style.opacity
+  },
 };

@@ -11,7 +11,6 @@ import WebSheet from "@/components/webSheet/index.vue";
 import Metronome from "@/components/metronome/index.vue";
 import ChordManager from "@/utils/webChordManager.js";
 
-const g_ChordManager = new ChordManager();
 const g_SheetText = `
 $title 诺亚方舟
 $singer 五月天
@@ -78,7 +77,7 @@ export default {
     };
   },
   created() {
-    // this.chord = g_ChordManager.getChord("#Cm")
+    // this.chord = ChordManager.getChord("#Cm")
     this.chord = {
       name: "Fm",
       stringNum: 6,
