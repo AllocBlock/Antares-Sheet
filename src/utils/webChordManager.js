@@ -264,4 +264,4 @@ function _getNameByKeyIndex(mode) {
   return keyName
 }
 
-export default WebChordManager
+export default new WebChordManager

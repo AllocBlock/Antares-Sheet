@@ -13,7 +13,7 @@
         <div id="help_button">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
-          <ToolChord id="chord_tool" v-model:chords="attachedChords" @dragStart="onChordDragStart" />
+          <ToolChord id="chord_tool" v-model:chords="attachedChords" v-on="toolChordEvents" />
           <div id="chord_tool_edit_button" class="button" @click="openPanelChord">
             编辑和弦
           </div>
@@ -101,7 +101,7 @@
       </div>
     </div>
 
-    <div id="drag_mark" v-show="dragChord.is" ref="dragMark">{{dragChord.chord ? dragChord.chord.name : '错误'}}</div>
+    <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">{{dragChord.text}}</div>
     <div id="temp_tip" @click="$toast('wow', 3)">{{editorMode.tip}}</div>
     <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
       <div id="raw_lyric_container">
@@ -130,7 +130,7 @@
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
-import WebChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
 import WebSheetParser from "@/utils/webSheetParser";
@@ -143,181 +143,14 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
 import { defineAsyncComponent } from 'vue'
-import HotKey from "@/utils/hotKey.js";
+import EditorModeProgression from './editorModeProgression.js'
+import EditorModeDrag from './editorModeDrag.js'
+import EditorModeMixed from './editorModeMixed.js'
 
 import { Editor, EditorAction } from "./editor.js";
-import { setPos } from "@/utils/common.js";
 
-let gThis = null
-let g_ChordManager = new WebChordManager();
 let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator");
-
-function getInputText(tips, defaultText = "") {
-  return prompt(tips, defaultText);
-}
-
-// const g_EditEventModeDrag = {
-//   text: {
-//     click: (e, node) => {
-//       console.log("text", node);
-//     },
-//     dblclick: (e, node) => {
-//       gThis.editContent(node);
-//     },
-//     contextmenu: (e, node) => gThis.openContext(e, node),
-//     mouseenter: (e, node) => {
-//       if (!gThis.dragChord.is) return
-//       if (node == gThis.dragChord.chordNode) return
-//       gThis.highlightNode(node)
-//     },
-//   },
-//   chord: {
-//     click: (e, node) => {
-//       gThis.playChord(g_ChordManager.getChord(node.chord));
-//     },
-//     dblclick: (e, node) => {
-//       gThis.editAddUnderline(node);
-//     },
-//     contextmenu: (e, node) => gThis.openContext(e, node),
-//     mouseenter: (e, node) => {
-//       if (!gThis.dragChord.is) return
-//       if (node == gThis.dragChord.chordNode) return
-//       gThis.highlightNode(node)
-//     },
-//   },
-//   mark: {
-//     click: (e, node) => {
-//       console.log("mark", node);
-//     },
-//     dblclick: (e, node) => {
-//       gThis.editContent(node);
-//     },
-//     contextmenu: (e, node) => gThis.openContext(e, node),
-//   },
-//   newline: {
-//     contextmenu: (e, node) => gThis.openContext(e, node),
-//   },
-
-//   tip: `双击可以编辑文字/添加下划线\n按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n拖入保存的文件可以直接加载`
-// }
-
-let gCurOnNode = null
-const g_EditEventModeHotkey = {
-  tip: `【和弦级数模式】\n鼠标移动到文字上，按下1-7键修改和弦\n重复按同一个键可切换大小调\n按下~键可移除和弦\ntab键可在前方快速添加一个空格\nshift+tab在后方添加空格`,
-  componentEvents: {
-    text: {
-      click: (e, node) => {
-        console.log("text", node);
-      },
-      dblclick: (e, node) => {
-        gThis.editContent(node);
-      },
-      contextmenu: (e, node) => gThis.openContext(e, node),
-      mouseenter: (e, node) => {
-        gCurOnNode = node
-        if (!gThis.dragChord.is) return
-        if (node == gThis.dragChord.chordNode) return
-        gThis.highlightNode(node)
-      },
-      mouseleave: () => {
-        gCurOnNode = null
-      }
-    },
-    chord: {
-      click: (e, node) => {
-        gThis.playChord(g_ChordManager.getChord(node.chord));
-      },
-      dblclick: (e, node) => {
-        if (!e.shiftKey) {
-          gThis.editAddUnderline(node);
-        }
-        else if (Editor.hasUnderlineToNextChord(node)){
-          gThis.editRemoveUnderline(node);
-        }
-      },
-      contextmenu: (e, node) => gThis.openContext(e, node),
-      mouseenter: (e, node) => {
-        gCurOnNode = node
-        if (!gThis.dragChord.is) return
-        if (node == gThis.dragChord.chordNode) return
-        gThis.highlightNode(node)
-      },
-    },
-    mark: {
-      click: (e, node) => {
-        console.log("mark", node);
-      },
-      dblclick: (e, node) => {
-        gThis.editContent(node);
-      },
-      contextmenu: (e, node) => gThis.openContext(e, node),
-    },
-    newline: {
-      contextmenu: (e, node) => gThis.openContext(e, node),
-    },
-  },
-  documentEvents: {
-  },
-  init: function() {
-    const progressionList = [
-      [0, true], // distance to tonic, is major
-      [2, false],
-      [4, false],
-      [5, true],
-      [7, true],
-      [9, false],
-      [11, false],
-    ]
-
-    // 按下1-7应用对应级数的和弦
-    progressionList.forEach(function([shift, isMajor], i) {
-      const keyName = (i + 1).toString()
-      HotKey.addListener(keyName, false, false, false, (e, [shift, isMajor]) => {
-        if (!gCurOnNode) return
-        let chordName = g_ChordManager.shiftKey(gThis.sheetInfo.sheetKey, shift)
-        if (Editor.isChord(gCurOnNode)) {
-          if (g_ChordManager.getDistance(gCurOnNode.chord, chordName) == 0) { // 同级的和弦，再次按下则切换大小和弦
-            let isCurMajor = g_ChordManager.isMajor(gCurOnNode.chord)
-            isMajor = !isCurMajor
-          }
-        }
-
-        if (!isMajor) chordName += "m"
-        gCurOnNode = EditorAction.convertToChord(gCurOnNode, chordName)
-      }, [shift, isMajor])
-    })
-
-    // 按下~移除和弦
-    HotKey.addListener("`", false, false, false, (e) => {
-      if (!gCurOnNode) return
-
-      if (Editor.isChord(gCurOnNode)) {
-        gCurOnNode = EditorAction.convertToText(gCurOnNode)
-      }
-    })
-
-    // 按下tab快速在前方添加文本节点，而后可以快速添加和弦
-    HotKey.addListener("Tab", false, false, false, (e) => {
-      e.preventDefault()
-      if (!gCurOnNode) return
-      
-      let emptyNode = Editor.createTextNode(" ")
-      Editor.insertBefore(gCurOnNode, emptyNode)
-      gCurOnNode = emptyNode
-    })
-
-    // 按下shift+tab快速在后方添加
-    HotKey.addListener("Tab", false, true, false, (e) => {
-      e.preventDefault()
-      if (!gCurOnNode) return
-      
-      let emptyNode = Editor.createTextNode(" ")
-      Editor.insertAfter(gCurOnNode, emptyNode)
-      gCurOnNode = emptyNode
-    })
-  }
-}
 
 export default {
   name: "SheetEditorPc",
@@ -354,7 +187,7 @@ export default {
         originalSheetKey: "",
         sheetTree: reactive(new SheetNode(ENodeType.Root)),
       },
-      editorMode: g_EditEventModeHotkey,
+      editorMode: EditorModeMixed,
       player: {
         instrument: "Oscillator",
         bpm: 120,
@@ -377,11 +210,10 @@ export default {
         enableRemoveUnderline: false,
         enableRecoverChord: false,
       },
+      toolChordEvents: {},
       dragChord: {
-        is: false,
-        chord: {},
-        chordNode: null,
-        originalNode: null
+        isDragging: false,
+        text: '',
       },
       rawLyricPanel: {
         show: false,
@@ -400,8 +232,9 @@ export default {
     }
   },
   created() {
-    gThis = this
-    this.editorMode.init()
+    this.editorMode.init(this)
+    if (this.editorMode.toolChordEvents)
+      this.toolChordEvents = this.editorMode.toolChordEvents
   },
   mounted() {
     let that = this
@@ -416,8 +249,6 @@ export default {
       });
 
     document.addEventListener("click", () => this.closeContext());
-    document.addEventListener("mousemove", (e) => this.onCursorMove(e));
-    document.addEventListener("mouseup", () => this.onCursorUp());
   },
   methods: {
     getEnv,
@@ -453,7 +284,7 @@ export default {
       })
 
       this.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
-        g_ChordManager.getChord(chordName)
+        ChordManager.getChord(chordName)
       ) : [];
       console.log(this.sheetInfo.chords, this.attachedChords);
     },
@@ -494,38 +325,19 @@ export default {
     shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = g_ChordManager.shiftKey(node.chord, oldKey, newKey);
+          node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
 
       for (let i in this.attachedChords) {
         let chordName = this.attachedChords[i].name
-        let newChordName = g_ChordManager.shiftKey(chordName, oldKey, newKey);
-        this.attachedChords[i] = g_ChordManager.getChord(newChordName)
+        let newChordName = ChordManager.shiftKey(chordName, oldKey, newKey);
+        this.attachedChords[i] = ChordManager.getChord(newChordName)
       }
     },
     editContent(node = null) {
       node = node ?? this.contextMenu.node;
-      let newContent = getInputText("标记内容", node.content);
-      if (!newContent) return;
-      switch (node.type) {
-        case ENodeType.Text: {
-          EditorAction.updateTextContent(node, newContent);
-          break;
-        }
-        case ENodeType.Mark: {
-          EditorAction.updateMarkContent(node, newContent);
-          break;
-        }
-        case ENodeType.Chord: {
-          EditorAction.updateChordContent(node, newContent);
-          break;
-        }
-        default: {
-          throw "未知的节点，无法编辑内容";
-          break;
-        }
-      }
+      EditorAction.editContent(node)
     },
     editRemove(node = null) {
       node = node ?? this.contextMenu.node;
@@ -542,47 +354,6 @@ export default {
     editAddUnderline(node = null) {
       node = node ?? this.contextMenu.node;
       EditorAction.addUnderlineForChord(node);
-    },
-    highlightNode(node) {
-      if (this.dragChord.originalNode)
-        delete this.dragChord.originalNode.style.opacity
-      node.style.opacity = 0.5
-      this.dragChord.originalNode = node
-    },
-    onChordDragStart(e, chord) {
-      this.dragChord.is = true
-      this.dragChord.chord = chord
-      this.dragChord.chordNode = reactive(new SheetNode(ENodeType.Chord))
-      this.dragChord.chordNode.chord = chord.name
-      this.dragChord.originalNode = null
-        // e.preventDefault()
-      this.onCursorMove(e)
-    },
-    onCursorMove(e) {
-      if (!this.dragChord.is) return
-
-      let [x, y] = getMouseOrTouchClient(e);
-      setPos(this.$refs.dragMark, x, y)
-    },
-    onCursorUp() {
-      if (this.dragChord.is) {
-        if (this.dragChord.originalNode) {
-          const targetNode = this.dragChord.originalNode
-          let chordNode = this.dragChord.chordNode
-          if (targetNode.type == ENodeType.ChordPure) {
-            chordNode.type = targetNode.type
-            chordNode.content = ''
-          } else {
-            chordNode.type = ENodeType.Chord
-            chordNode.content = targetNode.content
-          }
-          Editor.replace(targetNode, chordNode)
-        }
-        this.dragChord.is = false
-        this.dragChord.chord = null
-        this.dragChord.chordNode = null
-        this.dragChord.originalNode = null
-      }
     },
     onChangeSheetKey(e) {
       let oldKey = this.sheetInfo.sheetKey

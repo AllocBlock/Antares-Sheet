@@ -107,11 +107,10 @@
 </template>
 
 <script>
-import WebChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/webChordManager.js";
 import Chord from "@/components/chord/index.vue";
 import { clone, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 
-let g_ChordManager = new WebChordManager();
 const g_RecommendChordInCMajor = {
   常用: ["C", "Dm", "Em", "F", "G", "Am", "E"],
   修饰音: ["C7", "G7", "E7", "Csus4", "Gsus4", "Gsus2"],
@@ -185,12 +184,12 @@ export default {
         for (let type in g_RecommendChordInCMajor) {
           let list = [];
           for (let chordName of g_RecommendChordInCMajor[type]) {
-            let newChordName = g_ChordManager.shiftKey(
+            let newChordName = ChordManager.shiftKey(
               chordName,
               "C",
               this.key
             );
-            let newChord = g_ChordManager.getChord(newChordName) ?? {name: newChordName};
+            let newChord = ChordManager.getChord(newChordName) ?? {name: newChordName};
             list.push(newChord);
           }
           recommendChords.push({
@@ -212,12 +211,12 @@ export default {
       text = text.replace(/\s/g, "");
 
       if (text != "") {
-        g_ChordManager.traverse((chord) => {
+        ChordManager.traverse((chord) => {
           let chordName = chord.name;
           if (text == chordName) {
             // 完全匹配，优先级最大
             searchResult.push({ chord, priority: 1 });
-          } else if (g_ChordManager.isAlias(text, chordName)) {
+          } else if (ChordManager.isAlias(text, chordName)) {
             // 别名
             searchResult.push({ chord, priority: 2 });
           } else if (

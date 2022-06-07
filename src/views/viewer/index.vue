@@ -89,7 +89,7 @@
 <script type="module">
 import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
-import WebChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import WebSheetParser from "@/utils/webSheetParser.js"
 import { ELoadState } from "@/utils/common.js"
@@ -100,7 +100,6 @@ import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
 import CapoSelector from "@/components/capoSelector.vue";
 
-let g_ChordManager = null
 let g_Player = null
 
 export default {
@@ -147,11 +146,11 @@ export default {
         },
         chord: {
           click: (e, node) => {
-            this.playChord(g_ChordManager.getChord(node.chord))
+            this.playChord(ChordManager.getChord(node.chord))
           },
           mouseenter: (e, node) => {
             this.tools.tipChord.show = true
-            this.tools.tipChord.chord = g_ChordManager.getChord(node.chord)
+            this.tools.tipChord.chord = ChordManager.getChord(node.chord)
           },
           mouseleave: (e, node) => {
             this.tools.tipChord.show = false
@@ -222,7 +221,6 @@ export default {
   },
   mounted() {
     // init global var
-    g_ChordManager = new WebChordManager
     this.loadPlayer()
 
     // setup
@@ -355,12 +353,12 @@ export default {
     },
     shiftKey(offset) {
       let curKey = this.sheetInfo.sheetKey;
-      let newKey = g_ChordManager.shiftKey(curKey, offset);
+      let newKey = ChordManager.shiftKey(curKey, offset);
       this.sheetInfo.sheetKey = newKey
 
       traverseNode(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = g_ChordManager.shiftKey(node.chord, offset)
+          node.chord = ChordManager.shiftKey(node.chord, offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
           node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.sheetKey);
         }

@@ -119,7 +119,7 @@
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
 import { WebInstrument } from "@/utils/webInstrument.js";
-import WebChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/webChordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
 import WebSheetParser from "@/utils/webSheetParser";
@@ -131,7 +131,6 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 import AudioPlayer from "./audioPlayer.vue";
 
-let g_ChordManager = new WebChordManager();
 let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator");
 
@@ -658,7 +657,7 @@ export default {
         },
         chord: {
           click: (e, node) => {
-            this.playChord(g_ChordManager.getChord(node.chord));
+            this.playChord(ChordManager.getChord(node.chord));
           },
           dblclick: (e, node) => {
             this.editAddUnderline(node);
@@ -734,7 +733,7 @@ export default {
         })
 
         this.attachedChords = this.sheetInfo.chords.map((chordName) =>
-          g_ChordManager.getChord(chordName)
+          ChordManager.getChord(chordName)
         );
         console.log(this.sheetInfo.chords, this.attachedChords);
       })
@@ -796,14 +795,14 @@ export default {
     shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = g_ChordManager.shiftKey(node.chord, oldKey, newKey);
+          node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
 
       for (let i in this.attachedChords) {
         let chordName = this.attachedChords[i].name
-        let newChordName = g_ChordManager.shiftKey(chordName, oldKey, newKey);
-        this.attachedChords[i] = g_ChordManager.getChord(newChordName)
+        let newChordName = ChordManager.shiftKey(chordName, oldKey, newKey);
+        this.attachedChords[i] = ChordManager.getChord(newChordName)
       }
     },
     editContent(node = null) {
@@ -932,7 +931,6 @@ export default {
 // $.fn.reverse = [].reverse;
 
 // let $g_Sheet = null
-// let g_ChordManager = new ChordManager
 // let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele")
 
 // let g_Editor = new Editor
