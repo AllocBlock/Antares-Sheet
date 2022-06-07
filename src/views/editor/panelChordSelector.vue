@@ -107,9 +107,9 @@
 </template>
 
 <script>
-import ChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/chordManager.js";
 import Chord from "@/components/chord/index.vue";
-import { clone, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
+import { clone, getMouseOrTouchClient, getEnv } from "@/utils/common.js";
 
 const g_RecommendChordInCMajor = {
   常用: ["C", "Dm", "Em", "F", "G", "Am", "E"],

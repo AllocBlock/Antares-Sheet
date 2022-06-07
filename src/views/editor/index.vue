@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { getEnv } from "@/utils/webCommon.js";
+import { getEnv } from "@/utils/common.js";
 import SheetEditorPc from "./editorPc.vue";
 import SheetEditorMobile from "./editorMobile.vue";
 

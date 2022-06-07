@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import SheetNodeUnderline from '@/components/webSheet/underline.vue'
-import SheetNodeGeneral from '@/components/webSheet/general.vue'
+import SheetNodeUnderline from '@/components/antaresSheet/underline.vue'
+import SheetNodeGeneral from '@/components/antaresSheet/general.vue'
 import Toast from '@/components/toast.vue'
 import router from './router'
 

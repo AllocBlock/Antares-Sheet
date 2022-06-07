@@ -1,15 +1,15 @@
 <template>
   <Chord style="width: 300px; height: 400px" :chord="chord" />
   <Metronome />
-  <WebSheet style="width: 100%; height: 600px" :sheet-tree="sheetTree" />
+  <AntaresSheet style="width: 100%; height: 600px" :sheet-tree="sheetTree" />
 </template>
 
 <script>
 import Chord from "@/components/chord/index.vue";
-import WebSheetParser from "@/utils/webSheetParser.js";
-import WebSheet from "@/components/webSheet/index.vue";
+import WebSheetParser from "@/utils/sheetParser.js";
+import AntaresSheet from "@/components/antaresSheet/index.vue";
 import Metronome from "@/components/metronome/index.vue";
-import ChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/chordManager.js";
 
 const g_SheetText = `
 $title 诺亚方舟
@@ -68,7 +68,7 @@ $
 export default {
   name: "Test",
   components: {
-    Chord, WebSheet, Metronome
+    Chord, AntaresSheet, Metronome
   },
   data() {
     return {

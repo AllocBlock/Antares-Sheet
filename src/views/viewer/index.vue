@@ -63,7 +63,7 @@
         <CapoSelector class="select" v-model:value="tools.player.instrument.capo"/>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
-      <WebSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
+      <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
       <div id="sheet_padding"></div>
     </div>
     
@@ -87,15 +87,15 @@
 </template>
 
 <script type="module">
-import { getQueryVariable, getEnv } from "@/utils/webCommon.js";
-import { WebInstrument } from "@/utils/webInstrument.js";
-import ChordManager from "@/utils/webChordManager.js";
+import { getQueryVariable, getEnv } from "@/utils/common.js";
+import { WebInstrument } from "@/utils/instrument.js";
+import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
-import WebSheetParser from "@/utils/webSheetParser.js"
+import WebSheetParser from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
 
 import Metronome from "@/components/metronome/index.vue"
-import WebSheet from "@/components/webSheet/index.vue"
+import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
 import CapoSelector from "@/components/capoSelector.vue";
@@ -106,7 +106,7 @@ export default {
   name: "SheetViewer",
   components: {
     Metronome,
-    WebSheet,
+    AntaresSheet,
     Chord,
     CapoSelector
   },

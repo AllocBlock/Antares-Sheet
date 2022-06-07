@@ -1,5 +1,5 @@
 import { ENodeType, toPluginTypeString } from "@/utils/sheetNode.js"
-import WebSheetParser from "@/utils/webSheetParser";
+import WebSheetParser from "@/utils/sheetParser";
 
 function _toSheetFileString(node) {
   switch (node.type) {

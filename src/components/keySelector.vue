@@ -23,7 +23,7 @@
 
 <script>
 export default {
-  name: "WebKeySelector",
+  name: "KeySelector",
 };
 
 </script>

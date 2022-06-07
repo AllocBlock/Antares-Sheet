@@ -1,6 +1,6 @@
 import { Editor, EditorAction } from "./editor.js";
 import HotKey from "@/utils/hotKey.js";
-import ChordManager from "@/utils/webChordManager.js";
+import ChordManager from "@/utils/chordManager.js";
 
 let gThis = null
 let gCurNode = null // 目前的编辑目标节点

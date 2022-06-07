@@ -39,9 +39,9 @@
             />
             <div id="sheet_key_block">
               <div class="title">原调</div>
-              <WebKeySelector class="select" v-model:value="sheetInfo.originalKey" />
+              <KeySelector class="select" v-model:value="sheetInfo.originalKey" />
               <div class="title">选调</div>
-              <WebKeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
+              <KeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
@@ -49,7 +49,7 @@
               <div class="button" @click="saveSheetToFile">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
-            <WebSheet
+            <AntaresSheet
               id="sheet_box"
               :sheet-tree="sheetInfo.sheetTree"
               :events="editorMode.componentEvents"
@@ -128,15 +128,15 @@
 
 <script>
 import { reactive } from "vue";
-import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/webCommon.js";
-import { WebInstrument } from "@/utils/webInstrument.js";
-import ChordManager from "@/utils/webChordManager.js";
+import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/common.js";
+import { WebInstrument } from "@/utils/instrument.js";
+import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
-import WebSheetParser from "@/utils/webSheetParser";
-import { toSheetFileString } from "@/utils/webSheetWriter";
-import WebSheet from "@/components/webSheet/index.vue";
-import WebKeySelector from "@/components/keySelector.vue";
+import WebSheetParser from "@/utils/sheetParser";
+import { toSheetFileString } from "@/utils/sheetWriter";
+import AntaresSheet from "@/components/antaresSheet/index.vue";
+import KeySelector from "@/components/keySelector.vue";
 import Chord from "@/components/chord/index.vue";
 import { get } from "@/utils/request.js";
 import ToolChord from "./toolChord.vue";
@@ -158,8 +158,8 @@ export default {
     ToolChord,
     PanelChordSelector,
     Chord,
-    WebSheet,
-    WebKeySelector,
+    AntaresSheet,
+    KeySelector,
     "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {

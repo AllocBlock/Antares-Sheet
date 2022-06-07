@@ -1,4 +1,4 @@
-# 数字曲谱 Vue CLI
+# 星河曲谱 / Antares Sheet
 - 网页效果（PC）
 ![web](./images/web.jpg)
 - 打印效果（优化了网页打印）

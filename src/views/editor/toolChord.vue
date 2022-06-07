@@ -18,7 +18,7 @@
 
 <script>
 import Chord from "@/components/chord/index.vue";
-import { getEnv } from "@/utils/webCommon.js";
+import { getEnv } from "@/utils/common.js";
 
 export default {
   name: "SheetEditorToolChord",

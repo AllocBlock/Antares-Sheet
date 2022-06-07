@@ -138,9 +138,9 @@
 </template>
 
 <script>
-import WebAudioPlayer from "@/utils/webAudioPlayer.js";
+import WebAudioPlayer from "@/utils/audioPlayer.js";
 import HotKey from "@/utils/hotKey.js";
-import { getEnv, clone } from "@/utils/webCommon.js";
+import { getEnv, clone } from "@/utils/common.js";
 import { ELoadState, getPos, getRelativePos } from "@/utils/common.js"
 
 const PlaybackSpeedLevels = {

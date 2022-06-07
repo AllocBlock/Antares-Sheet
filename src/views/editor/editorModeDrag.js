@@ -1,7 +1,7 @@
 import { Editor, EditorAction } from "./editor.js";
 import HotKey from "@/utils/hotKey.js";
-import ChordManager from "@/utils/webChordManager.js";
-import { getMouseOrTouchClient } from "@/utils/webCommon.js";
+import ChordManager from "@/utils/chordManager.js";
+import { getMouseOrTouchClient } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
 import { ENodeType } from "@/utils/sheetNode.js";
 

@@ -13,7 +13,7 @@ import SheetNodeRoot from "./root.vue"
 import { SheetNode } from "@/utils/sheetNode.js"
 
 export default {
-  name: "WebSheet",
+  name: "AntaresSheet",
   components: {
     Chord, SheetNodeRoot
   },
