@@ -141,6 +141,7 @@ class StringInstrument {
         this.stringBasicTones = stringBasicTones
         this.stringNum = stringBasicTones.length
         this.playingNodes = []
+        this.capo = 0
     }
 
     play(audioSource, frets, volume, duration) {
@@ -157,7 +158,7 @@ class StringInstrument {
     playString(audioSource, string, fret, volume, delay) {
         this.stopString(string)
         let stringBasicToneIndex = _toneToIndex(this.stringBasicTones[string-1])
-        let toneIndex = stringBasicToneIndex + fret
+        let toneIndex = stringBasicToneIndex + fret + this.capo
         let tone = _indexToTone(toneIndex)
 
         this.playingNodes[string-1] = audioSource.play(tone, volume / this.stringNum, delay)
@@ -281,6 +282,18 @@ class WebInstrument {
     playString(string, fret, volume = 1.0, delay = 0.0) {
         if (this.type != "string") throw "乐器非有弦乐器，不能调用该函数";
         this.instrument.playString(this.audioSource, string, fret, volume, delay)
+    }
+
+    setCapo(capo) {
+        if (!(this.instrument instanceof StringInstrument)) throw "非弦乐器，不能设置变调夹"
+        capo = parseInt(capo)
+        if (isNaN(capo) || capo < 0) throw "无效的变调夹位置"
+        this.instrument.capo = capo
+    }
+
+    getCapo() {
+        if (!(this.instrument instanceof StringInstrument)) throw "非弦乐器，不能设置变调夹"
+        return this.instrument.capo
     }
 }
 

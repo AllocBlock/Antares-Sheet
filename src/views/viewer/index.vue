@@ -59,6 +59,8 @@
           <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
           <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
         </div>
+        <div class="title">变调夹</div>
+        <CapoSelector class="select" v-model:value="tools.player.instrument.capo"/>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
       <WebSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
@@ -96,6 +98,7 @@ import Metronome from "@/components/metronome/index.vue"
 import WebSheet from "@/components/webSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
+import CapoSelector from "@/components/capoSelector.vue";
 
 let g_ChordManager = null
 let g_Player = null
@@ -103,7 +106,10 @@ let g_Player = null
 export default {
   name: "SheetViewer",
   components: {
-    Metronome, WebSheet, Chord
+    Metronome,
+    WebSheet,
+    Chord,
+    CapoSelector
   },
   data() {
     return {
@@ -169,6 +175,7 @@ export default {
             type: "Ukulele",
             audioSource: "Oscillator",
             update: true,
+            capo: 0,
           },
           metronome: {
             update: true,
@@ -321,13 +328,17 @@ export default {
       scrollLoop()
     },
     playChord(chord) {
+      const capo = parseInt(this.tools.player.instrument.capo) ?? 0
+
       const bpm = this.$refs['metronome'].getBpm() ?? 120;
       let volume = 1.0;
 
       // play chord
       let duration = (1 / bpm) * 60 * 4;
-      if (g_Player && g_Player.audioSource.loaded)
+      if (g_Player && g_Player.audioSource.loaded) {
+        g_Player.setCapo(capo);
         g_Player.playChord(chord, volume, duration);
+      }
 
       // FIXME: cant record one string more than one otherwise old record will be replaced
       // play with rhythm
@@ -427,13 +438,22 @@ html, body {
   width: 100%;
   height: 100%;
 }
-</style>
 
-<style scoped lang="scss">
 ::selection {
   background: var(--theme-color);
 }
 
+.select {
+  margin: 0 10px;
+  background-color: transparent;
+  font-size: var(--base-font-size);
+  border: none;
+  outline: 2px solid grey;
+}
+
+</style>
+
+<style scoped lang="scss">
 #viewer {
   width: 100%;
   height: 100%;
