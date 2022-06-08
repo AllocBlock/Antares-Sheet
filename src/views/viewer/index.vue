@@ -31,7 +31,7 @@
           v-model="tools.sheetControl.autoScroll.speed"
           @input="changeAutoScrollSpeed()"
         />
-        <div id="auto_scroll_text" class="tools_text">{{tools.sheetControl.autoScroll.speed ? `x${parseFloat(tools.sheetControl.autoScroll.speed).toFixed(1)}` : "停止"}}</div>
+        <div id="auto_scroll_text" class="tools_text">{{autoScrollSpeedText}}</div>
       </div>
     </div>
 
@@ -45,7 +45,7 @@
       </transition>
       <Metronome ref="metronome"/>
       <select id="instrument_combo" v-model="tools.player.instrument.audioSource">
-        <option value="Oscillator">振荡器</option>
+        <option value="Oscillator">合成器音源</option>
         <option value="Ukulele">尤克里里音源</option>
       </select>
     </div>
@@ -54,20 +54,25 @@
       <div id="song_title" class="title">{{sheetInfo.title}}</div>
       <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
       <div id="sheet_key_block">
-        <div id="sheet_key" class="title">{{`原调 ${sheetInfo.originalKey} 选调 ${sheetInfo.sheetKey}`}}</div>
-        <div id="sheet_key_shift">
-          <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
-          <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
+        <div id="sheet_original_key" class="title">{{`原调 ${sheetInfo.originalKey}`}}</div>
+        <div id="sheet_current_key" class="title">
+          {{`选调 ${sheetInfo.sheetKey}`}}
+          <div id="sheet_key_shift">
+            <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
+            <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
+          </div>
         </div>
-        <div class="title">变调夹</div>
-        <CapoSelector class="select" v-model:value="tools.player.instrument.capo"/>
+        <div id="sheet_capo_block">
+          <div class="title">变调夹</div>
+          <CapoSelector id="capo_selector" v-model:value="tools.player.instrument.capo"/>
+        </div>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
       <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
       <div id="sheet_padding"></div>
     </div>
     
-    <div id="sidebar">
+    <div id="sidebar" v-if="env == 'pc'">
       <div id="sidebar_fixed">
         <div class="sidebar_block" @click="tools.tipChord.enable = !tools.tipChord.enable" :class="getSidebarStateClass(tools.tipChord.enable)">
           <img src="@/assets/icons/bubble.svg" type="image/svg+xml" />
@@ -217,6 +222,10 @@ export default {
     },
     showPlayerLoadCover() {
       return this.tools.player.loadState != ELoadState.Loaded;
+    },
+    autoScrollSpeedText() {
+      const speed = this.tools.sheetControl.autoScroll.speed
+      return speed > 0.0 ? `x${parseFloat(speed).toFixed(1)}` : "停止"
     }
   },
   mounted() {
@@ -297,9 +306,7 @@ export default {
     startAutoScroll() {
       let that = this
       let autoScroll = that.tools.sheetControl.autoScroll
-      const sheetElement = $("#sheet")[0]
       function scroll(amount) {
-        console.log("scroll")
         document.documentElement.scrollTop += amount
         document.body.scrollTop += amount // 兼容老版chrome，好像小程序也需要用body
       }
@@ -435,18 +442,11 @@ export default {
 html, body {
   width: 100%;
   height: 100%;
+  min-width: 300px;
 }
 
 ::selection {
   background: var(--theme-color);
-}
-
-.select {
-  margin: 0 10px;
-  background-color: transparent;
-  font-size: var(--base-font-size);
-  border: none;
-  outline: 2px solid grey;
 }
 
 </style>
@@ -560,6 +560,7 @@ html, body {
   line-height: calc(var(--title-base-font-size) * 2);
   font-size: calc(var(--title-base-font-size) * 1.5);
   color: black;
+  width: 100%;
 }
 
 #song_singer {
@@ -577,10 +578,19 @@ html, body {
 
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+#sheet_original_key, #sheet_current_key {
+  margin-right: 10px;
+}
+
+#sheet_current_key {
+  display: flex;
+  align-items: center;
 }
 
 #sheet_key_shift {
-  height: 100%;
   width: 30px;
   margin: 0 10px;
 
@@ -602,6 +612,21 @@ html, body {
 #sheet_key_shift_up:hover,
 #sheet_key_shift_down:hover {
   color: rgb(187, 73, 73);
+}
+
+#sheet_capo_block {
+  display: flex;
+  line-height: var(--title-base-font-size);
+  font-size: calc(var(--title-base-font-size) * 0.9);
+  color: #888;
+}
+
+#capo_selector {
+  margin: 0 10px;
+  background-color: transparent;
+  font-size: calc(var(--title-base-font-size) * 0.8);
+  border: none;
+  outline: 2px solid grey;
 }
 
 #sheet_by {
@@ -653,7 +678,6 @@ html, body {
 
 .tools_text {
   margin: 10px 0;
-  color: black;
 }
 
 #tools_player {
@@ -679,33 +703,6 @@ html, body {
     color: white;
     font-size: 30px;
   }
-}
-
-#scale_block {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#scale_slider {
-  flex-grow: 1;
-  margin: 10px 0;
-  
-  height: 300px;
-}
-
-#auto_scroll_block {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#auto_scroll_slider {
-  flex-grow: 1;
-  margin: 10px 0;
-  height: 300px;
 }
 
 #page_type_block {
@@ -809,13 +806,20 @@ html, body {
     top: 25%;
     left: 10px;
     width: 160px;
+    color: black;
   }
 
-  #scale_slider {
-    -webkit-appearance: slider-vertical;
+  #scale_block, #auto_scroll_block {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
-  #auto_scroll_slider {
+  #scale_slider, #auto_scroll_slider {
+    flex-grow: 1;
+    margin: 10px 0;
+    height: 300px;
     -webkit-appearance: slider-vertical;
   }
 
@@ -842,15 +846,25 @@ html, body {
 
   #tools_sheet_control {
     bottom: 0;
-    height: 10%;
+    height: 10vh;
     left: 0;
     width: 100%;
     background-color: #000000aa;
     flex-direction: column;
+    color: white;
   }
   #tools_sheet_control input {
     flex-shrink: 0;
     width: 60%;
+  }
+  #scale_block, #auto_scroll_block {
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+  #scale_slider, #auto_scroll_slider {
+    flex-grow: 1;
+    margin: 10px 0;
   }
   #tools_player {
     display: none;
@@ -866,7 +880,7 @@ html, body {
 </style>
 
 <style scoped lang="scss">
-/* mobile */
+/* printing */
 #viewer[env="printing"] {
   #sheet {
     width: 100%;
