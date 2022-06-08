@@ -1,17 +1,26 @@
 <template>
   <component :is="getTag()" ref="main" v-on="localEvents" :style="node.style ?? {}">
-    <chord-body>{{getContent()}}</chord-body>
-    <chord-ruby v-if="node.type == ENodeType.Chord">{{node.chord}}</chord-ruby>
+    <chord-body v-if="isMarkChord">{{getContent()}}</chord-body>
+    <chord-ruby v-if="isMarkChord">
+      <ChordName :chord-name="node.chord" />
+    </chord-ruby>
+    <chord-body v-else="isMarkChord">
+      <ChordName :chord-name="node.chord" />
+    </chord-body>
   </component>
 </template>
 
 <script>
 import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+import ChordName from './chordName.vue';
+
 export default {
   name: "SheetNodeChord",
+  components: { ChordName },
   data() {
     return {
-      localEvents: {}
+      localEvents: {},
+      isMarkChord: true,
     }
   },
   props: {
@@ -32,13 +41,13 @@ export default {
     }
   },
   created() {
-    this.ENodeType = ENodeType
     this.localEvents = {}
     if (this.events.chord) {
       for(let eventName in this.events.chord) {
         this.localEvents[eventName] = (e) => this.events.chord[eventName](e, this.node)
       }
     }
+    this.isMarkChord = (this.node.type == ENodeType.Chord)
   },
   methods: {
     getTag() {

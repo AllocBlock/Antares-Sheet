@@ -132,7 +132,7 @@ class WebChordManager {
   }
 
   _shiftKeyByOffset(chordName, offset) {
-    let [keyName, suffix] = _splitChord(chordName)
+    let [keyName, suffix] = _splitChordSuffix(chordName)
     let curKeyIndex = _getKeyIndexByName(chordName)
     let newKeyIndex = (curKeyIndex + offset - 1 + 12) % 12 + 1
     let newKeyName = _getNameByKeyIndex(newKeyIndex)
@@ -159,9 +159,9 @@ class WebChordManager {
   isAlias(name1, name2) {
     if (!_isChordName(name1) || !_isChordName(name2)) return false;
 
-    let [key1, suffix1] = _splitChord(name1)
+    let [key1, suffix1] = _splitChordSuffix(name1)
     let keyIndex1 = _getKeyIndexByName(name1)
-    let [key2, suffix2] = _splitChord(name2)
+    let [key2, suffix2] = _splitChordSuffix(name2)
     let keyIndex2 = _getKeyIndexByName(name2)
     return keyIndex1 == keyIndex2 && suffix1 == suffix2
   }
@@ -175,21 +175,38 @@ class WebChordManager {
   isMajor(chordName) {
     return !this.isMinor(chordName)
   }
+
+  // 拆分和弦，将根音和后缀分离，如：
+  // C -> [C, null]
+  // Gm -> [G, m]
+  // #Fmsus4add11 -> [#F, msus4add11]
+  splitChordSuffix(chordName) {
+    return _splitChordSuffix(chordName)
+  }
+
+  // 拆分和弦，将主和弦和装饰音分离，如：
+  // C -> [C, null]
+  // Gm -> [Gm, null]
+  // #Fmsus4add11 -> [#Fm, sus4add11]
+  splitChordDecoration(chordName) {
+    return _splitChord(chordName, ReSplitChordDecoration)
+  }
 }
 
+const ReSplitChordSuffix = /^(#?b?[A-Ga-g]#?b?)([majaddsug1-9]*)?$/
+const ReSplitChordDecoration = /^(#?b?[A-Ga-g]#?b?m?)([majaddsug1-9]*)?$/
+
 function _isChordName(str) {
-  let ReSplitChord = /^(#?b?[A-Ga-g]#?b?)([majsug1-9]*)$/
-  let res = str.match(ReSplitChord)
+  let res = str.match(ReSplitChordSuffix)
   return !!res
 }
 
-function _splitChord(str) {
-  let ReSplitChord = /^(#?b?[A-Ga-g]#?b?)([majsug1-9]*)$/
-  let res = str.match(ReSplitChord)
+function _splitChord(str, re) {
+  let res = str.match(re)
   if (!res)
     throw "拆解和弦失败" + str
   let keyName = res[1]
-  let suffix = res[2]
+  let suffix = res[2] ?? null
 
   // 检查主音格式
   let hasSharp = false, hasFlat = false
@@ -210,6 +227,10 @@ function _splitChord(str) {
   return [keyName, suffix]
 }
 
+function _splitChordSuffix(str) {
+  return _splitChord(str, ReSplitChordSuffix)
+}
+
 const g_KeyMap = {
   "C": 1,
   "D": 3,
@@ -221,7 +242,7 @@ const g_KeyMap = {
 }
 
 function _getKeyIndexByName(name) {
-  let [keyName, suffix] = _splitChord(name)
+  let [keyName, suffix] = _splitChordSuffix(name)
 
   let res = keyName.match(/[^b#]+/)
   if (!res) throw "未知错误";
