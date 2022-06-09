@@ -1,5 +1,5 @@
 <template>
-  <div class="editor" :env="getEnv()" :style="globalCssVar">
+  <div class="editor" :style="globalCssVar">
     <input
       type="range"
       id="layout_slider"
@@ -128,7 +128,7 @@
 
 <script>
 import { reactive } from "vue";
-import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/common.js";
+import { getQueryVariable, getCursorClientPos } from "@/utils/common.js";
 import { Instrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
@@ -172,7 +172,6 @@ export default {
         "--tip-text-background-color": "var(--theme-color)",
         "--tip-button-background-color": "seagreen",
       },
-      env: "pc",
       showChordPanel: false,
       attachedChords: [],
       loaded: false,
@@ -221,7 +220,6 @@ export default {
       },
       layout: {
         toolWidthPercentage: 20,
-        vertRatio: 0.7,
         showAudioPlayer: false
       },
     };
@@ -251,22 +249,9 @@ export default {
     document.addEventListener("click", () => this.closeContext());
   },
   methods: {
-    getEnv,
-    formatSheetTree(node) {
-      Editor.traverseDFS(node, (n) => {
-        // 文本拆分
-        if (n.type == ENodeType.Text && n.content.length > 1) {
-          Editor.replace(n, Editor.createTextNodes(n.content));
-        }
-        // 和弦内容拆分
-        else if (n.type == ENodeType.Chord && n.content.length > 1) {
-          EditorAction.editContent(n, n.content);
-        }
-      });
-    },
     loadSheet(sheetText) {
       let rootNode = reactive(SheetParser.parse(sheetText));
-      this.formatSheetTree(rootNode);
+      Editor.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
       }
@@ -825,6 +810,28 @@ export default {
     opacity: 1.0;
   }
 }
+
+#tools_block {
+  position: relative;
+  width: 20%;
+  height: 100%;
+
+  box-sizing: border-box;
+  outline: 2px black solid;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  flex-shrink: 0;flex-shrink: 0;
+
+  z-index: 1;
+
+  #chord_tool {
+    width: 100%;
+    overflow-y: auto;
+  }
+}
 </style>
 
 <style scoped>
@@ -896,26 +903,5 @@ export default {
 :deep(text:hover::after) {
   border: 2px solid var(--sheet-theme-color);
   box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
-}
-</style>
-
-<style scoped lang="scss">
-.editor[env=pc] {
-  #tools_block {
-    position: relative;
-    width: 20%;
-    height: 100%;
-
-    box-sizing: border-box;
-    outline: 2px black solid;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow-y: auto;
-    flex-shrink: 0;flex-shrink: 0;
-
-    z-index: 1;
-  }
 }
 </style>

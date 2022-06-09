@@ -1,5 +1,5 @@
 <template>
-  <component :is="getTag()"></component>
+  <component :is="tag"></component>
 </template>
 
 <script>
@@ -13,11 +13,10 @@ export default {
     SheetEditorPc,
     SheetEditorMobile,
   },
-  methods: {
-    getTag() {
+  computed: {
+    tag() {
       const env = getEnv()
-      if (env == "pc") return "SheetEditorPc"
-      else return "SheetEditorMobile"
+      return env == "pc" ? "SheetEditorPc" : "SheetEditorMobile"
     }
   },
 };

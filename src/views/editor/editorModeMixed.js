@@ -1,7 +1,7 @@
 import { Editor, EditorAction } from "./editor.js";
 import HotKey from "@/utils/hotKey.js";
 import ChordManager from "@/utils/chordManager.js";
-import { getMouseOrTouchClient } from "@/utils/common.js";
+import { getCursorClientPos } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
 import { ENodeType } from "@/utils/sheetNode.js";
 
@@ -15,7 +15,7 @@ let gCurNode = null
 function _onCursorMove(e) {
   if (!gIsDragging) return
 
-  let [x, y] = getMouseOrTouchClient(e);
+  let [x, y] = getCursorClientPos(e);
   setPos(gThis.$refs.dragMark, x, y)
 }
 
@@ -45,7 +45,8 @@ function _setToRemoveNode(node) {
 
   if (gToRemoveNode)
     EditorAction.unhighlightNode(gToRemoveNode)
-  EditorAction.highlightNode(node)
+  if (node)
+    EditorAction.highlightNode(node)
   gToRemoveNode = node
 
   gCurNode = node
@@ -74,10 +75,8 @@ export default {
         _setCurNode(node)
       },
       mouseleave: (e, node) => {
-        // TIPS: 如果启用，则移出元素后就不会替换该元素了，这样的交互体验不佳
         if (node == gToRemoveNode) {
-          EditorAction.unhighlightNode(gToRemoveNode)
-          gToRemoveNode = null
+          _setToRemoveNode(null)
         }
 
         if (gCurNode == node)
@@ -103,8 +102,7 @@ export default {
       },
       mouseleave: (e, node) => {
         if (node == gToRemoveNode) {
-          EditorAction.unhighlightNode(gToRemoveNode)
-          gToRemoveNode = null
+          _setToRemoveNode(null)
         }
 
         if (gCurNode == node)

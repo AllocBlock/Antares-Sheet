@@ -1,11 +1,5 @@
 <template>
-  <SheetNodePlugin v-if="node.type == ENodeType.Plugin" :node="node" :events="events" />
-  <SheetNodeUnderline v-else-if="node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure" :node="node" :events="events" />
-  <SheetNodeChord v-else-if="node.type == ENodeType.Chord || node.type == ENodeType.ChordPure" :node="node" :events="events" />
-  <SheetNodeMark v-else-if="node.type == ENodeType.Mark" :node="node" :events="events" />
-  <SheetNodeText v-else-if="node.type == ENodeType.Text" :node="node" :events="events" />
-  <SheetNodeNewLine v-else-if="node.type == ENodeType.NewLine" :node="node" :events="events" />
-  <SheetNodeError v-else />
+  <component :is="tag" :node="node" :events="events"/>
 </template>
 
 <script>
@@ -40,8 +34,20 @@ export default {
       }
     }
   },
-  created() {
-    this.ENodeType = ENodeType
-  },
+  computed: {
+    tag() {
+      switch(this.node.type) {
+        case ENodeType.Plugin: return "SheetNodePlugin";
+        case ENodeType.Underline:
+        case ENodeType.UnderlinePure: return "SheetNodeUnderline";
+        case ENodeType.Chord:
+        case ENodeType.ChordPure: return "SheetNodeChord";
+        case ENodeType.Mark: return "SheetNodeMark";
+        case ENodeType.Text: return "SheetNodeText";
+        case ENodeType.NewLine: return "SheetNodeNewLine";
+        default: return "SheetNodeError";
+      }
+    }
+  }
 };
 </script>

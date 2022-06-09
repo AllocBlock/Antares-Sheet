@@ -9,6 +9,7 @@
         :key="chord.name"
         class="prefab_chord drag attached_chord"
         :chord="chord"
+        :styles="styles"
         @mousedown="dragStart($event, chord)"
         @touchstart="dragStart($event, chord)"
       />
@@ -33,6 +34,17 @@ export default {
       type: Array,
       required: true,
     },
+    styles: {
+      type: Object,
+      default: function() {
+        return {
+          titleRatio: 0.16,
+          colorMain: "black",
+          colorMarkText: "white",
+          colorRootString: "red"
+        }
+      }
+    }
   },
   methods: {
     getEnv,
@@ -47,11 +59,9 @@ export default {
 
 <style scoped>
 .tool_chord {
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto;
 }
 
 .tool {

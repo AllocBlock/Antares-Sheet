@@ -1,7 +1,6 @@
 import { Editor, EditorAction } from "./editor.js";
-import HotKey from "@/utils/hotKey.js";
 import ChordManager from "@/utils/chordManager.js";
-import { getCursorClientPos } from "@/utils/common.js";
+import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
 import { ENodeType } from "@/utils/sheetNode.js";
 
@@ -10,15 +9,41 @@ let gThis = null
 let gIsDragging = false
 let gToRemoveNode = null
 let gToInsertChordNode = null
+const gPointDistance = 80 // px
 
-function _onCursorMove(e) {
+const gTargetElementNameSet = ['text', 'chord', 'chord-pure']
+function _getCursorOverElement(x, y) {
+  let e = document.elementFromPoint(x, y);
+  if (!e || e === document) return null
+  while(e && e.tagName && e !== document) {
+    if (gTargetElementNameSet.includes(e.tagName.toLowerCase()))
+      return e
+
+    e = e.parentNode
+  }
+  return null
+}
+
+function _onTouchMove(e) {
   if (!gIsDragging) return
 
   let [x, y] = getCursorClientPos(e);
-  setPos(gThis.$refs.dragMark, x, y)
+  let markElement = gThis.$refs.dragMark
+  let size = getInnerSize(markElement)
+  let pointerX = x - size.w * 0.5
+  let pointerY = y - size.h - gPointDistance
+  setPos(gThis.$refs.dragMark, pointerX, pointerY)
+
+  // 获取标记下方的节点
+  let pointerOverElement = _getCursorOverElement(x, y - gPointDistance)
+  if (pointerOverElement) {
+    pointerOverElement.dispatchEvent(new Event('custom-cursor-over'))
+  }
+  else
+    _setToRemoveNode(null)
 }
 
-function _onCursorUp(e) {
+function _onTouchEnd(e) {
   if (gIsDragging) {
     if (gToRemoveNode) {
       if (gToRemoveNode.type == ENodeType.ChordPure) { // 纯和弦，则也插入纯和弦
@@ -44,7 +69,8 @@ function _setToRemoveNode(node) {
 
   if (gToRemoveNode)
     EditorAction.unhighlightNode(gToRemoveNode)
-  EditorAction.highlightNode(node)
+  if (node)
+    EditorAction.highlightNode(node)
   gToRemoveNode = node
 }
 
@@ -53,7 +79,6 @@ export default {
   componentEvents: {
     text: {
       click: (e, node) => {
-        console.log("text", node);
       },
       dblclick: (e, node) => {
         EditorAction.editContent(node);
@@ -62,15 +87,8 @@ export default {
         if (gOpenContextFunc)
           gOpenContextFunc(e, node)
       },
-      mouseenter: (e, node) => {
-        if (!gIsDragging) return
+      customCursorOver: (e, node) => {
         _setToRemoveNode(node)
-      },
-      mouseleave: (e, node) => {
-        if (node == gToRemoveNode) {
-          EditorAction.unhighlightNode(gToRemoveNode)
-          gToRemoveNode = null
-        }
       }
     },
     chord: {
@@ -86,20 +104,12 @@ export default {
         }
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
-      mouseenter: (e, node) => {
-        if (!gIsDragging) return
+      customCursorOver: (e, node) => {
         _setToRemoveNode(node)
-      },
-      mouseleave: (e, node) => {
-        if (node == gToRemoveNode) {
-          EditorAction.unhighlightNode(gToRemoveNode)
-          gToRemoveNode = null
-        }
       }
     },
     mark: {
       click: (e, node) => {
-        console.log("mark", node);
       },
       dblclick: (e, node) => {
         EditorAction.editContent(node);
@@ -117,20 +127,21 @@ export default {
       gIsDragging = true
       gToInsertChordNode = Editor.createChordNode('', chord.name)
       gToRemoveNode = null
-        // e.preventDefault()
-      _onCursorMove(e)
+      _onTouchMove(e)
       
       gThis.dragChord.isDragging = true
       gThis.dragChord.text = chord ? chord.name : '错误'
+
+      e.preventDefault()
     }
   },
   init: function(instance) {
     gThis = instance
-    document.addEventListener("mousemove", _onCursorMove);
-    document.addEventListener("mouseup", _onCursorUp);
+    document.addEventListener("touchmove", _onTouchMove);
+    document.addEventListener("touchend", _onTouchEnd);
   },
   release: function() {
-    document.removeEventListener("mousemove", _onCursorMove);
-    document.removeEventListener("mouseup", _onCursorUp);
+    document.removeEventListener("touchmove", _onTouchMove);
+    document.removeEventListener("touchend", _onTouchEnd);
   }
 }

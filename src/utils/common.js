@@ -38,6 +38,17 @@ export function getRelativePos(element, pageX, pageY) {
   }
 }
 
+// 可以在元素时也获取到正确值
+export function getInnerSize(element) {
+  let $e = $(element)
+	let w = $e.innerWidth()
+	let h = $e.innerHeight()
+
+  return {
+    w, h
+  }
+}
+
 export function getQueryVariable(key) {
   var query = window.location.search.substring(1)
   var vars = query.split("&")
@@ -69,13 +80,15 @@ export function setEnv(env) {
   return g_Env = env
 }
 
-export function getMouseOrTouchClient(e) {
+export function getCursorClientPos(e) {
+  if (e.originalEvent) e = originalEvent
+
   if (e.clientX) {
     return [e.clientX, e.clientY];
   } else {
     return [
-      e.originalEvent.changedTouches[0].clientX,
-      e.originalEvent.changedTouches[0].clientY,
+      e.changedTouches[0].clientX,
+      e.changedTouches[0].clientY,
     ];
   }
 }

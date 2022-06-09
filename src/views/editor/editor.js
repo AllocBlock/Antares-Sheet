@@ -309,7 +309,21 @@ export const Editor = {
       })
       return lyric
     }
-  }
+  },
+
+  // 规范化曲谱树为编辑模式
+  normalizeSheetTree(node) {
+    this.traverseDFS(node, (n) => {
+      // 文本拆分
+      if (n.type == ENodeType.Text && n.content.length > 1) {
+        this.replace(n, Editor.createTextNodes(n.content));
+      }
+      // 和弦内容拆分
+      else if (n.type == ENodeType.Chord && n.content.length > 1) {
+        EditorAction.updateContent(n, n.content);
+      }
+    });
+  },
 };
   
 export const EditorAction = {
@@ -557,22 +571,18 @@ export const EditorAction = {
     }
   },
 
-  editContent(node) {
-    if (!node) throw "节点为空"
-
-    let newContent = _getInputText("标记内容", node.content);
-    if (!newContent) return;
+  updateContent(node, content) {
     switch (node.type) {
       case ENodeType.Text: {
-        EditorAction.updateTextContent(node, newContent);
+        EditorAction.updateTextContent(node, content);
         break;
       }
       case ENodeType.Mark: {
-        EditorAction.updateMarkContent(node, newContent);
+        EditorAction.updateMarkContent(node, content);
         break;
       }
       case ENodeType.Chord: {
-        EditorAction.updateChordContent(node, newContent);
+        EditorAction.updateChordContent(node, content);
         break;
       }
       default: {
@@ -580,6 +590,14 @@ export const EditorAction = {
         break;
       }
     }
+  },
+
+  editContent(node) {
+    if (!node) throw "节点为空"
+
+    let newContent = _getInputText("标记内容", node.content);
+    if (!newContent) return;
+    this.updateContent(node, newContent)
   },
 
   highlightNode(node) {
