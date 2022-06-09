@@ -93,10 +93,10 @@
 
 <script type="module">
 import { getQueryVariable, getEnv } from "@/utils/common.js";
-import { WebInstrument } from "@/utils/instrument.js";
+import { Instrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
-import WebSheetParser from "@/utils/sheetParser.js"
+import SheetParser from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
 
 import Metronome from "@/components/metronome/index.vue"
@@ -243,7 +243,7 @@ export default {
 
     this.load.params.sheetName = sheetName
     get(`sheets/${sheetName}.sheet`).then((res) => {
-      let rootNode = WebSheetParser.parse(res)
+      let rootNode = SheetParser.parse(res)
       if (!rootNode) {
         this.load.state = ELoadState.Failed
         throw "曲谱解析失败！"
@@ -414,7 +414,7 @@ export default {
       
       if (this.tools.player.instrument.update) {
         let callbacks = createCallbacks(curIndex);
-        g_Player = new WebInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
+        g_Player = new Instrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
         
         this.tools.player.instrument.update = false;
         curIndex++;

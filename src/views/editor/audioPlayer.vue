@@ -138,7 +138,7 @@
 </template>
 
 <script>
-import WebAudioPlayer from "@/utils/audioPlayer.js";
+import AudioPlayer from "@/utils/audioPlayer.js";
 import HotKey from "@/utils/hotKey.js";
 import { getEnv, clone } from "@/utils/common.js";
 import { ELoadState, getPos, getRelativePos } from "@/utils/common.js"
@@ -239,7 +239,7 @@ export default {
     let that = this
 
     console.log("Loading [Audio Player]")
-    this.audioPlayer = new WebAudioPlayer
+    this.audioPlayer = new AudioPlayer
     document.addEventListener("mouseup", this.onMouseUp)
     document.addEventListener("mousemove", this.onMouseMove)
 

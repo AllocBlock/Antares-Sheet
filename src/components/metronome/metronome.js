@@ -9,7 +9,7 @@ const MetronomeLibrary = [
   }
 ]
 
-export default class WebMetronome {
+export default class Metronome {
   constructor(callbacks = {}) {
     this.bpm = 120
     this.pattern = "-..."

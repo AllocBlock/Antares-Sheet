@@ -1,4 +1,4 @@
-export class WebTabConfig {
+export class TabConfig {
     set(key, value) {
         this[key] = value
     }
@@ -71,16 +71,16 @@ export class WebTabConfig {
     }
 }
 
-export class WebTabConnectNote {
+export class TabConnectNote {
     constructor() {
         this.type = "connect"
         this.notes = []
     }
 }
 
-export class WebTabSingleNote {
+export class TabSingleNote {
     constructor() {
-        this.config = new WebTabConfig
+        this.config = new TabConfig
         this.type = "single"
         this.frets = null
         this.duration = null
@@ -103,9 +103,9 @@ export class WebTabSingleNote {
     }
 }
 
-export class WebTabBar {
+export class TabBar {
     constructor() {
-        this.config = new WebTabConfig
+        this.config = new TabConfig
         this.notes = []
     }
     setProperty(key, value) {
@@ -122,15 +122,15 @@ const RePropertyG = /\[([^\]]+):([^\]]+)\]/g
 const ReNote = /^\(([^)]+?)\)((?:\[[^\]]+:[^\]]+\])*)(\d+)(\.?)$/
 const ReNoteG = /\(([^)]+?)\)((?:\[[^\]]+:[^\]]+\])*)(\d+)(\.?)/g
 
-export class WebTab {
+export class Tab {
     constructor() {
-        this.config = new WebTabConfig
+        this.config = new TabConfig
         this.bars = []
     }
 }
 
 export function parseTab(strTab) {
-    let tab = new WebTab
+    let tab = new Tab
     let res = strTab.match(/^\s*\$([^]*?)\$([^]*)$/)
     _check(res);
     let strConfig = res[1]
@@ -142,7 +142,7 @@ export function parseTab(strTab) {
 }
 
 function _parseConfig(strConfig) {
-    let config = new WebTabConfig
+    let config = new TabConfig
     if (!strConfig) return config
 
     let strProps = strConfig.match(/\[.*\]/g)
@@ -172,7 +172,7 @@ function _parseBars(strBars) {
 }
 
 function _parseBar(strBar) {
-    let bar = new WebTabBar
+    let bar = new TabBar
     let strBarUnits = strBar.match(/(\[.*?\]|\{.*?\}|\(.*?\)(?:\[.*?\])*\d+\.?)/g) // 分割出配置、连接小节和独立小节
     _check(strBarUnits);
 
@@ -188,7 +188,7 @@ function _parseBar(strBar) {
                 let res = strBarUnit.match(/^\{([^]*?)\}$/)
                 let strNotes = res[1].match(ReNoteG)
                 _check(strNotes);
-                let connectNote = new WebTabConnectNote
+                let connectNote = new TabConnectNote
                 for(let strNote of strNotes) {
                     let note = _parseSingleNote(strNote)
                     connectNote.notes.push(note)
@@ -228,7 +228,7 @@ function _parseSingleNote(strNote) {
     if (hasDot)
         throw "指法谱：暂不支持附点"
 
-    let note = new WebTabSingleNote
+    let note = new TabSingleNote
     note.frets = frets
     note.duration = duration
     note.hasDot = hasDot

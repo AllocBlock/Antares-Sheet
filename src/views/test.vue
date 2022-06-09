@@ -6,7 +6,7 @@
 
 <script>
 import Chord from "@/components/chord/index.vue";
-import WebSheetParser from "@/utils/sheetParser.js";
+import SheetParser from "@/utils/sheetParser.js";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import Metronome from "@/components/metronome/index.vue";
 import ChordManager from "@/utils/chordManager.js";
@@ -73,7 +73,7 @@ export default {
   data() {
     return {
       chord: null,
-      sheetTree: WebSheetParser.parse(g_SheetText),
+      sheetTree: SheetParser.parse(g_SheetText),
     };
   },
   created() {

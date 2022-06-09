@@ -1,6 +1,6 @@
 import * as Tone from 'tone'
 
-class WebAudioPlayer {
+class AudioPlayer {
   constructor() {
     this.audioContext = new AudioContext
     this.loaded = false
@@ -81,4 +81,4 @@ class WebAudioPlayer {
   }
 }
 
-export default WebAudioPlayer
+export default AudioPlayer

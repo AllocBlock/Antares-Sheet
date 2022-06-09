@@ -1,5 +1,5 @@
 import { ENodeType, toPluginTypeString } from "@/utils/sheetNode.js"
-import WebSheetParser from "@/utils/sheetParser";
+import SheetParser from "@/utils/sheetParser";
 
 function _toSheetFileString(node) {
   switch (node.type) {
@@ -49,7 +49,7 @@ export function toSheetFileString(root, title, singer, by, originalKey, sheetKey
 
   // 测试能否解析
   try {
-    WebSheetParser.parse(data)
+    SheetParser.parse(data)
   }
   catch (e) {
     throw "生成曲谱文件失败：" + e

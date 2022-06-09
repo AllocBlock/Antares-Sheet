@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import WebMetronome from "./webMetronome.js";
+import Metronome from "./metronome.js";
 
 export default {
   name: "Metronome",
@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     load(callbacks) {
-      this.metronome = new WebMetronome(callbacks)
+      this.metronome = new Metronome(callbacks)
       this.updateBpm()
     },
     togglePlay() {

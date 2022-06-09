@@ -129,11 +129,11 @@
 <script>
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/common.js";
-import { WebInstrument } from "@/utils/instrument.js";
+import { Instrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
-import WebSheetParser from "@/utils/sheetParser";
+import SheetParser from "@/utils/sheetParser";
 import { toSheetFileString } from "@/utils/sheetWriter";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
@@ -149,8 +149,8 @@ import EditorModeMixed from './editorModeMixed.js'
 
 import { Editor, EditorAction } from "./editor.js";
 
-let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator");
+let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
+let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
 
 export default {
   name: "SheetEditorPc",
@@ -265,7 +265,7 @@ export default {
       });
     },
     loadSheet(sheetText) {
-      let rootNode = reactive(WebSheetParser.parse(sheetText));
+      let rootNode = reactive(SheetParser.parse(sheetText));
       this.formatSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";

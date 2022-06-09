@@ -118,11 +118,11 @@
 <script>
 import { reactive } from "vue";
 import { getQueryVariable, getMouseOrTouchClient, getEnv } from "@/utils/common.js";
-import { WebInstrument } from "@/utils/instrument.js";
+import { Instrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
-import WebSheetParser from "@/utils/sheetParser";
+import SheetParser from "@/utils/sheetParser";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
 import Chord from "@/components/chord/index.vue";
@@ -131,8 +131,8 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 import AudioPlayer from "./audioPlayer.vue";
 
-let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new WebInstrument("Ukulele", "Oscillator");
+let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
+let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
 
 function getInputText(tips, defaultText = "") {
   return prompt(tips, defaultText);
@@ -714,7 +714,7 @@ export default {
     let sheetName = getQueryVariable("sheet");
     get(`sheets/${sheetName}.sheet`)
       .then((res) => {
-        let rootNode = reactive(WebSheetParser.parse(res));
+        let rootNode = reactive(SheetParser.parse(res));
         this.formatSheetTree(rootNode);
         if (!rootNode) {
           throw "曲谱解析失败！";
@@ -913,7 +913,7 @@ export default {
 };
 
 // import { drawChord, drawChordNotFound } from "./modules/webChordRender.js"
-// import { WebInstrument } from "./modules/instrument.js"
+// import { Instrument } from "./modules/instrument.js"
 // import { runPresetTip } from "./modules/tip.js"
 // import { convertXXX } from "./modules/xxxToSheet.js"
 
@@ -928,7 +928,7 @@ export default {
 // $.fn.reverse = [].reverse;
 
 // let $g_Sheet = null
-// let g_UkulelePlayer = new WebInstrument("Ukulele", "Ukulele")
+// let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele")
 
 // let g_Editor = new Editor
 

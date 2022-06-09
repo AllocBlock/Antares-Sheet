@@ -100,7 +100,7 @@ function _chordArrayToObject(chordArray) {
   return chord
 }
 
-class WebChordManager {
+class ChordManager {
   constructor() {
     this.chords = []
     for (let chordArray of ChordArrayList) {
@@ -133,6 +133,7 @@ class WebChordManager {
 
   _shiftKeyByOffset(chordName, offset) {
     let [keyName, suffix] = _splitChordSuffix(chordName)
+    suffix = suffix ?? ""
     let curKeyIndex = _getKeyIndexByName(chordName)
     let newKeyIndex = (curKeyIndex + offset - 1 + 12) % 12 + 1
     let newKeyName = _getNameByKeyIndex(newKeyIndex)
@@ -204,7 +205,7 @@ function _isChordName(str) {
 function _splitChord(str, re) {
   let res = str.match(re)
   if (!res)
-    throw "拆解和弦失败" + str
+    throw "拆解和弦失败：" + str
   let keyName = res[1]
   let suffix = res[2] ?? null
 
@@ -285,4 +286,4 @@ function _getNameByKeyIndex(mode) {
   return keyName
 }
 
-export default new WebChordManager
+export default new ChordManager
