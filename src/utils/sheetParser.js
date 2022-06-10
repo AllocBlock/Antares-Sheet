@@ -172,7 +172,7 @@ function parseNodes(parentNode, str) {
   parentNode.children = nodes
 }
 
-function parse(sheetText) {
+export function parseSheet(sheetText) {
   let rootNode = new SheetNode(ENodeType.Root)
   if (!sheetText) return null
   // 解析标签信息，标签信息具有通用性，可以自定义标签
@@ -220,8 +220,4 @@ function parse(sheetText) {
     throw "bad tree"
   }
   return rootNode
-}
-
-export default {
-  parse,
 }

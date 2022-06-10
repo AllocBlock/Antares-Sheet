@@ -93,10 +93,10 @@
 
 <script type="module">
 import { getQueryVariable, getEnv } from "@/utils/common.js";
-import { Instrument } from "@/utils/instrument.js";
+import Instrument from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
-import SheetParser from "@/utils/sheetParser.js"
+import { parseSheet } from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
 
 import Metronome from "@/components/metronome/index.vue"
@@ -243,7 +243,7 @@ export default {
 
     this.load.params.sheetName = sheetName
     get(`sheets/${sheetName}.sheet`).then((res) => {
-      let rootNode = SheetParser.parse(res)
+      let rootNode = parseSheet(res)
       if (!rootNode) {
         this.load.state = ELoadState.Failed
         throw "曲谱解析失败！"

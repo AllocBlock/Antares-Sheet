@@ -23,9 +23,9 @@
       </div>
       <div id="sheet_by" class="title">制谱 锦瑟</div>
       <div class="flex_center">
-        <div id="edit_raw_lyric_button" class="button">编辑歌词</div>
-        <div class="button" @click="saveSheetToFile">保存</div>
-        <div class="button" @click="loadSheetFromFile">载入</div>
+        <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
+        <!-- <div class="button" @click="saveSheetToFile">保存</div> -->
+        <!-- <div class="button" @click="loadSheetFromFile">载入</div> -->
       </div>
       <AntaresSheet
         id="sheet"
@@ -35,70 +35,65 @@
       />
       <div id="sheet_padding"></div>
     </div>
-  </div>
 
-  <div id="tools_block" @touchstart="disableOverscroll">
-    <!-- <div id="tools_title" class="title flex_center">工具栏</div> -->
-    <div class="padding" />
-    <ToolChord id="chord_tool" :styles="toolChordStyles" v-model:chords="attachedChords" v-on="editorMode.toolChordEvents" />
-    <div class="padding" />
-    <!-- <div id="chord_tool_edit_button" class="button" @click="openPanelChord">
-      编辑和弦
-    </div> -->
-  </div>
+    <div id="tools_block" @touchstart="disableOverscroll">
+      <!-- <div id="tools_title" class="title flex_center">工具栏</div> -->
+      <div class="padding" />
+      <ToolChord id="chord_tool" :styles="toolChordStyles" v-model:chords="toolChord.attachedChords" v-on="toolChord.events" />
+      <div class="padding" />
+      <!-- <div id="chord_tool_edit_button" class="button" @click="this.toolChord.showPanel = true">
+        编辑和弦
+      </div> -->
+    </div>
 
-  <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">
-    <div id="drag_mark_text">{{dragChord.text}}</div>
-    <div id="drag_mark_arrow"></div>
-  </div>
+    <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">
+      <div id="drag_mark_text">{{dragChord.text}}</div>
+      <div id="drag_mark_arrow"></div>
+    </div>
 
-  <div id="raw_lyric_panel" class="panel" style="display: none">
-    <div id="raw_lyric_container">
-      <div id="raw_lyric_title">在下方输入歌词</div>
-      <textarea id="raw_lyric_textarea"></textarea>
-      <div style="display: flex">
-        <div id="raw_lyric_button_confirm" class="button">确认歌词</div>
-        <div id="raw_lyric_button_cancel" class="button">取消</div>
+    <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
+      <div id="raw_lyric_container">
+        <div id="raw_lyric_title">在下方输入歌词</div>
+        <textarea id="raw_lyric_textarea" v-model="rawLyricPanel.lyrics"></textarea>
+        <div style="display: flex">
+          <div id="raw_lyric_button_confirm" class="button" @click="confirmLyric">确认歌词</div>
+          <div id="raw_lyric_button_cancel" class="button" @click="rawLyricPanel.show = false">取消</div>
+        </div>
       </div>
     </div>
+
+    <PanelChordSelector
+      id="chord_panel"
+      class="panel"
+      v-model:attachedChords="toolChord.attachedChords"
+      v-model:show="toolChord.showPanel"
+      :key="sheetInfo.sheetKey"
+    />
+
+    <div id="help_button" v-if="false">?</div>
   </div>
-
-  <PanelChordSelector
-    id="chord_panel"
-    class="panel"
-    v-model:attachedChords="attachedChords"
-    v-model:show="showChordPanel"
-    :key="sheetInfo.sheetKey"
-  />
-
-  <div id="help_button" v-if="false">?</div>
 </template>
 
 <script>
 import { reactive } from "vue";
 import { getQueryVariable } from "@/utils/common.js";
-import { Instrument } from "@/utils/instrument.js";
+import Instrument from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
-import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
+import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
-import SheetParser from "@/utils/sheetParser";
+import { parseSheet } from "@/utils/sheetParser.js";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
 import Chord from "@/components/chord/index.vue";
 import { get } from "@/utils/request.js";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
-import AudioPlayer from "./audioPlayer.vue";
 
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
 import { Editor, EditorAction } from "./editor.js";
 
 let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
-
-function getInputText(tips, defaultText = "") {
-  return prompt(tips, defaultText);
-}
 
 export default {
   name: "SheetEditor",
@@ -108,7 +103,6 @@ export default {
     Chord,
     AntaresSheet,
     KeySelector,
-    AudioPlayer
   },
   data() {
     return {
@@ -120,9 +114,11 @@ export default {
         "--tip-text-background-color": "var(--theme-color)",
         "--tip-button-background-color": "seagreen",
       },
-      showChordPanel: false,
-      attachedChords: [],
-      loaded: false,
+      toolChord: {
+        showPanel: false,
+        attachedChords: [],
+        events: {},
+      },
       sheetInfo: {
         title: "加载中",
         singer: "",
@@ -132,10 +128,9 @@ export default {
         chords: [],
         rhythms: [],
         originalSheetKey: "",
-        sheetTree: reactive(new SheetNode(ENodeType.Root)),
+        sheetTree: Editor.createRootNode(),
       },
       editorMode: EditorModeMobileDrag,
-      toolChordEvents: {},
       toolChordStyles: {
         titleRatio: 0.16,
         colorMain: "white",
@@ -144,18 +139,30 @@ export default {
       },
       player: {
         instrument: "Oscillator",
+        bpm: 120,
+        stum: true
       },
       dragChord: {
         isDragging: false,
         text: "",
+      },
+      rawLyricPanel: {
+        show: false,
+        lyrics: "",
+      },
+      contextMenu: {
+        show: false,
+        node: null,
+        enableAddUnderline: false,
+        enableRemoveUnderline: false,
+        enableRecoverChord: false,
       },
     };
   },
   created() {
     this.editorMode.init(this)
     if (this.editorMode.toolChordEvents)
-      this.toolChordEvents = this.editorMode.toolChordEvents
-    console.log(this.toolChordEvents)
+      this.toolChord.events = this.editorMode.toolChordEvents
   },
   mounted() {
     let that = this
@@ -171,7 +178,7 @@ export default {
   },
   methods: {
     loadSheet(sheetText) {
-      let rootNode = reactive(SheetParser.parse(sheetText));
+      let rootNode = reactive(parseSheet(sheetText));
       Editor.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
@@ -185,22 +192,15 @@ export default {
       this.sheetInfo.rhythms = rootNode.rhythms ?? [];
       this.sheetInfo.sheetTree = rootNode;
       this.sheetInfo.originalSheetKey = rootNode.sheetKey;
-      this.$nextTick(() => {
-        this.loaded = true; // 下一帧才设为加载完成，避免触发watch
-      })
 
-      this.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
+      this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log(this.sheetInfo.chords, this.attachedChords);
-    },
-    openPanelChord() {
-      this.showChordPanel = true;
+      console.log(this.sheetInfo.chords, this.toolChord.attachedChords);
     },
     playChord(chord) {
-      const bpm = 120;
       let volume = 0.5;
-      let duration = (1 / bpm) * 60 * 4;
+      let duration = this.player.stum ? 0 : (1 / this.player.bpm) * 60 * 4;
       let player = null;
       switch (this.player.instrument) {
         case "Oscillator":
@@ -221,10 +221,10 @@ export default {
         }
       });
 
-      for (let i in this.attachedChords) {
-        let chordName = this.attachedChords[i].name
+      for (let i in this.toolChord.attachedChords) {
+        let chordName = this.toolChord.attachedChords[i].name
         let newChordName = ChordManager.shiftKey(chordName, oldKey, newKey);
-        this.attachedChords[i] = ChordManager.getChord(newChordName)
+        this.toolChord.attachedChords[i] = ChordManager.getChord(newChordName)
       }
     },
     onChangeSheetKey(e) {
@@ -238,11 +238,23 @@ export default {
     },
     disableOverscroll(e) {
       e.preventDefault()
-    }
+    },
+    openRawLyricPanel() {
+      this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)
+      this.rawLyricPanel.show = true
+    },
+    confirmLyric() {
+      if (!confirm("是否确认覆盖歌词？此前制作的和弦将全部被删除！！")) return;
+
+      let root = Editor.createRootNode()
+      Editor.append(root, Editor.createTextNodes(this.rawLyricPanel.lyrics))
+      this.sheetInfo.sheetTree = root
+      this.rawLyricPanel.show = false
+    },
   },
   watch: {
-    attachedChords: function() {
-      this.sheetInfo.chords = this.attachedChords.map(chord => chord.name)
+    "toolChord.attachedChords": function() {
+      this.sheetInfo.chords = this.toolChord.attachedChords.map(chord => chord.name)
     }
   },
 };
@@ -422,34 +434,35 @@ export default {
 }
 
 #raw_lyric_panel {
-}
-#raw_lyric_container {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.8);
-}
-#raw_lyric_title {
-  padding: 20px 0;
-}
-#raw_lyric_textarea {
-  font-family: inherit;
-  color: black;
-  font-size: var(--base-font-size);
-  height: 60%;
-  width: 60%;
-}
-#raw_lyric_button_confirm {
-  background: var(--sheet-theme-color);
-}
-#raw_lyric_button_cancel {
-  background: grey;
-}
-#edit_raw_lyric_button {
-  background: var(--sheet-theme-color);
+  #raw_lyric_container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.8);
+  }
+  #raw_lyric_title {
+    font-size: 20px;
+    padding: 20px 0;
+    color: white;
+  }
+  #raw_lyric_textarea {
+    font-family: inherit;
+    color: black;
+    font-size: var(--base-font-size);
+    height: 80%;
+    width: 80%;
+  }
+  #raw_lyric_button_confirm {
+    background: var(--sheet-theme-color);
+    color: white;
+  }
+  #raw_lyric_button_cancel {
+    background: grey;
+    color: white;
+  }
 }
 
 #drag_mark {

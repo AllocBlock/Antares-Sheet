@@ -1,20 +1,12 @@
 <template>
   <div class="editor" :style="globalCssVar">
-    <input
-      type="range"
-      id="layout_slider"
-      min="0"
-      max="100"
-      v-model="layout.toolWidthPercentage"
-      step="0.1"
-    />
     <div class="flex_center fill" style="flex-direction: column;">
       <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '80' : '100'}%; position: relative;`">
         <div id="help_button">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
-          <ToolChord id="chord_tool" v-model:chords="attachedChords" v-on="toolChordEvents" />
-          <div id="chord_tool_edit_button" class="button" @click="openPanelChord">
+          <ToolChord id="chord_tool" v-model:chords="toolChord.attachedChords" v-on="toolChord.events" />
+          <div id="chord_tool_edit_button" class="button" @click="this.toolChord.showPanel = true">
             编辑和弦
           </div>
         </div>
@@ -64,12 +56,9 @@
       </div>
     </div>
 
-    <div
-      id="editor_context"
-      class="context"
-      v-if="contextMenu.show"
-      :style="contextMenu.style"
-    >
+    <input type="range" id="layout_slider" min="0" max="100" step="0.1" v-model="layout.toolWidthPercentage"/>
+
+    <div id="editor_context" class="context" v-if="contextMenu.show" :style="contextMenu.style">
       <div id="editor_context_menu">
         <div class="editor_context_menu_item" @click="contextMenu.insertState.showInsertPos = true">插入</div>
         <div class="editor_context_menu_item" @click="editContent()">编辑</div>
@@ -116,8 +105,8 @@
     <PanelChordSelector
       id="chord_panel"
       class="panel"
-      v-model:attachedChords="attachedChords"
-      v-model:show="showChordPanel"
+      v-model:attachedChords="toolChord.attachedChords"
+      v-model:show="toolChord.showPanel"
       :key="sheetInfo.sheetKey"
     />
     <div id="drop_hint_panel">
@@ -127,27 +116,26 @@
 </template>
 
 <script>
-import { reactive } from "vue";
-import { getQueryVariable, getCursorClientPos } from "@/utils/common.js";
-import { Instrument } from "@/utils/instrument.js";
-import ChordManager from "@/utils/chordManager.js";
-import { SheetNode, ENodeType, traverseNode } from "@/utils/sheetNode.js";
-
-import SheetParser from "@/utils/sheetParser";
-import { toSheetFileString } from "@/utils/sheetWriter";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
-import Chord from "@/components/chord/index.vue";
-import { get } from "@/utils/request.js";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
+import Chord from "@/components/chord/index.vue";
 
-import { defineAsyncComponent } from 'vue'
+import { reactive, defineAsyncComponent } from "vue";
+import { getQueryVariable } from "@/utils/common.js";
+import { get } from "@/utils/request.js";
+
+import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
+import { parseSheet } from "@/utils/sheetParser.js";
+import { toSheetFileString } from "@/utils/sheetWriter.js";
+import { Editor, EditorAction } from "./editor.js";
 import EditorModeProgression from './editorModeProgression.js'
 import EditorModeDrag from './editorModeDrag.js'
 import EditorModeMixed from './editorModeMixed.js'
 
-import { Editor, EditorAction } from "./editor.js";
+import Instrument from "@/utils/instrument.js";
+import ChordManager from "@/utils/chordManager.js";
 
 let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
@@ -172,9 +160,10 @@ export default {
         "--tip-text-background-color": "var(--theme-color)",
         "--tip-button-background-color": "seagreen",
       },
-      showChordPanel: false,
-      attachedChords: [],
-      loaded: false,
+      layout: {
+        toolWidthPercentage: 20,
+        showAudioPlayer: false
+      },
       sheetInfo: {
         title: "加载中",
         singer: "",
@@ -184,7 +173,12 @@ export default {
         chords: [],
         rhythms: [],
         originalSheetKey: "",
-        sheetTree: reactive(new SheetNode(ENodeType.Root)),
+        sheetTree: Editor.createRootNode(),
+      },
+      toolChord: {
+        showPanel: false,
+        attachedChords: [],
+        events: {}
       },
       editorMode: EditorModeMixed,
       player: {
@@ -209,7 +203,6 @@ export default {
         enableRemoveUnderline: false,
         enableRecoverChord: false,
       },
-      toolChordEvents: {},
       dragChord: {
         isDragging: false,
         text: '',
@@ -217,10 +210,6 @@ export default {
       rawLyricPanel: {
         show: false,
         lyrics: "",
-      },
-      layout: {
-        toolWidthPercentage: 20,
-        showAudioPlayer: false
       },
     };
   },
@@ -232,7 +221,7 @@ export default {
   created() {
     this.editorMode.init(this)
     if (this.editorMode.toolChordEvents)
-      this.toolChordEvents = this.editorMode.toolChordEvents
+      this.toolChord.events = this.editorMode.toolChordEvents
   },
   mounted() {
     let that = this
@@ -250,7 +239,7 @@ export default {
   },
   methods: {
     loadSheet(sheetText) {
-      let rootNode = reactive(SheetParser.parse(sheetText));
+      let rootNode = reactive(parseSheet(sheetText));
       Editor.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
@@ -264,17 +253,11 @@ export default {
       this.sheetInfo.rhythms = rootNode.rhythms ?? [];
       this.sheetInfo.sheetTree = rootNode;
       this.sheetInfo.originalSheetKey = rootNode.sheetKey;
-      this.$nextTick(() => {
-        this.loaded = true; // 下一帧才设为加载完成，避免触发watch
-      })
 
-      this.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
+      this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log(this.sheetInfo.chords, this.attachedChords);
-    },
-    openPanelChord() {
-      this.showChordPanel = true;
+      console.log(this.sheetInfo.chords, this.toolChord.attachedChords);
     },
     openContext(e, node) {
       e.preventDefault();
@@ -314,10 +297,10 @@ export default {
         }
       });
 
-      for (let i in this.attachedChords) {
-        let chordName = this.attachedChords[i].name
+      for (let i in this.toolChord.attachedChords) {
+        let chordName = this.toolChord.attachedChords[i].name
         let newChordName = ChordManager.shiftKey(chordName, oldKey, newKey);
-        this.attachedChords[i] = ChordManager.getChord(newChordName)
+        this.toolChord.attachedChords[i] = ChordManager.getChord(newChordName)
       }
     },
     editContent(node = null) {
@@ -370,7 +353,7 @@ export default {
         this.sheetInfo.by,
         this.sheetInfo.originalKey,
         this.sheetInfo.sheetKey,
-        this.attachedChords.map(n => n.name),
+        this.toolChord.attachedChords.map(n => n.name),
       )
       let time = new Date().toLocaleDateString().replace(/\//g, "_")
     
@@ -438,8 +421,8 @@ export default {
         Math.max(10, this.layout.toolWidthPercentage)
       );
     },
-    attachedChords: function() {
-      this.sheetInfo.chords = this.attachedChords.map(chord => chord.name)
+    "toolChord.attachedChords": function() {
+      this.sheetInfo.chords = this.toolChord.attachedChords.map(chord => chord.name)
     }
   },
 };

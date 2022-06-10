@@ -1,4 +1,69 @@
 import { loadFileBuffer } from "@/utils/audio.js"
+
+const g_ToneNameMap = {
+    "A": 0,
+    "B": 2,
+    "C": 3,
+    "D": 5,
+    "E": 7,
+    "F": 8,
+    "G": 10,
+}
+
+function  _toneToIndex(tone) { // A0 = 0, C4 = 52
+    let res = tone.name.match(/[^b#]+/)
+    if (!res) throw "未知错误：匹配音调失败";
+    let keyWithoutDecoration = res[0]
+    let remainIndex = g_ToneNameMap[keyWithoutDecoration]
+    if (remainIndex == undefined) throw "未知错误：匹配音调失败";
+
+    let hasSharp = false, hasFlat = false
+    res = tone.name.match(/#/)
+    if (res) hasSharp = true;
+    res = tone.name.match(/b/)
+    if (res) hasFlat = true;
+
+    if (hasSharp) remainIndex++;
+    else if (hasFlat) remainIndex--;
+
+    let index = remainIndex + tone.octave * 12
+
+    if (isNaN(index)) throw "未知错误：匹配音调失败";
+
+    return index
+}
+
+function _indexToTone(index) {
+    let remainIndex = index % 12
+    let octave = Math.floor(index / 12)
+
+    let name = null
+    for(let key in g_ToneNameMap) {
+        if (remainIndex == g_ToneNameMap[key]) {
+            name = key
+        }
+        else if (remainIndex - 1 == g_ToneNameMap[key]) {
+            name = "#" + key
+        }
+    }
+    if (!name) throw "未知错误：获取音调失败"
+
+    return {
+        name: name,
+        octave: octave
+    }
+}
+
+const g_StandardFrequencyA = 440
+function _ToneToFrequency(tone) {
+    let absIndexA = _toneToIndex({name : "A", octave: 4})
+    let curIndex = _toneToIndex(tone)
+    let offset = curIndex - absIndexA
+
+    let frequency = g_StandardFrequencyA * Math.pow(2, 1 / 12 * offset)
+    return frequency
+}
+
 const ResourceDir = "/resources"
 
 const AudioSourceLibrary = [
@@ -185,7 +250,7 @@ class StringInstrument {
 /* 
  * 管理音频上下文，创建音源和乐器并连接
  */
-class Instrument {
+export default class Instrument {
     constructor(instrumentName = "Ukulele", audioSourceName = "Oscillator", callbacks = {}) {
         this.audioContext = new AudioContext()
 
@@ -296,69 +361,3 @@ class Instrument {
         return this.instrument.capo
     }
 }
-
-const g_ToneNameMap = {
-    "A": 0,
-    "B": 2,
-    "C": 3,
-    "D": 5,
-    "E": 7,
-    "F": 8,
-    "G": 10,
-}
-
-function  _toneToIndex(tone) { // A0 = 0, C4 = 52
-    let res = tone.name.match(/[^b#]+/)
-    if (!res) throw "未知错误：匹配音调失败";
-    let keyWithoutDecoration = res[0]
-    let remainIndex = g_ToneNameMap[keyWithoutDecoration]
-    if (remainIndex == undefined) throw "未知错误：匹配音调失败";
-
-    let hasSharp = false, hasFlat = false
-    res = tone.name.match(/#/)
-    if (res) hasSharp = true;
-    res = tone.name.match(/b/)
-    if (res) hasFlat = true;
-
-    if (hasSharp) remainIndex++;
-    else if (hasFlat) remainIndex--;
-
-    let index = remainIndex + tone.octave * 12
-
-    if (isNaN(index)) throw "未知错误：匹配音调失败";
-
-    return index
-}
-
-function _indexToTone(index) {
-    let remainIndex = index % 12
-    let octave = Math.floor(index / 12)
-
-    let name = null
-    for(let key in g_ToneNameMap) {
-        if (remainIndex == g_ToneNameMap[key]) {
-            name = key
-        }
-        else if (remainIndex - 1 == g_ToneNameMap[key]) {
-            name = "#" + key
-        }
-    }
-    if (!name) throw "未知错误：获取音调失败"
-
-    return {
-        name: name,
-        octave: octave
-    }
-}
-
-const g_StandardFrequencyA = 440
-function _ToneToFrequency(tone) {
-    let absIndexA = _toneToIndex({name : "A", octave: 4})
-    let curIndex = _toneToIndex(tone)
-    let offset = curIndex - absIndexA
-
-    let frequency = g_StandardFrequencyA * Math.pow(2, 1 / 12 * offset)
-    return frequency
-}
-
-export { Instrument }
