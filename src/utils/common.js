@@ -83,7 +83,7 @@ export function setEnv(env) {
 export function getCursorClientPos(e) {
   if (e.originalEvent) e = originalEvent
 
-  if (e.clientX) {
+  if (e.clientX != undefined) {
     return [e.clientX, e.clientY];
   } else {
     return [

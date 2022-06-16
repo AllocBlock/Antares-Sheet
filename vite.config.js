@@ -40,6 +40,9 @@ const customTags = [
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    sourcemap: true
+  },
   plugins: [vue({
     template: {
       compilerOptions: {

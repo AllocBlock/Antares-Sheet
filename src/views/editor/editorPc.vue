@@ -186,7 +186,8 @@ export default {
         originalSheetKey: "",
         sheetTree: reactive(new SheetNode(ENodeType.Root)),
       },
-      editorMode: EditorModeMixed,
+      // editorMode: EditorModeMixed,
+      editorMode: EditorModeDrag,
       player: {
         instrument: "Oscillator",
         bpm: 120,
