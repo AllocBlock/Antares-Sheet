@@ -50,6 +50,16 @@ export const Editor = {
     if (!node.parent) throw "该节点是根节点";
     return node.parent.children.findIndex((e) => e === node);
   },
+  prevSibling(node) {
+    let i = Editor.indexOf(node)
+    if (i == 0) return null
+    else return node.parent.children[i - 1]
+  },
+  nextSibling(node) {
+    let i = Editor.indexOf(node)
+    if (i == node.parent.children.length - 1) return null
+    else return node.parent.children[i + 1]
+  },
   commonAncestor(node1, node2) {
     let node1Ancestors = [];
     let tempNode = node1;
@@ -145,6 +155,14 @@ export const Editor = {
   },
   prepend(parent, data) {
     this.insert(parent, 0, data, 0);
+  },
+
+  isFirstNode(node) {
+    return node.parent && node.parent.type == ENodeType.Root && Editor.prevSibling(node) == null;
+  },
+
+  isLastNode(node) {
+    return node.parent && node.parent.type == ENodeType.Root && Editor.nextSibling(node) == null;
   },
 
   createRootNode() {
