@@ -118,7 +118,7 @@
       class="panel"
       v-model:attachedChords="attachedChords"
       v-model:show="showChordPanel"
-      :key="sheetInfo.sheetKey"
+      :tonic="sheetInfo.sheetKey"
     />
     <div id="drop_hint_panel">
       <div id="drop_hint_text">拖拽文件加载</div>
@@ -179,11 +179,11 @@ export default {
         title: "加载中",
         singer: "",
         by: "",
-        originalKey: "",
-        sheetKey: "",
+        originalKey: "C",
+        sheetKey: "C",
         chords: [],
         rhythms: [],
-        originalSheetKey: "",
+        originalSheetKey: "C",
         sheetTree: reactive(new SheetNode(ENodeType.Root)),
       },
       // editorMode: EditorModeMixed,
@@ -272,7 +272,7 @@ export default {
       this.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log(this.sheetInfo.chords, this.attachedChords);
+      console.log(this.sheetInfo);
     },
     openPanelChord() {
       this.showChordPanel = true;
@@ -310,7 +310,7 @@ export default {
     },
     shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
-        if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
+        if (Editor.isChord(node)) {
           node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
@@ -349,6 +349,7 @@ export default {
       let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
       if (!confirmed) return
       this.shiftKey(oldKey, newKey)
+      console.log("keyyyyyyyyyyyyyyyyyyyyyyyyyyyy", newKey)
     },
     openRawLyricPanel() {
       this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)

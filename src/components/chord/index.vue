@@ -1,6 +1,7 @@
 <template>
   <div class="container" ref="container" :style="getGlobalCssVar()">
     <ChordError v-if="error" />
+    <ChordPlaceholder v-else-if="usePlaceholder" :text="placeholder" />
     <div v-else class="chord" :style="calChordStyle()">
       <div class="name" ref="name" :style="`font-size: ${chordLayout.titleFontSize}px`">{{formattedChord.name}}</div>
       <div class="graph" ref="graph">
@@ -30,18 +31,20 @@
 
 <script>
 import ChordError from "./error.vue";
-
+import ChordPlaceholder from "./placeholder.vue"
+ 
 const MinChordGraphHeight = 400, MinChordGraphWidth = 300;
 const FingerNameList = ["1", "2", "3", "4", "T"];
 
 export default {
   name: "Chord",
   components: {
-    ChordError,
+    ChordError, ChordPlaceholder
   },
   data() {
     return {
       error: false,
+      usePlaceholder: false,
       $chordContainer: null,
       graphSize: {
         w: 0, h: 0
@@ -67,6 +70,10 @@ export default {
     chord: {
       type: Object,
       required: true,
+    },
+    placeholder: {
+      type: String,
+      default: "未知和弦"
     },
     styles: {
       type: Object,
@@ -142,7 +149,7 @@ export default {
 
       let curChord = this.formatChordInfo(this.chord);
       if (!curChord || !this.checkChord(curChord)) {
-        this.error = true;
+        this.usePlaceholder = true;
         return;
       }
       this.formattedChord = curChord

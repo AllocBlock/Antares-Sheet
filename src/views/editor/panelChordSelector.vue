@@ -17,8 +17,9 @@
         >
           <Chord
             v-for="(chord, index) in localAttachedChords"
-            :key="chord ? chord.name : index"
-            :chord="chord"
+            :key="chord.name ?? chord ?? index"
+            :chord="typeof(chord) == 'string' ? null : chord"
+            :placeholder="typeof(chord) == 'string' ? chord : chord.name"
             :styles="chordStyle"
             class="prefab_chord chord_drag_sort"
             :type="index == _DraggingChordIndex ? 'fake' : ''"
@@ -59,8 +60,9 @@
             <div class="recommend_sub_list">
               <Chord
                 v-for="(chord, index) in type.list"
-                :key="chord ? chord.name : index"
-                :chord="chord"
+                :key="chord.name ?? chord ?? index"
+                :chord="typeof(chord) == 'string' ? null : chord"
+                :placeholder="typeof(chord) == 'string' ? chord : chord.name"
                 :class="
                   'prefab_chord ' +
                   (isAttached(chord) ? 'chord_already_attached' : 'chord_add')
@@ -84,8 +86,9 @@
         <div id="search_chord_list">
           <Chord
             v-for="chord in searchChords"
-            :key="chord.name"
-            :chord="chord"
+            :key="chord.name ?? chord ?? index"
+            :chord="typeof(chord) == 'string' ? null : chord"
+            :placeholder="typeof(chord) == 'string' ? chord : chord.name"
             :class="
               'prefab_chord ' +
               (isAttached(chord) ? 'chord_already_attached' : 'chord_add')
@@ -132,9 +135,9 @@ export default {
       type: Array,
       required: true,
     },
-    key: {
+    tonic: {
       type: String,
-      default: "C",
+      required: true,
     },
   },
   data() {
@@ -179,15 +182,16 @@ export default {
       this.close();
     },
     updateRecommendChords() {
+      console.log("update", this.tonic)
       let recommendChords = [];
-      if (this.key) {
+      if (this.tonic) {
         for (let type in g_RecommendChordInCMajor) {
           let list = [];
           for (let chordName of g_RecommendChordInCMajor[type]) {
             let newChordName = ChordManager.shiftKey(
               chordName,
               "C",
-              this.key
+              this.tonic
             );
             let newChord = ChordManager.getChord(newChordName) ?? {name: newChordName};
             list.push(newChord);
@@ -199,7 +203,7 @@ export default {
         }
       } else {
         recommendChords.push({
-          title: "请先指选调",
+          title: "请先指定选调",
           list: [],
         });
       }
@@ -242,7 +246,7 @@ export default {
     },
 
     isAttached(chord) {
-      return this.localAttachedChords.find((e) => e == chord) != undefined;
+      return this.localAttachedChords.find(e => e.name == chord.name) != undefined;
     },
 
     addAttachedChord(chord) {
@@ -316,7 +320,7 @@ export default {
       if (this.show)
         this.localAttachedChords = clone(this.attachedChords)
     },
-    key: function () {
+    tonic: function () {
       this.updateRecommendChords();
     },
     searchText: function () {
