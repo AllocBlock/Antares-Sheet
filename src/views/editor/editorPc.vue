@@ -107,7 +107,7 @@
       class="panel"
       v-model:attachedChords="toolChord.attachedChords"
       v-model:show="toolChord.showPanel"
-      :key="sheetInfo.sheetKey"
+      :tonic="sheetInfo.sheetKey"
     />
     <div id="drop_hint_panel">
       <div id="drop_hint_text">拖拽文件加载</div>
@@ -168,11 +168,11 @@ export default {
         title: "加载中",
         singer: "",
         by: "",
-        originalKey: "",
-        sheetKey: "",
+        originalKey: "C",
+        sheetKey: "C",
         chords: [],
         rhythms: [],
-        originalSheetKey: "",
+        originalSheetKey: "C",
         sheetTree: Editor.createRootNode(),
       },
       toolChord: {
@@ -180,7 +180,8 @@ export default {
         attachedChords: [],
         events: {}
       },
-      editorMode: EditorModeMixed,
+      // editorMode: EditorModeMixed,
+      editorMode: EditorModeDrag,
       player: {
         instrument: "Oscillator",
         bpm: 120,
@@ -257,7 +258,10 @@ export default {
       this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log(this.sheetInfo.chords, this.toolChord.attachedChords);
+      console.log(this.sheetInfo);
+    },
+    openPanelChord() {
+      this.showChordPanel = true;
     },
     openContext(e, node) {
       e.preventDefault();
@@ -292,7 +296,7 @@ export default {
     },
     shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
-        if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
+        if (Editor.isChord(node)) {
           node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
@@ -331,6 +335,7 @@ export default {
       let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
       if (!confirmed) return
       this.shiftKey(oldKey, newKey)
+      console.log("keyyyyyyyyyyyyyyyyyyyyyyyyyyyy", newKey)
     },
     openRawLyricPanel() {
       this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)

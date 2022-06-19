@@ -7,49 +7,200 @@ import { ENodeType } from "@/utils/sheetNode.js";
 
 let gThis = null
 
-let gIsDragging = false
-let gToRemoveNode = null
-let gToInsertChordNode = null
-
-function _onCursorMove(e) {
-  if (!gIsDragging) return
-
-  let [x, y] = getCursorClientPos(e);
-  setPos(gThis.$refs.dragMark, x, y)
+let gDragChord = {
+  is: false,
+  chordName: null,
+  toUpdateNode: null,
+  toInsertNode: null,
+  clear() {
+    this.is = false
+    this.chordName = null
+    this.toUpdateNode = null
+    this.toInsertNode = null
+  }
 }
 
-function _onCursorUp(e) {
-  if (gIsDragging) {
-    if (gToRemoveNode) {
-      if (gToRemoveNode.type == ENodeType.ChordPure) { // 纯和弦，则也插入纯和弦
-        gToInsertChordNode.type = gToRemoveNode.type
-        gToInsertChordNode.content = ''
-      } else { // 否则插入普通和弦，并标记该文本
-        gToInsertChordNode.type = ENodeType.Chord
-        gToInsertChordNode.content = gToRemoveNode.content
-      }
-      // TODO: 检查是否能够替换，有没有不能直接替换的情况？
-      Editor.replace(gToRemoveNode, gToInsertChordNode)
-    }
-    gIsDragging = false
-    gToInsertChordNode = null
-    gToRemoveNode = null
+let gShiftChord = {
+  is: false,
+  chordName: null,
+  lastPosX: 0,
+  curNode: null,
+  shiftThreshold: 50, // px
+  curShiftDistance: 0,
 
+  setCurShiftNode(n) {
+    if (this.curNode)
+      EditorAction.unhighlightNode(this.curNode)
+  
+    if (n)
+      EditorAction.highlightNode(n)
+  
+      this.curNode = n;
+  },
+  clear() {
+    this.is = false
+    this.chordName = null,
+    this.lastPosX = 0
+    this.shiftThreshold = 50
+    this.curShiftDistance = 0
+    this.setCurShiftNode(null)
+  }
+}
+
+let gUI = {
+  showDragMark(chordName) {
+    gThis.dragChord.isDragging = true
+    gThis.dragChord.text = chordName ?? '错误'
+  },
+  hideDragMark() {
     gThis.dragChord.isDragging = false
   }
 }
 
-function _setToRemoveNode(node) {
-  if (node == gToInsertChordNode) return
+function _doesPreferPureChord() {
+  if (!gDragChord.toUpdateNode) return false;
+  else if (gDragChord.toUpdateNode.type == ENodeType.ChordPure) return true; // 纯和弦，则也插入纯和弦
+  else {
+    // 同一行内，如果有ChordPure则插入纯和弦
+    // 否则，如果有非空的Text和Chord节点则插入普通和弦
+    let lineStartNode = Editor.findPrev(gDragChord.toUpdateNode, (n) => n.type == ENodeType.NewLine || Editor.isFirstNode(n))
+    let lineEndNode = Editor.findNext(gDragChord.toUpdateNode, (n) => n.type == ENodeType.NewLine || Editor.isLastNode(n))
+    
+    let hasChordPure = false;
+    let hasTextOrChord = false; // TODO：怎么考虑？
+    Editor.findNext(lineStartNode, (n) => {
+      if (n == lineEndNode) return true;
+      if (n.type == ENodeType.ChordPure) hasChordPure = true;
+      else if ((n.type == ENodeType.Chord) ||
+      (n.type == ENodeType.Text && !Editor.isPlaceholder(n.content))) hasTextOrChord = true;
+      return false;
+    })
 
-  if (gToRemoveNode)
-    EditorAction.unhighlightNode(gToRemoveNode)
-  EditorAction.highlightNode(node)
-  gToRemoveNode = node
+    if (hasChordPure) return true;
+  }
+  return false;
+}
+
+function _onCursorMove(e) {
+  let [x, y] = getCursorClientPos(e);
+
+  if (gDragChord.is) { // 普通拖放和弦模式
+    setPos(gThis.$refs.dragMark, x, y)
+  } else if (gShiftChord.is) { // 偏移和弦模式
+    let dx = x - gShiftChord.lastPosX
+    gShiftChord.lastPosX = x
+
+    if (dx * gShiftChord.curShiftDistance >= 0) {
+      gShiftChord.curShiftDistance += dx
+
+      let offset = Math.trunc(gShiftChord.curShiftDistance / gShiftChord.shiftThreshold);
+      if (Math.abs(offset) >= 1) {
+        console.log("shift by: ", offset)
+        _shiftChord(offset)
+        gShiftChord.curShiftDistance -= offset * gShiftChord.shiftThreshold
+      }
+    } else {
+      gShiftChord.curShiftDistance = dx
+    }
+  }
+}
+
+function _onCursorUp(e) {
+  if (gDragChord.is) {
+    if (gDragChord.toUpdateNode) {
+      if (_doesPreferPureChord()) {
+        gDragChord.toInsertNode.type = ENodeType.ChordPure
+        gDragChord.toInsertNode.content = ''
+      } else { // 否则插入普通和弦，并标记该文本
+        gDragChord.toInsertNode.type = ENodeType.Chord
+        gDragChord.toInsertNode.content = gDragChord.toUpdateNode.content
+      }
+      // TODO: 检查是否能够替换，有没有不能直接替换的情况？
+      Editor.replace(gDragChord.toUpdateNode, gDragChord.toInsertNode)
+    }
+    gDragChord.clear()
+    gUI.hideDragMark()
+  } else if (gShiftChord.is) {
+    if (gShiftChord.curNode.temp) delete gShiftChord.curNode.temp; // 移除临时状态
+    gShiftChord.clear()
+  }
+}
+
+function _setToRemoveNode(node) {
+  if (node == gDragChord.toInsertNode) return
+
+  if (!gShiftChord.is) {
+    if (gDragChord.toUpdateNode)
+      EditorAction.unhighlightNode(gDragChord.toUpdateNode)
+    EditorAction.highlightNode(node)
+    gDragChord.toUpdateNode = node
+  }
+}
+
+function _startDragChord(e, chordName) {
+  gDragChord.is = true
+  gDragChord.chordName = chordName
+  gDragChord.toInsertNode = Editor.createChordNode('', chordName)
+  gDragChord.toUpdateNode = null
+  _onCursorMove(e)
+  gUI.showDragMark(chordName)
+}
+
+function _startShiftChord(e, chordName, node) {
+  gShiftChord.is = e.altKey ? true : false
+  if (gShiftChord.is) {
+    gShiftChord.lastPosX = getCursorClientPos(e)[0];
+    gShiftChord.chordName = chordName
+    gShiftChord.setCurShiftNode(node)
+    _onCursorMove(e)
+  }
+}
+
+function _shiftChordByStep(toLeft = true) {
+  // TODO: 这会破坏下划线，如何保留？
+  let isPlaceholder = Editor.isPlaceholder(gShiftChord.curNode.content)
+  let nearbyNode = toLeft ? Editor.prevSibling(gShiftChord.curNode) : Editor.nextSibling(gShiftChord.curNode)
+  // 插入还是替换？
+  // 如果当前是占位和弦，则替换
+  // 否则，如果临近是文本，且是空文本，则替换
+  // 否则，插入
+  // /TODO: 如果是和弦怎么处理？
+
+  if (nearbyNode.type != ENodeType.Text && isPlaceholder) return; // 如果已经是占位和弦，且临近也是和弦或其他标记，则不允许移动
+
+  let replace = nearbyNode.type == ENodeType.Text && (isPlaceholder || Editor.isPlaceholder(nearbyNode.content))
+  let oldNode = gShiftChord.curNode
+
+  if (replace) { // 替换，则把和弦移动到前一个文本上
+    let curNode = EditorAction.convertToChord(nearbyNode, gShiftChord.chordName)
+    gShiftChord.setCurShiftNode(curNode)
+  } else { // 否则在前方插入一个和弦
+    let curNode = Editor.createChordNode("_", gShiftChord.chordName)
+    curNode.temp = true // 设置为临时节点，可以被删除
+    gShiftChord.setCurShiftNode(curNode)
+    if (toLeft) Editor.insertBefore(oldNode, gShiftChord.curNode);
+    else Editor.insertAfter(oldNode, gShiftChord.curNode);
+  }
+
+  // 如果时新建的节点，则删除
+  EditorAction.convertToText(oldNode, oldNode.temp == true) // TIPS: 发现一点，如果传入undefined，似乎会使用默认参数
+}
+
+function _shiftChord(offset) {
+  offset = Math.trunc(offset)
+  if (offset > 0) {
+    while(offset--) {
+      _shiftChordByStep(false)
+    }
+  } else {
+    while(offset++) {
+      _shiftChordByStep(true)
+    }
+  }
 }
 
 export default {
-  tip: `【拖拽和弦模式】双击可以编辑文字/添加下划线\n按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n拖入保存的文件可以直接加载`,
+  tip: `【拖拽和弦模式】双击可以编辑文字/添加下划线\n按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n按住Alt拖拽可微调偏移和弦\n拖入保存的文件可以直接加载`,
   componentEvents: {
     text: {
       click: (e, node) => {
@@ -63,15 +214,16 @@ export default {
           gOpenContextFunc(e, node)
       },
       mouseenter: (e, node) => {
-        if (!gIsDragging) return
-        _setToRemoveNode(node)
+        if (gDragChord.is) {
+          _setToRemoveNode(node)
+        }
       },
       mouseleave: (e, node) => {
-        if (node == gToRemoveNode) {
-          EditorAction.unhighlightNode(gToRemoveNode)
-          gToRemoveNode = null
+        if (gDragChord.is && node == gDragChord.toUpdateNode) {
+          EditorAction.unhighlightNode(gDragChord.toUpdateNode)
+          gDragChord.toUpdateNode = null
         }
-      }
+      },
     },
     chord: {
       click: (e, node) => {
@@ -87,13 +239,30 @@ export default {
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
       mouseenter: (e, node) => {
-        if (!gIsDragging) return
-        _setToRemoveNode(node)
+        if (gDragChord.is) {
+          _setToRemoveNode(node)
+        }
       },
       mouseleave: (e, node) => {
-        if (node == gToRemoveNode) {
-          EditorAction.unhighlightNode(gToRemoveNode)
-          gToRemoveNode = null
+        if (gDragChord.is && node == gDragChord.toUpdateNode) {
+          EditorAction.unhighlightNode(gDragChord.toUpdateNode)
+          gDragChord.toUpdateNode = null
+        }
+      },
+      mousedown: (e, node) => {
+        console.log("mousedown ", node.chord)
+        if (gDragChord.is || gShiftChord.is) return;
+
+        if (e.shiftKey) {
+          console.log("shift ", node.chord)
+          _startDragChord(e, node.chord)
+          EditorAction.convertToText(node, false)
+        } else if (e.ctrlKey){
+          console.log("ctrl ", node.chord)
+          _startDragChord(e, node.chord)
+        } else if (e.altKey && node.type == ENodeType.Chord){
+          console.log("alt ", node.chord)
+          _startShiftChord(e, node.chord, node)
         }
       }
     },
@@ -114,14 +283,9 @@ export default {
   },
   toolChordEvents: {
     dragStart: (e, chord) => {
-      gIsDragging = true
-      gToInsertChordNode = Editor.createChordNode('', chord.name)
-      gToRemoveNode = null
-        // e.preventDefault()
-      _onCursorMove(e)
-      
-      gThis.dragChord.isDragging = true
-      gThis.dragChord.text = chord ? chord.name : '错误'
+      if (chord && chord.name)
+        _startDragChord(e, chord.name)
+      // e.preventDefault()
     }
   },
   init: function(instance) {

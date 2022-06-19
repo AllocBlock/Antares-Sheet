@@ -5,6 +5,36 @@ function _getInputText(tips, defaultText = "") {
   return prompt(tips, defaultText);
 }
 
+function _traverseNext(node, index, callback) {
+  if (callback(node)) return node;
+  // 继续向后遍历
+  // 已知当前节点、起始索引
+  // 递归调用索引>起始索引的子节点，传入索引=-1，表示该节点需要被完整遍历，不再遍历回父节点
+  // 如果起始索引>-1，且有父节点，递归调用父节点，传入索引=自身索引
+  for (let i = index + 1; i < node.children.length; ++i) {
+    let res = _traverseNext(node.children[i], -1, callback);
+    if (res) return res;
+  }
+  if (index > -1 && node.parent)
+    return _traverseNext(node.parent, Editor.indexOf(node), callback);
+  else return null;
+}
+
+function _traversePrev(node, index, callback) {
+  if (callback(node)) return node;
+  // 继续向前遍历
+  // 已知当前节点、结束索引
+  // 递归倒序调用索引<结束索引的子节点，传入索引=其孩子数量，表示该节点需要被完整遍历，不再遍历回父节点
+  // 如果起始索引<其孩子数量，且有父节点，递归调用父节点，传入索引=自身索引
+  for (let i = index - 1; i >= 0; --i) {
+    let res = _traversePrev(node.children[i], node.children[i].children.length, callback);
+    if (res) return res;
+  }
+  if (index < node.children.length && node.parent)
+    return _traversePrev(node.parent, Editor.indexOf(node), callback);
+  else return null;
+}
+
 export const Editor = {
   isChord(node) {
     return node
@@ -19,6 +49,16 @@ export const Editor = {
   indexOf(node) {
     if (!node.parent) throw "该节点是根节点";
     return node.parent.children.findIndex((e) => e === node);
+  },
+  prevSibling(node) {
+    let i = Editor.indexOf(node)
+    if (i == 0) return null
+    else return node.parent.children[i - 1]
+  },
+  nextSibling(node) {
+    let i = Editor.indexOf(node)
+    if (i == node.parent.children.length - 1) return null
+    else return node.parent.children[i + 1]
   },
   commonAncestor(node1, node2) {
     let node1Ancestors = [];
@@ -63,39 +103,21 @@ export const Editor = {
     }
     callback(node);
   },
-  traverseNext(node, index, callback) {
-    if (callback(node)) return node;
-    // 继续向后遍历
-    // 已知当前节点、起始索引
-    // 递归调用索引>起始索引的子节点，传入索引=-1，表示该节点需要被完整遍历，不再遍历回父节点
-    // 如果起始索引>-1，且有父节点，递归调用父节点，传入索引=自身索引
-    for (let i = index + 1; i < node.children.length; ++i) {
-      let res = this.traverseNext(node.children[i], -1, callback);
-      if (res) return res;
-    }
-    if (index > -1 && node.parent)
-      return this.traverseNext(node.parent, this.indexOf(node), callback);
-    else return null;
+  // node: 搜寻起始节点
+  // isTargetCallback: 经过每个节点时调用，返回true则停止搜寻
+  findNext(node, isTargetCallback) {
+    return _traverseNext(node, node.children.length, isTargetCallback);
   },
-  traversePrev(node, index, callback) {
-    if (callback(node)) return node;
-    // 继续向前遍历
-    // 已知当前节点、结束索引
-    // 递归倒序调用索引<结束索引的子节点，传入索引=其孩子数量，表示该节点需要被完整遍历，不再遍历回父节点
-    // 如果起始索引<其孩子数量，且有父节点，递归调用父节点，传入索引=自身索引
-    for (let i = index - 1; i >= 0; --i) {
-      let res = this.traversePrev(node.children[i], node.children[i].children.length, callback);
-      if (res) return res;
-    }
-    if (index < node.children.length && node.parent)
-      return this.traversePrev(node.parent, this.indexOf(node), callback);
-    else return null;
+  // node: 搜寻起始节点
+  // isTargetCallback: 经过每个节点时调用，返回true则停止搜寻
+  findPrev(node, isTargetCallback) {
+    return _traversePrev(node, -1, isTargetCallback);
   },
   findNextNodeByType(node, type) {
-    return this.traverseNext(node, node.children.length, (n) => n != node && n.type == type);
+    return this.findNext(node, (n) => n != node && n.type == type);
   },
   findPrevNodeByType(node, type) {
-    return this.traversePrev(node, -1, (n) => n != node && n.type == type);
+    return this.findPrev(node, (n) => n != node && n.type == type);
   },
   insert(parent, index, data, replace = 0) {
     if (index < 0) throw "索引错误";
@@ -133,6 +155,14 @@ export const Editor = {
   },
   prepend(parent, data) {
     this.insert(parent, 0, data, 0);
+  },
+
+  isFirstNode(node) {
+    return node.parent && node.parent.type == ENodeType.Root && Editor.prevSibling(node) == null;
+  },
+
+  isLastNode(node) {
+    return node.parent && node.parent.type == ENodeType.Root && Editor.nextSibling(node) == null;
   },
 
   createRootNode() {
@@ -290,7 +320,7 @@ export const Editor = {
   },
 
   isPlaceholder(str) {
-    return str == "" || str == " " || str == "_"
+    return !str || str == "" || str == " " || str == "_"
   },
 
   toString(node, recursive = false) {
@@ -530,21 +560,25 @@ export const EditorAction = {
     }
   },
 
-  convertToText(node) {
+  convertToText(node, removeEmptyNode = true) {
     if (node.type == ENodeType.Text) return node;
     else if (Editor.isChord(node)) {
       this.removeAllUnderlineOnChord(node) // 删除和弦下划线
 
       let content = node.content
-      if (content == "" || content == " " || content == "_") { // 空和弦，直接删除
-        Editor.remove(node)
-        return null
+      if (Editor.isPlaceholder(content)) { // 空和弦
+        if (removeEmptyNode) { // 删除
+          Editor.remove(node)
+          return null
+        }
+        else { // 全部标记为空格
+          content = " "
+        }
       }
-      else {
-        let textNodes = Editor.createTextNodes(node.content)
-        Editor.replace(node, textNodes);
-        return textNodes
-      }
+
+      let textNodes = Editor.createTextNodes(content)
+      Editor.replace(node, textNodes);
+      return textNodes
     }
     else {
       throw "类型错误，无法转换该节点为文本节点";
@@ -595,7 +629,7 @@ export const EditorAction = {
   editContent(node) {
     if (!node) throw "节点为空"
 
-    let newContent = _getInputText("标记内容", node.content);
+    let newContent = _getInputText("编辑内容", node.content);
     if (!newContent) return;
     this.updateContent(node, newContent)
   },

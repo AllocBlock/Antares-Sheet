@@ -108,6 +108,11 @@ class ChordManager {
       this.chords[chord.name] = chord
     }
   }
+
+  isChord(chordName) {
+    return _isChordName(chordName)
+  }
+
   getChord(name, allowAlias) {
     if (this.chords[name])
       return this.chords[name]
