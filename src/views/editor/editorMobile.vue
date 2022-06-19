@@ -70,6 +70,23 @@
       :key="sheetInfo.sheetKey"
     />
 
+    <div id="editor_context" class="context" v-if="contextMenu.show" :style="contextMenu.style">
+      <div id="editor_context_menu">
+        <div class="editor_context_menu_item" @click="contextMenu.insertState.showInsertPos = true">插入</div>
+        <div class="editor_context_menu_item" @click="editContent()">编辑</div>
+        <div class="editor_context_menu_item" @click="editRemove()">删除</div>
+        <div class="editor_context_menu_item" @click="editAddUnderline()" v-show="contextMenu.enableAddUnderline">
+          添加下划线
+        </div>
+        <div class="editor_context_menu_item" @click="editRemoveUnderline()" v-show="contextMenu.enableRemoveUnderline">
+          删除下划线
+        </div>
+        <div class="editor_context_menu_item" @click="editRecoverChord()" v-show="contextMenu.enableRecoverChord">
+          恢复和弦为文字
+        </div>
+      </div>
+    </div>
+
     <div id="help_button" v-if="false">?</div>
   </div>
 </template>
@@ -251,6 +268,16 @@ export default {
       this.sheetInfo.sheetTree = root
       this.rawLyricPanel.show = false
     },
+    openContext(e, node) {
+      e.preventDefault();
+      this.contextMenu.show = true;
+      this.contextMenu.node = node;
+
+      let isChord = Editor.isChord(node);
+      this.contextMenu.enableAddUnderline = isChord;
+      this.contextMenu.enableRemoveUnderline = isChord && Editor.hasUnderlineToNextChord(node);
+      this.contextMenu.enableRecoverChord = isChord;
+    },
   },
   watch: {
     "toolChord.attachedChords": function() {
@@ -405,22 +432,44 @@ export default {
   user-select: none;
   overflow: hidden;
   z-index: 20;
+  background: #fff;
+  border: var(--theme-color) solid 1px;
+  border-radius: 2vw;
+  box-shadow: 10px 5px 5px #00000088;
 
-  border-radius: 10px;
+  width: 60%;
+  left: 20%;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.context::before {
-  position: absolute;
-  content: "";
-
+.editor_context_menu_item {
+  position: relative;
   width: 100%;
-  height: 100%;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: rgb(49, 100, 88);
-  opacity: 0.9;
+  color: var(--theme-color);
+  padding: 1vh 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 21;
+
+  & + & {
+    border-top: grey solid 1px;
+  }
+}
+
+#editor_context {
+  #editor_context_menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 10px;
+
+    width: 100%;
+  }
 }
 
 .panel {

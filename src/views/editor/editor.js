@@ -602,10 +602,15 @@ export const EditorAction = {
 
   highlightNode(node) {
     node.style.opacity = 0.5
+    if (node.type == ENodeType.Text && Editor.isPlaceholder(node.content)) {
+      node.style.background = "var(--theme-color)"
+    }
   },
 
   unhighlightNode(node) {
-    if (node && node.style && node.style.opacity !== undefined)
+    if (node && node.style && node.style.opacity !== undefined) {
       delete node.style.opacity
+      if (node.style.background) delete node.style.background
+    }
   },
 };
