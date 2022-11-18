@@ -17,8 +17,7 @@ export default {
         EditorAction.editContent(node);
       },
       contextmenu: (e, node) => {
-        if (gOpenContextFunc)
-          gOpenContextFunc(e, node)
+        gThis.openContext(e, node)
       },
       mouseenter: (e, node) => {
         _setCurNode(node)
@@ -122,5 +121,6 @@ export default {
       Editor.insertAfter(gCurNode, emptyNode)
       gCurNode = emptyNode
     })
-  }
+  },
+  release: function() {}
 }

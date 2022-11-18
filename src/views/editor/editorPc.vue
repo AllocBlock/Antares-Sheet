@@ -130,15 +130,17 @@ import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
 import { Editor, EditorAction } from "./editor.js";
-import EditorModeProgression from './editorModeProgression.js'
+import EditorModeBasic from './editorModeBasic.js'
 import EditorModeDrag from './editorModeDrag.js'
-import EditorModeMixed from './editorModeMixed.js'
+import EditorModeProgression from './editorModeProgression.js'
+import { mergeEditorModeArray } from "./editorModeCommon.js";
 
 import Instrument from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 
 let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
+const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, EditorModeProgression],  `【组合编辑模式】详细操作见其他模式的介绍`)
 
 export default {
   name: "SheetEditorPc",
@@ -180,8 +182,7 @@ export default {
         attachedChords: [],
         events: {}
       },
-      // editorMode: EditorModeMixed,
-      editorMode: EditorModeDrag,
+      editorMode: g_EditorMode,
       player: {
         instrument: "Oscillator",
         bpm: 120,

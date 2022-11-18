@@ -1,6 +1,4 @@
 import { Editor, EditorAction } from "./editor.js";
-import HotKey from "@/utils/hotKey.js";
-import ChordManager from "@/utils/chordManager.js";
 import { getCursorClientPos } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
 import { ENodeType } from "@/utils/sheetNode.js";
@@ -200,19 +198,9 @@ function _shiftChord(offset) {
 }
 
 export default {
-  tip: `【拖拽和弦模式】双击可以编辑文字/添加下划线\n按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n按住Alt拖拽可微调偏移和弦\n拖入保存的文件可以直接加载`,
+  tip: `【拖拽和弦模式】按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n按住Alt拖拽可微调偏移和弦\n拖入保存的文件可以直接加载`,
   componentEvents: {
     text: {
-      click: (e, node) => {
-        console.log("text", node);
-      },
-      dblclick: (e, node) => {
-        EditorAction.editContent(node);
-      },
-      contextmenu: (e, node) => {
-        if (gOpenContextFunc)
-          gOpenContextFunc(e, node)
-      },
       mouseenter: (e, node) => {
         if (gDragChord.is) {
           _setToRemoveNode(node)
@@ -226,18 +214,6 @@ export default {
       },
     },
     chord: {
-      click: (e, node) => {
-        gThis.playChord(ChordManager.getChord(node.chord));
-      },
-      dblclick: (e, node) => {
-        if (!e.shiftKey) {
-          EditorAction.addUnderlineForChord(node);
-        }
-        else if (Editor.hasUnderlineToNextChord(node)){
-          EditorAction.removeUnderlineOfChord(node);
-        }
-      },
-      contextmenu: (e, node) => gThis.openContext(e, node),
       mouseenter: (e, node) => {
         if (gDragChord.is) {
           _setToRemoveNode(node)
@@ -265,18 +241,6 @@ export default {
           _startShiftChord(e, node.chord, node)
         }
       }
-    },
-    mark: {
-      click: (e, node) => {
-        console.log("mark", node);
-      },
-      dblclick: (e, node) => {
-        EditorAction.editContent(node);
-      },
-      contextmenu: (e, node) => gThis.openContext(e, node),
-    },
-    newline: {
-      contextmenu: (e, node) => gThis.openContext(e, node),
     },
   },
   documentEvents: {

@@ -84,8 +84,7 @@ export default {
         EditorAction.editContent(node);
       },
       contextmenu: (e, node) => {
-        if (gOpenContextFunc)
-          gOpenContextFunc(e, node)
+        gThis.openContext(e, node)
       },
       customCursorOver: (e, node) => {
         _setToRemoveNode(node)
