@@ -93,7 +93,6 @@ function _onCursorMove(e) {
 
       let offset = Math.trunc(gShiftChord.curShiftDistance / gShiftChord.shiftThreshold);
       if (Math.abs(offset) >= 1) {
-        console.log("shift by: ", offset)
         _shiftChord(offset)
         gShiftChord.curShiftDistance -= offset * gShiftChord.shiftThreshold
       }
@@ -226,18 +225,14 @@ export default {
         }
       },
       mousedown: (e, node) => {
-        console.log("mousedown ", node.chord)
         if (gDragChord.is || gShiftChord.is) return;
 
         if (e.shiftKey) {
-          console.log("shift ", node.chord)
           _startDragChord(e, node.chord)
           EditorAction.convertToText(node, false)
         } else if (e.ctrlKey){
-          console.log("ctrl ", node.chord)
           _startDragChord(e, node.chord)
         } else if (e.altKey && node.type == ENodeType.Chord){
-          console.log("alt ", node.chord)
           _startShiftChord(e, node.chord, node)
         }
       }

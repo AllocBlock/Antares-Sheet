@@ -14,7 +14,6 @@ app.config.globalProperties.$toast = function(text, duration = 1.0) {
   let root = null
   let toast = null
   toast = createApp(Toast, { text, duration, callbackDestroy: () => {
-    console.log("toast destroyed")
     toast.unmount()
     root.remove()
   }})

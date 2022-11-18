@@ -354,7 +354,6 @@ export default {
       let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
       if (!confirmed) return
       this.shiftKey(oldKey, newKey)
-      console.log("keyyyyyyyyyyyyyyyyyyyyyyyyyyyy", newKey)
     },
     openRawLyricPanel() {
       this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)
@@ -431,7 +430,7 @@ export default {
           break
         }
       }
-      console.log(this.contextMenu.node)
+      
       if (this.contextMenu.insertState.onLeft)
         Editor.insertBefore(this.contextMenu.node, nodes)
       else

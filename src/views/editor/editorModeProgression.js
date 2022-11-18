@@ -13,12 +13,6 @@ export default {
   tip: `【和弦级数模式】\n鼠标移动到文字上，按下1-7键修改和弦\n重复按同一个键可切换大小调\n按下~键可移除和弦\ntab键可在前方快速添加一个空格\nshift+tab在后方添加空格`,
   componentEvents: {
     text: {
-      dblclick: (e, node) => {
-        EditorAction.editContent(node);
-      },
-      contextmenu: (e, node) => {
-        gThis.openContext(e, node)
-      },
       mouseenter: (e, node) => {
         _setCurNode(node)
       },
@@ -28,17 +22,6 @@ export default {
       }
     },
     chord: {
-      click: (e, node) => {
-        gThis.playChord(ChordManager.getChord(node.chord));
-      },
-      dblclick: (e, node) => {
-        if (!e.shiftKey) {
-          EditorAction.addUnderlineForChord(node);
-        }
-        else if (Editor.hasUnderlineToNextChord(node)){
-          EditorAction.removeUnderlineOfChord(node);
-        }
-      },
       contextmenu: (e, node) => gThis.openContext(e, node),
       mouseenter: (e, node) => {
         _setCurNode(node)
@@ -47,18 +30,6 @@ export default {
         if (gCurNode == node)
           _setCurNode(null)
       }
-    },
-    mark: {
-      click: (e, node) => {
-        console.log("mark", node);
-      },
-      dblclick: (e, node) => {
-        EditorAction.editContent(node);
-      },
-      contextmenu: (e, node) => gThis.openContext(e, node),
-    },
-    newline: {
-      contextmenu: (e, node) => gThis.openContext(e, node),
     },
   },
   documentEvents: {
