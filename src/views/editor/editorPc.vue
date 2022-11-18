@@ -123,7 +123,7 @@ import PanelChordSelector from "./panelChordSelector.vue";
 import Chord from "@/components/chord/index.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
-import { getQueryVariable } from "@/utils/common.js";
+import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
 import { get } from "@/utils/request.js";
 
 import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
@@ -137,6 +137,7 @@ import { mergeEditorModeArray } from "./editorModeCommon.js";
 
 import Instrument from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
+import Storage from "@/utils/storage.js";
 
 let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
@@ -228,16 +229,33 @@ export default {
   mounted() {
     let that = this
 
-    let sheetName = getQueryVariable("sheet");
-    get(`sheets/${sheetName}.sheet`)
-      .then((res) => {
-        that.loadSheet(res)
-      })
-      .catch((e) => {
-        console.error("加载失败", e);
-      });
-
+    let storageSheet = Storage.load("tempSheet")
+    if (!storageSheet) {
+      console.log("从文件加载曲谱...");
+      let sheetName = getQueryVariable("sheet");
+      get(`sheets/${sheetName}.sheet`)
+        .then((res) => {
+          that.loadSheet(res)
+        })
+        .catch((e) => {
+          console.error("加载失败", e);
+        });
+    }
+    else {
+      console.log("从上次会话加载曲谱...");
+      that.loadSheet(storageSheet)
+    }
+    
     document.addEventListener("click", () => this.closeContext());
+
+    function saveSheetToStorage() {
+      let data = that.getSheetRaw()
+      Storage.save("tempSheet", data)
+    }
+    startRepeatTimeout(()=>{
+      console.log("Save sheet...")
+      saveSheetToStorage()
+    }, 5000)
   },
   methods: {
     loadSheet(sheetText) {
@@ -350,9 +368,8 @@ export default {
       this.sheetInfo.sheetTree = root
       this.rawLyricPanel.show = false
     },
-    saveSheetToFile() {
-      // TODO: remove un used chord?
-      let fileData = toSheetFileString(
+    getSheetRaw() {
+      return toSheetFileString(
         this.sheetInfo.sheetTree,
         this.sheetInfo.title,
         this.sheetInfo.singer,
@@ -361,6 +378,10 @@ export default {
         this.sheetInfo.sheetKey,
         this.toolChord.attachedChords.map(n => n.name),
       )
+    },
+    saveSheetToFile() {
+      // TODO: remove un used chord?
+      let fileData = this.getSheetRaw()
       let time = new Date().toLocaleDateString().replace(/\//g, "_")
     
       let blob = new Blob([fileData], {type: 'text/plain'})

@@ -92,3 +92,11 @@ export function getCursorClientPos(e) {
     ];
   }
 }
+
+export function startRepeatTimeout(func, timeout = 1000) {
+  function loop() {
+    func()
+    setTimeout(loop, timeout)
+  }
+  setTimeout(loop, timeout)
+}
