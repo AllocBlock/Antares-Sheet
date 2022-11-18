@@ -1,7 +1,7 @@
 <template>
   <div class="editor" :style="globalCssVar">
     <div class="flex_center fill" style="flex-direction: column;">
-      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '80' : '100'}%; position: relative;`">
+      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? ('calc(100% - ' + layout.audioPlayerHeight + 'px)') : '100%'}; position: relative;`">
         <div id="help_button">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
@@ -34,6 +34,10 @@
               <KeySelector class="select" v-model:value="sheetInfo.originalKey" />
               <div class="title">选调</div>
               <KeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
+              <div id="sheet_capo_block">
+                <div class="title">变调夹</div>
+                <CapoSelector id="capo_selector" v-model:value="player.capo"/>
+              </div>
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
@@ -50,7 +54,7 @@
           </div>
         </div>
       </div>
-      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? '20' : '0'}%; position: relative;`">
+      <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? layout.audioPlayerHeight : '0'}px; position: relative;`">
         <div class="flex_center" v-show="!layout.showAudioPlayer" id="playerOpenTag" @click="layout.showAudioPlayer = true">打开音乐播放器</div>
         <AudioPlayer v-show="layout.showAudioPlayer" @close="layout.showAudioPlayer = false" v-model:disableHotkey="disablePlayerHotkey"/>
       </div>
@@ -121,6 +125,7 @@ import KeySelector from "@/components/keySelector.vue";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 import Chord from "@/components/chord/index.vue";
+import CapoSelector from "@/components/capoSelector.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
@@ -151,6 +156,7 @@ export default {
     Chord,
     AntaresSheet,
     KeySelector,
+    CapoSelector,
     "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {
@@ -165,6 +171,7 @@ export default {
       },
       layout: {
         toolWidthPercentage: 20,
+        audioPlayerHeight: 180,
         showAudioPlayer: false
       },
       sheetInfo: {
@@ -187,7 +194,8 @@ export default {
       player: {
         instrument: "Oscillator",
         bpm: 120,
-        stum: true
+        stum: true,
+        capo: 0
       },
       contextMenu: {
         show: false,
@@ -298,7 +306,7 @@ export default {
       this.contextMenu.show = false;
     },
     playChord(chord) {
-      let volume = 0.5;
+      let volume = 0.3;
       let duration = this.player.stum ? 0 : (1 / this.player.bpm) * 60 * 4;
       let player = null;
       switch (this.player.instrument) {
@@ -311,6 +319,8 @@ export default {
         default:
           throw "未知错误";
       }
+      const capo = parseInt(this.player.capo) ?? 0
+      player.setCapo(capo);
       player.playChord(chord, volume, duration);
     },
     shiftKey(oldKey, newKey) {
@@ -454,6 +464,12 @@ export default {
 };
 </script>
 
+<style>
+html, body {
+  overflow: hidden;
+}
+</style>
+
 <style scoped src="./common.css"></style>
 
 <style scoped lang="scss">
@@ -595,6 +611,21 @@ export default {
 
     display: flex;
     align-items: center;
+  }
+
+  #sheet_capo_block {
+    display: flex;
+    line-height: var(--title-base-font-size);
+    font-size: calc(var(--title-base-font-size) * 0.9);
+    color: #888;
+  }
+
+  #capo_selector {
+    margin: 0 10px;
+    background-color: transparent;
+    font-size: calc(var(--title-base-font-size) * 0.8);
+    border: none;
+    outline: 2px solid grey;
   }
 
   #sheet_by {

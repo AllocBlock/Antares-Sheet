@@ -202,9 +202,23 @@ class ChordManager {
 const ReSplitChordSuffix = /^(#?b?[A-Ga-g]#?b?)([majaddsug1-9]*)?$/
 const ReSplitChordDecoration = /^(#?b?[A-Ga-g]#?b?m?)([majaddsug1-9]*)?$/
 
+function _getNumOfChar(str, char) {
+  let n = 0;
+  for (let c of str)
+    if (c == char)
+      n++;
+  return n;
+}
+
 function _isChordName(str) {
   let res = str.match(ReSplitChordSuffix)
-  return !!res
+  if (!res) return false
+  let keyName = res[1]
+  if (!keyName) return false // 需要有主音
+  if (keyName == "#" || keyName == "b") return false // 不能只有#/b
+  if (_getNumOfChar(keyName, '#') > 1 || _getNumOfChar(keyName, 'b') > 1 > 1) return false // 不能有多个#/b
+  if (keyName.indexOf('#') != -1 && keyName.indexOf('b') != -1) return false // 不能有多个#/b
+  return true
 }
 
 function _splitChord(str, re) {
