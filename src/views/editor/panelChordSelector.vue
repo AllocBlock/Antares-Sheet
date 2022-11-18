@@ -182,7 +182,6 @@ export default {
       this.close();
     },
     updateRecommendChords() {
-      console.log("update", this.tonic)
       let recommendChords = [];
       if (this.tonic) {
         for (let type in g_RecommendChordInCMajor) {

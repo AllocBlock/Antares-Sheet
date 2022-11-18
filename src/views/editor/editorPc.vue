@@ -277,7 +277,7 @@ export default {
       this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log(this.sheetInfo);
+      console.log("加载曲谱：", this.sheetInfo);
     },
     openPanelChord() {
       this.showChordPanel = true;

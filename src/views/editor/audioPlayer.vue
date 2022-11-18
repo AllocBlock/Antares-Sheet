@@ -238,7 +238,6 @@ export default {
   created() {
     let that = this
 
-    console.log("Loading [Audio Player]")
     this.audioPlayer = new AudioPlayer
     document.addEventListener("mouseup", this.onMouseUp)
     document.addEventListener("mousemove", this.onMouseMove)
