@@ -1,10 +1,17 @@
 <template>
   <component :is="getTag()" ref="main" v-on="localEvents" :style="node.style ?? {}">
-    <chord-body v-if="isMarkChord">{{getContent()}}</chord-body>
-    <chord-ruby v-if="isMarkChord">
-      <ChordName :chord-name="node.chord" />
-    </chord-ruby>
-    <chord-body v-else="isMarkChord">
+    <template v-if="isMarkChord">
+      <chord-body>
+        <Placeholder v-if="isPlaceholder()"/>
+        <template v-else>
+          {{node.content}}
+        </template>
+      </chord-body>
+      <chord-ruby>
+        <ChordName :chord-name="node.chord" />
+      </chord-ruby>
+    </template>
+    <chord-body v-else>
       <ChordName :chord-name="node.chord" />
     </chord-body>
   </component>
@@ -13,10 +20,11 @@
 <script>
 import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
 import ChordName from './chordName.vue';
+import Placeholder from './placeholder.vue';
 
 export default {
   name: "SheetNodeChord",
-  components: { ChordName },
+  components: { ChordName, Placeholder },
   data() {
     return {
       localEvents: {},
@@ -53,12 +61,9 @@ export default {
     getTag() {
       return this.node.type == ENodeType.Chord ? "chord" : "chord-pure"
     },
-    getContent() {
-      if (this.node.type == ENodeType.Chord)
-        return (!this.node.content || this.node.content == '_' || this.node.content == ' ') ? "🔹" : this.node.content
-      else
-        return this.node.chord
-    }
+    isPlaceholder() {
+      return !this.node.content || this.node.content == '_' || this.node.content == ' ';
+    },
   },
 };
 </script>
