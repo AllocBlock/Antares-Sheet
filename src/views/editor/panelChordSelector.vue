@@ -112,7 +112,7 @@
 <script>
 import ChordManager from "@/utils/chordManager.js";
 import Chord from "@/components/chord/index.vue";
-import { clone, getCursorClientPos, getEnv } from "@/utils/common.js";
+import { clone, getCursorClientPos, getEnv, setPos } from "@/utils/common.js";
 
 const g_RecommendChordInCMajor = {
   常用: ["C", "Dm", "Em", "F", "G", "Am", "E"],
@@ -271,11 +271,7 @@ export default {
       if (!this._isDraggingChord) return;
 
       let [x, y] = getCursorClientPos(e);
-      let $e = "#chord_sort_drag_mark"
-      $e.css({
-        left: x,
-        top: y
-      })
+      setPos("#chord_sort_drag_mark", x, y)
       // TODO: 对触屏需要判断元素，手动触发over事件
     },
 

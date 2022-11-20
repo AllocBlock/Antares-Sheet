@@ -21,6 +21,8 @@
               class="input"
               placeholder="在此处输入歌名"
               v-model="sheetInfo.title"
+              @focus="beginTyping"
+              @blur="endTyping"
             />
             <input
               type="text"
@@ -28,6 +30,8 @@
               class="input"
               placeholder="在此处输入歌手"
               v-model="sheetInfo.singer"
+              @focus="beginTyping"
+              @blur="endTyping"
             />
             <div id="sheet_key_block">
               <div class="title">原调</div>
@@ -56,16 +60,16 @@
       </div>
       <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? layout.audioPlayerHeight : '0'}px; position: relative;`">
         <div class="flex_center" v-show="!layout.showAudioPlayer" id="playerOpenTag" @click="layout.showAudioPlayer = true">打开音乐播放器</div>
-        <AudioPlayer v-show="layout.showAudioPlayer" @close="layout.showAudioPlayer = false" v-model:disableHotkey="disablePlayerHotkey"/>
+        <AudioPlayer v-show="layout.showAudioPlayer" @close="layout.showAudioPlayer = false" :mute-hotkey="mutePlayerHotkey"/>
       </div>
     </div>
 
     <input type="range" id="layout_slider" min="0" max="100" step="0.1" v-model="layout.toolWidthPercentage"/>
 
-    <div id="editor_context" class="context" v-if="contextMenu.show" :style="contextMenu.style">
+    <div id="editor_context" class="context" v-if="contextMenu.show" :style="contextMenu.style" @click.stop="contextMenu.show = false">
       <div id="editor_context_menu">
         <div class="editor_context_menu_item" @click="contextMenu.insertState.showInsertPos = true">插入</div>
-        <div class="editor_context_menu_item" @click="editContent()">编辑</div>
+        <div class="editor_context_menu_item" @click="editContent()" v-show="contextMenu.enableEditContent">编辑</div>
         <div class="editor_context_menu_item" @click="editRemove()">删除</div>
         <div class="editor_context_menu_item" @click="editAddUnderline()" v-show="contextMenu.enableAddUnderline">
           添加下划线
@@ -79,14 +83,14 @@
       </div>
     </div>
 
-    <div id="editor_context_insert_pos" class="context" v-if="contextMenu.insertState.showInsertPos" :style="contextMenu.style">
+    <div id="editor_context_insert_pos" class="context" v-if="contextMenu.insertState.showInsertPos" :style="contextMenu.style" @click.stop="contextMenu.insertState.showInsertPos = false">
       <div id="editor_context_menu_insert_pos">
         <div class="editor_context_menu_item" @click="onClickInsertPos(true)">前方</div>
         <div class="editor_context_menu_item"  @click="onClickInsertPos(false)">后方</div>
       </div>
     </div>
 
-    <div id="editor_context_insert_type" class="context" v-if="contextMenu.insertState.showInsertType" :style="contextMenu.style">
+    <div id="editor_context_insert_type" class="context" v-if="contextMenu.insertState.showInsertType" :style="contextMenu.style" @click.stop="contextMenu.insertState.showInsertType = false">
       <div id="editor_context_menu_insert_type">
         <div class="editor_context_menu_item" @click="onClickInsertMark()">标记</div>
         <div class="editor_context_menu_item" @click="onClickInsertText()">文本</div>
@@ -210,6 +214,7 @@ export default {
           onLeft: true,
           insertType: ENodeType.Text
         },
+        enableEditContent: false,
         enableAddUnderline: false,
         enableRemoveUnderline: false,
         enableRecoverChord: false,
@@ -222,11 +227,12 @@ export default {
         show: false,
         lyrics: "",
       },
+      isTyping: false
     };
   },
   computed: {
-    disablePlayerHotkey() {
-      return this.rawLyricPanel.show;
+    mutePlayerHotkey() {
+      return !this.layout.showAudioPlayer || this.rawLyricPanel.show || this.isTyping;
     }
   },
   created() {
@@ -291,6 +297,7 @@ export default {
       this.showChordPanel = true;
     },
     openContext(e, node) {
+      this.closeContext()
       e.preventDefault();
       this.contextMenu.show = true;
       this.contextMenu.node = node;
@@ -298,12 +305,24 @@ export default {
       this.contextMenu.style.top = `${e.clientY}px`;
 
       let isChord = Editor.isChord(node);
+      let isNewLine = Editor.isNewLine(node);
+      this.contextMenu.enableEditContent = !isNewLine;
       this.contextMenu.enableAddUnderline = isChord;
       this.contextMenu.enableRemoveUnderline = isChord && Editor.hasUnderlineToNextChord(node);
       this.contextMenu.enableRecoverChord = isChord;
     },
     closeContext() {
       this.contextMenu.show = false;
+      this.contextMenu.insertState.showInsertPos = false;
+      this.contextMenu.insertState.showInsertType = false;
+    },
+    beginTyping() {
+      this.isTyping = true
+      console.log("typing!!!")
+    },
+    endTyping() {
+      this.isTyping = false
+      console.log("not typing!!!")
     },
     playChord(chord) {
       let volume = 0.3;
@@ -463,12 +482,6 @@ export default {
   },
 };
 </script>
-
-<style>
-html, body {
-  overflow: hidden;
-}
-</style>
 
 <style scoped src="./common.css"></style>
 

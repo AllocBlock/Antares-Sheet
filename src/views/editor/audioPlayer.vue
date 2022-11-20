@@ -213,7 +213,7 @@ export default {
     };
   },
   props: {
-    disableHotkey: {
+    muteHotkey: {
       type: Boolean,
       default: false,
     }
@@ -232,7 +232,7 @@ export default {
       return "未知错误";
     },
     enableHotkey() {
-      return !this.markContext.show && !this.disableHotkey
+      return !this.markContext.show && !this.muteHotkey
     }
   },
   created() {
@@ -244,16 +244,13 @@ export default {
 
     function hotkeySwitcher(callback, preventDefault = false) {
       return (e) => {
-        if (preventDefault) e.preventDefault()
         if (!that.enableHotkey) return;
+        if (preventDefault) e.preventDefault()
         callback(e)
       }
     }
 
-    HotKey.addListener(" ", false, false, false, hotkeySwitcher((e) => {
-      e.preventDefault()
-      this.togglePlay()
-    }))
+    HotKey.addListener(" ", false, false, false, hotkeySwitcher((e) => this.togglePlay(), true))
     HotKey.addListener("w", false, false, false, hotkeySwitcher(() => this.addMark()))
     HotKey.addListener("q", false, false, false, hotkeySwitcher(() => this.jumpToPrevMark()))
     HotKey.addListener("e", false, false, false, hotkeySwitcher(() => this.jumpToNextMark()))

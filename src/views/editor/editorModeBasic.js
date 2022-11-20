@@ -7,12 +7,8 @@ export default {
   tip: `【基础编辑模式】双击可以编辑文字/添加下划线\n右键可以打开菜单`,
   componentEvents: {
     text: {
-      dblclick: (e, node) => {
-        EditorAction.editContent(node);
-      },
-      contextmenu: (e, node) => {
-        gThis.openContext(e, node)
-      },
+      dblclick: (e, node) => EditorAction.editContent(node),
+      contextmenu: (e, node) => gThis.openContext(e, node)
     },
     chord: {
       click: (e, node) => {

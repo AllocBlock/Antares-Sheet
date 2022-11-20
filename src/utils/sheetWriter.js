@@ -33,9 +33,13 @@ function _toSheetFileString(node) {
 }
 
 export function toSheetFileString(root, title, singer, by, originalKey, sheetKey, attachedChords) {
-  let data = ""
 
-  data += "$title " + title + "\n"
+  // restriction
+  title = title.replace(/"/g, "")
+
+  // generate
+  let data = ""
+  data += "$title \"" + title + "\"\n"
   data += "$singer " + singer + "\n"
   data += "$by " + by + "\n"
   data += "$originalKey " + originalKey + "\n"

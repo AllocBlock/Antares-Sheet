@@ -41,6 +41,9 @@ export const Editor = {
       ? node.type == ENodeType.Chord || node.type == ENodeType.ChordPure
       : false;
   },
+  isNewLine(node) {
+    return node &&node.type == ENodeType.NewLine;
+  },
   isUnderline(node) {
     return node
       ? node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure
@@ -620,7 +623,7 @@ export const EditorAction = {
         break;
       }
       default: {
-        throw "未知的节点，无法编辑内容";
+        console.warn("无法编辑该节点的内容", node);
         break;
       }
     }
