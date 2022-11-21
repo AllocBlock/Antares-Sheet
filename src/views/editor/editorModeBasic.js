@@ -15,6 +15,14 @@ function _cbMouseLeave(e, node) {
     gCurNode = node
 }
 
+function _hotkeySwitcher(func) {
+  return (e) => {
+    if (!gCurNode) return
+    if (gThis.muteEditorModeHotkey) return
+    func(e)
+  }
+}
+
 function _insertSpaceBefore(e) {
   e.preventDefault()
   if (!gCurNode) return
@@ -37,6 +45,13 @@ function _delete(e) {
   
   EditorAction.remove(gCurNode)
   gCurNode = null
+}
+
+function _recoverChordToText(e) {
+  e.preventDefault()
+  if (Editor.isChord(gCurNode)) {
+    gCurNode = EditorAction.convertToText(gCurNode)
+  }
 }
 
 function _insertNewLineBefore(e) {
@@ -116,31 +131,25 @@ export default {
     gThis = instance
     
     // 按下~移除和弦
-    gHookIds.push(HotKey.addListener("`", false, false, false, (e) => {
-      if (!gCurNode) return
-
-      if (Editor.isChord(gCurNode)) {
-        gCurNode = EditorAction.convertToText(gCurNode)
-      }
-    }))
+    gHookIds.push(HotKey.addListener("`", false, false, false, _hotkeySwitcher(_recoverChordToText)))
 
     // 按下tab键快速在前方添加空格
-    gHookIds.push(HotKey.addListener("Tab", false, false, false, _insertSpaceBefore))
+    gHookIds.push(HotKey.addListener("Tab", false, false, false, _hotkeySwitcher(_insertSpaceBefore)))
 
     // 按下space键快速在后方添加空格
-    gHookIds.push(HotKey.addListener(" ", false, false, false, _insertSpaceAfter))
+    gHookIds.push(HotKey.addListener(" ", false, false, false, _hotkeySwitcher(_insertSpaceAfter)))
 
     // 按下delete/r键快速删除
-    gHookIds.push(HotKey.addListener("Delete", false, false, false, _delete))
-    gHookIds.push(HotKey.addListener("r", false, false, false, _delete))
+    gHookIds.push(HotKey.addListener("Delete", false, false, false, _hotkeySwitcher(_delete)))
+    gHookIds.push(HotKey.addListener("r", false, false, false, _hotkeySwitcher(_delete)))
 
     // 按下enter键快速在后方添加换行，同时按下shift则在前方添加
-    gHookIds.push(HotKey.addListener("Enter", false, false, false, _insertNewLineBefore))
-    gHookIds.push(HotKey.addListener("Enter", false, true, false, _insertNewLineAfter))
+    gHookIds.push(HotKey.addListener("Enter", false, false, false, _hotkeySwitcher(_insertNewLineBefore)))
+    gHookIds.push(HotKey.addListener("Enter", false, true, false, _hotkeySwitcher(_insertNewLineAfter)))
 
     // 按下w键快速添加下划线，s删除下划线
-    gHookIds.push(HotKey.addListener("w", false, false, false, _addUnderline))
-    gHookIds.push(HotKey.addListener("s", false, false, false, _removeUnderline))
+    gHookIds.push(HotKey.addListener("w", false, false, false, _hotkeySwitcher(_addUnderline)))
+    gHookIds.push(HotKey.addListener("s", false, false, false, _hotkeySwitcher(_removeUnderline)))
   },
   release: function() {
     for (let id of gHookIds) {

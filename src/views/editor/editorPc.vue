@@ -272,7 +272,10 @@ export default {
   computed: {
     mutePlayerHotkey() {
       return !this.layout.showAudioPlayer || this.rawLyricPanel.show || this.isTyping;
-    }
+    },
+    muteEditorModeHotkey() {
+      return this.rawLyricPanel.show || this.isTyping;
+    },
   },
   created() {
     this.editorMode.init(this)
