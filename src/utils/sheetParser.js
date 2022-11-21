@@ -213,6 +213,7 @@ export function parseSheet(sheetText) {
       rootNode[key] = value;
     } else break;
   }
+  lineIndex--;
 
   let sheetBody = lines.slice(lineIndex).join("\n");
   parseNodes(rootNode, sheetBody)

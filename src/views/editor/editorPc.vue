@@ -73,14 +73,14 @@
       @click.stop="contextMenu.show = false"
     >
       <div id="editor_context_menu">
-        <div class="context_menu_item" @click="contextMenu.insertState.showInsertPos = true">
+        <div class="context_menu_item">
           <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`" class="context_icon context_menu_button" 
             @click="insertNode(item.type, true)" 
             @mouseenter="onContextButtonMouseEnter('在左侧' + item.tip)"
             @mouseleave="onContextButtonMouseLeave()"
           />
         </div>
-        <div class="context_menu_item" @click="contextMenu.insertState.showInsertPos = true">
+        <div class="context_menu_item">
           <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`" class="context_icon context_menu_button" 
             @click="insertNode(item.type, false)" 
             @mouseenter="onContextButtonMouseEnter('在右侧' + item.tip)"
@@ -324,6 +324,10 @@ export default {
       this.sheetInfo.rhythms = []
       this.sheetInfo.originalSheetKey = "C"
       this.sheetInfo.sheetTree = Editor.createRootNode()
+
+      // 初始文本
+      Editor.append(this.sheetInfo.sheetTree, Editor.createTextNodes("歌词"))
+      Editor.append(this.sheetInfo.sheetTree, Editor.createNewLineNode())
     },
     loadSheet(sheetText) {
       let rootNode = reactive(parseSheet(sheetText));
@@ -344,7 +348,7 @@ export default {
       this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log("加载曲谱：", this.sheetInfo);
+      console.log("加载曲谱：", this.sheetInfo, rootNode);
     },
     openPanelChord() {
       this.showChordPanel = true;

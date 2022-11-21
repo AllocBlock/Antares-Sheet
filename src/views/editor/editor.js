@@ -142,7 +142,7 @@ export const Editor = {
   insertBefore(node, data) {
     this.insert(node.parent, this.indexOf(node), data, 0);
   },
-  remove(data) {
+  remove(data) { // 无检查直接删除
     if (Array.isArray(data)) {
       for (let node of data) {
         this.replace(node, []);
@@ -282,55 +282,6 @@ export const Editor = {
   //             break;
   //     }
   // },
-
-  insertChar($e, pos) {
-    let newChars = _getInputText("插入文字");
-    if (newChars) {
-      let chars = newChars.split("");
-      for (let char of chars) {
-        this.insert($e, `<char>${char}</char>`, pos);
-      }
-    }
-  },
-
-  insertInfo($e, pos) {
-    let text = _getInputText("插入标记");
-    if (text) {
-      this.insert($e, `<info>${text}</info>`, pos);
-    }
-  },
-
-  insertLine($e, pos) {
-    this.insert($e, `<newline>⇲</newline>`, pos);
-  },
-
-  elementToFileStr($e) {
-    var that = this;
-    let tagName = $e[0].tagName;
-    switch (tagName) {
-      case "CHAR":
-        return $e.text();
-      case "NEWLINE":
-        return "\n";
-      case "CHORD": {
-        let char = _getChordTextNode($e).text();
-        if (char == "") char = "_";
-        let chordName = $e.find("chord_name").text();
-        return `[${chordName}]${char}`;
-      }
-      case "UNDERLINE": {
-        let $children = $e.children();
-        let str = "{";
-        $children.each(function () {
-          str += that.elementToFileStr($(this));
-        });
-        str += "}";
-        return str;
-      }
-      default:
-        return `[不支持的元素${tagName}]`;
-    }
-  },
 
   isPlaceholder(str) {
     return !str || str == "" || str == " " || str == "_"
@@ -645,6 +596,35 @@ export const EditorAction = {
     let newContent = _getInputText("编辑内容", node.content);
     if (!newContent) return;
     this.updateContent(node, newContent)
+  },
+
+  editTextWithNeighbor(node) {
+    if (!node) throw "节点为空"
+
+    let text = node.content
+    let textNodes = [node]
+    // 向前
+    let cur = Editor.prevSibling(node)
+    while(cur) {
+      if (cur.type != ENodeType.Text) break;
+      textNodes.splice(0, 0, cur)
+      text = cur.content + text
+      cur = Editor.prevSibling(cur)
+    }
+
+    // 向后
+    cur = Editor.nextSibling(node)
+    while(cur) {
+      if (cur.type != ENodeType.Text) break;
+      textNodes.push(cur)
+      text += cur.content
+      cur = Editor.nextSibling(cur)
+    }
+
+    let newText = _getInputText("编辑文本", text);
+
+    Editor.insertAfter(node, Editor.createTextNodes(newText))
+    Editor.remove(textNodes)
   },
 
   highlightNode(node) {
