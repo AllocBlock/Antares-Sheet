@@ -328,6 +328,8 @@ export default {
       this.sheetInfo.originalSheetKey = "C"
       this.sheetInfo.sheetTree = Editor.createRootNode()
 
+      this.toolChord.attachedChords = []
+
       // 初始文本
       Editor.append(this.sheetInfo.sheetTree, Editor.createTextNodes("歌词"))
       Editor.append(this.sheetInfo.sheetTree, Editor.createNewLineNode())

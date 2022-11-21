@@ -133,13 +133,11 @@ export default {
     // 按下~移除和弦
     gHookIds.push(HotKey.addListener("`", false, false, false, _hotkeySwitcher(_recoverChordToText)))
 
-    // 按下tab键快速在前方添加空格
+    // 按下tab键快速在前方添加空格，+Shift则在后方
     gHookIds.push(HotKey.addListener("Tab", false, false, false, _hotkeySwitcher(_insertSpaceBefore)))
+    gHookIds.push(HotKey.addListener("Tab", false, true, false, _hotkeySwitcher(_insertSpaceAfter)))
 
-    // 按下space键快速在后方添加空格
-    gHookIds.push(HotKey.addListener(" ", false, false, false, _hotkeySwitcher(_insertSpaceAfter)))
-
-    // 按下delete/r键快速删除
+    // 按下delete/R键快速删除
     gHookIds.push(HotKey.addListener("Delete", false, false, false, _hotkeySwitcher(_delete)))
     gHookIds.push(HotKey.addListener("r", false, false, false, _hotkeySwitcher(_delete)))
 
@@ -147,9 +145,9 @@ export default {
     gHookIds.push(HotKey.addListener("Enter", false, false, false, _hotkeySwitcher(_insertNewLineBefore)))
     gHookIds.push(HotKey.addListener("Enter", false, true, false, _hotkeySwitcher(_insertNewLineAfter)))
 
-    // 按下w键快速添加下划线，s删除下划线
-    gHookIds.push(HotKey.addListener("w", false, false, false, _hotkeySwitcher(_addUnderline)))
-    gHookIds.push(HotKey.addListener("s", false, false, false, _hotkeySwitcher(_removeUnderline)))
+    // 按下U键快速添加下划线，J删除下划线
+    gHookIds.push(HotKey.addListener("u", false, false, false, _hotkeySwitcher(_addUnderline)))
+    gHookIds.push(HotKey.addListener("j", false, false, false, _hotkeySwitcher(_removeUnderline)))
   },
   release: function() {
     for (let id of gHookIds) {
