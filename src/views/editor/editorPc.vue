@@ -6,8 +6,11 @@
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
           <ToolChord id="chord_tool" v-model:chords="toolChord.attachedChords" v-on="toolChord.events" />
-          <div id="chord_tool_edit_button" class="button" @click="this.toolChord.showPanel = true">
+          <div class="button" @click="this.toolChord.showPanel = true">
             编辑和弦
+          </div>
+          <div id="clear_sheet_button" class="button" @click="clearSheet">
+            清空曲谱
           </div>
         </div>
         <div class="fill" style="display: flex; justify-content: center; overflow: auto;">
@@ -308,6 +311,20 @@ export default {
     }, 5000)
   },
   methods: {
+    clearSheet() {
+      if (!confirm("是否清空曲谱？（无法撤销！）"))
+        return
+
+      this.sheetInfo.title = "请输入歌名"
+      this.sheetInfo.singer = "请输入歌手"
+      this.sheetInfo.by = "锦瑟"
+      this.sheetInfo.originalKey = "C"
+      this.sheetInfo.sheetKey = "C"
+      this.sheetInfo.chords = []
+      this.sheetInfo.rhythms = []
+      this.sheetInfo.originalSheetKey = "C"
+      this.sheetInfo.sheetTree = Editor.createRootNode()
+    },
     loadSheet(sheetText) {
       let rootNode = reactive(parseSheet(sheetText));
       Editor.normalizeSheetTree(rootNode);
@@ -759,6 +776,11 @@ export default {
     margin-top: 10px;
     font-size: var(--base-font-size);
   }
+}
+
+#clear_sheet_button {
+  background: var(--sheet-theme-color);
+  color: white;
 }
 
 .context {
