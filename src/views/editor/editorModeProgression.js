@@ -4,6 +4,7 @@ import ChordManager from "@/utils/chordManager.js";
 
 let gThis = null
 let gCurNode = null // 目前的编辑目标节点
+let gHookIds = []
 
 function _setCurNode(node) {
   gCurNode = node
@@ -49,7 +50,7 @@ export default {
     // 按下1-7应用对应级数的和弦
     progressionList.forEach(function([shift, isMajor], i) {
       const keyName = (i + 1).toString()
-      HotKey.addListener(keyName, false, false, false, (e, [shift, isMajor]) => {
+      gHookIds.push(HotKey.addListener(keyName, false, false, false, (e, [shift, isMajor]) => {
         if (!gCurNode) return
         let chordName = ChordManager.shiftKey(gThis.sheetInfo.sheetKey, shift)
         if (Editor.isChord(gCurNode)) {
@@ -61,37 +62,12 @@ export default {
 
         if (!isMajor) chordName += "m"
         gCurNode = EditorAction.convertToChord(gCurNode, chordName)
-      }, [shift, isMajor])
-    })
-
-    // 按下~移除和弦
-    HotKey.addListener("`", false, false, false, (e) => {
-      if (!gCurNode) return
-
-      if (Editor.isChord(gCurNode)) {
-        gCurNode = EditorAction.convertToText(gCurNode)
-      }
-    })
-
-    // 按下tab快速在前方添加文本节点，而后可以快速添加和弦
-    HotKey.addListener("Tab", false, false, false, (e) => {
-      e.preventDefault()
-      if (!gCurNode) return
-      
-      let emptyNode = Editor.createTextNode(" ")
-      Editor.insertBefore(gCurNode, emptyNode)
-      gCurNode = emptyNode
-    })
-
-    // 按下shift+tab快速在后方添加
-    HotKey.addListener("Tab", false, true, false, (e) => {
-      e.preventDefault()
-      if (!gCurNode) return
-      
-      let emptyNode = Editor.createTextNode(" ")
-      Editor.insertAfter(gCurNode, emptyNode)
-      gCurNode = emptyNode
+      }, [shift, isMajor]))
     })
   },
-  release: function() {}
+  release: function() {
+    for (let id of gHookIds) {
+      HotKey.removeListener(id)
+    }
+  }
 }

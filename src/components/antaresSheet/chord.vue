@@ -28,7 +28,6 @@ export default {
   data() {
     return {
       localEvents: {},
-      isMarkChord: true,
     }
   },
   props: {
@@ -55,7 +54,11 @@ export default {
         this.localEvents[eventName] = (e) => this.events.chord[eventName](e, this.node)
       }
     }
-    this.isMarkChord = (this.node.type == ENodeType.Chord)
+  },
+  computed: {
+    isMarkChord: function() {
+      return this.node.type == ENodeType.Chord
+    }
   },
   methods: {
     getTag() {

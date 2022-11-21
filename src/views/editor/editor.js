@@ -100,11 +100,11 @@ export const Editor = {
     }
     return node;
   },
-  traverseDFS(node, callback) {
-    for (let i = 0; i < node.children.length; ++i) {
-      this.traverseDFS(node.children[i], callback);
+  traverseDFS(root, callback) {
+    for (let i = 0; i < root.children.length; ++i) {
+      this.traverseDFS(root.children[i], callback);
     }
-    callback(node);
+    callback(root);
   },
   // node: 搜寻起始节点
   // isTargetCallback: 经过每个节点时调用，返回true则停止搜寻
@@ -239,6 +239,16 @@ export const Editor = {
 
     let commonAncestorNode = Editor.commonAncestor(chordNode, nextChordNode);
     return commonAncestorNode.type == underlineType;
+  },
+
+  isInUnderline(chordNode) {
+    if (!Editor.isChord(chordNode)) throw "类型错误";
+    let cur = chordNode
+    while (cur) {
+      if (Editor.isUnderline(cur)) return true;
+      cur = cur.parent
+    }
+    return false
   },
 
   // insert($base, $inserted, pos) {

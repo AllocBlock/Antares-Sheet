@@ -113,6 +113,10 @@
             @mouseenter="onContextButtonMouseEnter('将和弦恢复成文本')"
             @mouseleave="onContextButtonMouseLeave()"
           />
+          <Svg src="/icons/switch.svg" class="context_icon context_menu_button" @click="editSwitchChordType()" v-show="contextMenu.enableSwitchChordType" 
+            @mouseenter="onContextButtonMouseEnter('切换和弦类别')"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
         </div>
       </div>
       <Transition name="trans_fade">
@@ -239,6 +243,7 @@ export default {
         enableAddUnderline: false,
         enableRemoveUnderline: false,
         enableRecoverChord: false,
+        enableSwitchChordType: false,
         insertMenu: [
           { svgName: "marker", type: "mark", tip: "插入标记"},
           { svgName: "space", type: "space", tip: "插入空格"},
@@ -341,6 +346,7 @@ export default {
       this.contextMenu.enableAddUnderline = isChord;
       this.contextMenu.enableRemoveUnderline = isChord && Editor.hasUnderlineToNextChord(node);
       this.contextMenu.enableRecoverChord = isChord;
+      this.contextMenu.enableSwitchChordType = isChord;
     },
     closeContext() {
       this.contextMenu.show = false;
@@ -399,6 +405,67 @@ export default {
     editRecoverChord(node = null) {
       node = node ?? this.contextMenu.node;
       EditorAction.convertToText(node);
+    },
+    editSwitchChordType(node = null) {
+      node = node ?? this.contextMenu.node;
+      if (node.type == ENodeType.Chord) { // 标注和弦转纯和弦
+        // 如果没有下划线，直接转换
+        if (!Editor.isInUnderline(node)) node.type = ENodeType.ChordPure
+        else {
+          // 获取最顶层的下划线
+          let cur = node
+          let topUnderline = null
+          while (cur) {
+            if (Editor.isUnderline(cur)) topUnderline = cur;
+            cur = cur.parent
+          }
+
+          // 检查是否有非空文本存在
+          let hasNonEmptyTextNode = false
+          Editor.traverseDFS(topUnderline, (n) => {
+            if (n.type == ENodeType.Text && n.content != " ")
+              hasNonEmptyTextNode = true;
+          })
+
+          // 如果有非空文本，则不能整体转为纯和弦，断开所有下划线并独立转为纯和弦
+          // TODO: 是否加一个选项让用户选择？
+          if (hasNonEmptyTextNode) {
+            EditorAction.removeAllUnderlineOnChord(node)
+            node.type = ENodeType.ChordPure
+          }
+          else { // 否则，underline转underlinepure，chord转chordpure
+            Editor.traverseDFS(topUnderline, (n) => {
+              if (n.type == ENodeType.Chord)
+                n.type = ENodeType.ChordPure;
+              if (n.type == ENodeType.Underline)
+                n.type = ENodeType.UnderlinePure;
+            })
+          }
+        }
+        
+      }
+      else if (node.type == ENodeType.ChordPure) {
+        // 如果没有下划线，直接转换
+        if (!Editor.isInUnderline(node)) node.type = ENodeType.Chord
+        else { // 否则整体转换
+          // 获取最顶层的下划线
+          let cur = node
+          let topUnderline = null
+          while (cur) {
+            if (Editor.isUnderline(cur)) topUnderline = cur;
+            cur = cur.parent
+          }
+
+          Editor.traverseDFS(topUnderline, (n) => {
+            if (n.type == ENodeType.ChordPure)
+              n.type = ENodeType.Chord;
+            if (n.type == ENodeType.UnderlinePure)
+              n.type = ENodeType.Underline;
+          })
+        }
+        
+      }
+      else throw "节点类型错误"
     },
     editAddUnderline(node = null) {
       node = node ?? this.contextMenu.node;

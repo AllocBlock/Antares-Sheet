@@ -1,18 +1,23 @@
-let g_Listeners = {}
+let gListeners = {}
+let gHookId = 1;
+// let gDebug = true
 
 function addListener(key, ctrl, shift, alt, callback, customData = null) {
-  if (!g_Listeners[key]) g_Listeners[key] = []
-  g_Listeners[key].push({
-    ctrl, shift, alt, callback, customData
+  if (!gListeners[key]) gListeners[key] = []
+  gListeners[key].push({
+    id: gHookId, ctrl, shift, alt, callback, customData
   })
+  return gHookId++;
 }
 
-function removeListener(key, ctrl, shift, alt, callback) {
-  if (!g_Listeners[key]) return;
-
-  let index = g_Listeners[key].findIndex((e) => e.ctrl == ctrl && e.shift == shift && e.alt == alt && e.callback == callback)
-  if (index > 0)
-    g_Listeners[key].splice(index, 1)
+function removeListener(id) {
+  for (let key in gListeners) {
+    let index = gListeners[key].findIndex(e => e.id == id)
+    if (index != -1) {
+      gListeners[key].splice(index, 1)
+      return;
+    }
+  }
 }
 
 document.addEventListener("keydown", (e) => {
@@ -20,7 +25,9 @@ document.addEventListener("keydown", (e) => {
   const ctrl = e.ctrlKey
   const shift = e.shiftKey
   const alt = e.altKey
-  for(let entry of g_Listeners[key] ?? []) {
+  // if (gDebug)
+  //   console.log(`key=${key}, ctrl=${ctrl}, shift=${shift}, alt=${alt}`)
+  for(let entry of gListeners[key] ?? []) {
     if (ctrl == entry.ctrl && shift == entry.shift && alt == entry.alt) {
       entry.callback(e, entry.customData)
     }
