@@ -75,15 +75,15 @@
     <div id="sidebar" v-if="env == 'pc'">
       <div id="sidebar_fixed">
         <div class="sidebar_block" @click="tools.tipChord.enable = !tools.tipChord.enable" :class="getSidebarStateClass(tools.tipChord.enable)">
-          <img src="@/assets/icons/bubble.svg" type="image/svg+xml" />
+          <img src="/icons/bubble.svg" type="image/svg+xml" />
           <div class="sidebar_block_text">提示和弦</div>
         </div>
         <div class="sidebar_block" @click="tools.player.enable = !tools.player.enable" :class="getSidebarStateClass(tools.player.enable)">
-          <img src="@/assets/icons/player.svg" type="image/svg+xml" />
+          <img src="/icons/player.svg" type="image/svg+xml" />
           <div class="sidebar_block_text">播放器</div>
         </div>
         <div class="sidebar_block" @click="tools.sheetControl.enable = !tools.sheetControl.enable" :class="getSidebarStateClass(tools.sheetControl.enable)">
-          <img src="@/assets/icons/layout.svg" type="image/svg+xml" />
+          <img src="/icons/layout.svg" type="image/svg+xml" />
           <div class="sidebar_block_text">滚动缩放</div>
         </div>
       </div>

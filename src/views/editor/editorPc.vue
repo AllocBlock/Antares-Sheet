@@ -66,36 +66,61 @@
 
     <input type="range" id="layout_slider" min="0" max="100" step="0.1" v-model="layout.toolWidthPercentage"/>
 
-    <div id="editor_context" class="context" v-if="contextMenu.show" :style="contextMenu.style" @click.stop="contextMenu.show = false">
+    <div id="editor_context" class="context" v-show="contextMenu.show" :style="contextMenu.style" 
+      @click.stop="contextMenu.show = false"
+    >
       <div id="editor_context_menu">
-        <div class="editor_context_menu_item" @click="contextMenu.insertState.showInsertPos = true">插入</div>
-        <div class="editor_context_menu_item" @click="editContent()" v-show="contextMenu.enableEditContent">编辑</div>
-        <div class="editor_context_menu_item" @click="editRemove()">删除</div>
-        <div class="editor_context_menu_item" @click="editAddUnderline()" v-show="contextMenu.enableAddUnderline">
-          添加下划线
+        <div class="context_menu_item" @click="contextMenu.insertState.showInsertPos = true">
+          <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`" class="context_icon context_menu_button" 
+            @click="insertNode(item.type, true)" 
+            @mouseenter="onContextButtonMouseEnter('在左侧' + item.tip)"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
         </div>
-        <div class="editor_context_menu_item" @click="editRemoveUnderline()" v-show="contextMenu.enableRemoveUnderline">
-          删除下划线
+        <div class="context_menu_item" @click="contextMenu.insertState.showInsertPos = true">
+          <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`" class="context_icon context_menu_button" 
+            @click="insertNode(item.type, false)" 
+            @mouseenter="onContextButtonMouseEnter('在右侧' + item.tip)"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
         </div>
-        <div class="editor_context_menu_item" @click="editRecoverChord()" v-show="contextMenu.enableRecoverChord">
-          恢复和弦为文字
+        <div class="context_menu_item" @click="editContent()" v-show="contextMenu.enableEditContent">
+          <Svg src="/icons/edit.svg" class="context_icon context_menu_button" 
+            @mouseenter="onContextButtonMouseEnter('编辑内容')"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
+        </div>
+        <div class="context_menu_item" @click="editRemove()">
+          <Svg src="/icons/trash.svg" class="context_icon context_menu_button" 
+            @mouseenter="onContextButtonMouseEnter('删除')"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
+        </div>
+        <div class="context_menu_item" v-show="contextMenu.enableAddUnderline || contextMenu.enableRemoveUnderline">
+          下划线
+          <Svg src="/icons/add.svg" class="context_icon context_menu_button" @click="editAddUnderline()" v-show="contextMenu.enableAddUnderline" 
+            @mouseenter="onContextButtonMouseEnter('添加下划线')"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
+          <Svg src="/icons/trash.svg" class="context_icon context_menu_button" @click="editRemoveUnderline()" v-show="contextMenu.enableRemoveUnderline"
+            @mouseenter="onContextButtonMouseEnter('删除下划线')"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
+        </div>
+        <div class="context_menu_item" v-show="contextMenu.enableRecoverChord">
+          和弦
+          <Svg src="/icons/recover.svg" class="context_icon context_menu_button" @click="editRecoverChord()" v-show="contextMenu.enableRecoverChord" 
+            @mouseenter="onContextButtonMouseEnter('将和弦恢复成文本')"
+            @mouseleave="onContextButtonMouseLeave()"
+          />
         </div>
       </div>
-    </div>
-
-    <div id="editor_context_insert_pos" class="context" v-if="contextMenu.insertState.showInsertPos" :style="contextMenu.style" @click.stop="contextMenu.insertState.showInsertPos = false">
-      <div id="editor_context_menu_insert_pos">
-        <div class="editor_context_menu_item" @click="onClickInsertPos(true)">前方</div>
-        <div class="editor_context_menu_item"  @click="onClickInsertPos(false)">后方</div>
-      </div>
-    </div>
-
-    <div id="editor_context_insert_type" class="context" v-if="contextMenu.insertState.showInsertType" :style="contextMenu.style" @click.stop="contextMenu.insertState.showInsertType = false">
-      <div id="editor_context_menu_insert_type">
-        <div class="editor_context_menu_item" @click="onClickInsertMark()">标记</div>
-        <div class="editor_context_menu_item" @click="onClickInsertText()">文本</div>
-        <div class="editor_context_menu_item" @click="onClickInsertNewLine()">换行</div>
-      </div>
+      <Transition name="trans_fade">
+        <div id="editor_context_tip" v-show="contextMenu.tip.show" key="editor_context_tipxxx">
+          {{contextMenu.tip.content}}
+        </div>
+      </Transition>
+      
     </div>
 
     <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">{{dragChord.text}}</div>
@@ -130,6 +155,7 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 import Chord from "@/components/chord/index.vue";
 import CapoSelector from "@/components/capoSelector.vue";
+import Svg from "@/components/svg.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
@@ -155,6 +181,7 @@ const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, Edit
 export default {
   name: "SheetEditorPc",
   components: {
+    Svg,
     ToolChord,
     PanelChordSelector,
     Chord,
@@ -208,16 +235,20 @@ export default {
           left: 0,
           top: 0,
         },
-        insertState: {
-          showInsertPos: false,
-          showInsertType: false,
-          onLeft: true,
-          insertType: ENodeType.Text
-        },
         enableEditContent: false,
         enableAddUnderline: false,
         enableRemoveUnderline: false,
         enableRecoverChord: false,
+        insertMenu: [
+          { svgName: "marker", type: "mark", tip: "插入标记"},
+          { svgName: "space", type: "space", tip: "插入空格"},
+          { svgName: "enter", type: "newline", tip: "插入换行"},
+          { svgName: "text", type: "text", tip: "插入文本"},
+        ],
+        tip: {
+          show: false,
+          content: ""
+        }
       },
       dragChord: {
         isDragging: false,
@@ -313,8 +344,6 @@ export default {
     },
     closeContext() {
       this.contextMenu.show = false;
-      this.contextMenu.insertState.showInsertPos = false;
-      this.contextMenu.insertState.showInsertType = false;
     },
     beginTyping() {
       this.isTyping = true
@@ -432,42 +461,48 @@ export default {
       input.click();
       input.remove()
     },
-    onClickInsertPos(isOnLeft) {
-      this.contextMenu.insertState.onLeft = isOnLeft;
-      this.contextMenu.insertState.showInsertPos = false;
-      this.contextMenu.insertState.showInsertType = true;
-    },
-    onClickInsertType(type) {
-      this.contextMenu.insertState.showInsertType = false;
-
+    insertNode(type, isOnLeft) {
+      // init node
       let nodes = null
       switch(type) {
-        case ENodeType.Text: {
-          let text = prompt("文本内容", "请输出文本")
+        case "text": {
+          let text = prompt("插入文本", "请输入文本")
           if (!text) return;
           nodes = Editor.createTextNodes(text)
           break
         }
-        case ENodeType.Mark: {
-          let text = prompt("标记内容", "标记")
+        case "space": {
+          nodes = Editor.createTextNodes(" ")
+          break
+        }
+        case "mark": {
+          let text = prompt("插入标记", "请输入标记内容")
           if (!text) return;
           nodes = Editor.createMarkNode(text)
           break
         }
-        case ENodeType.NewLine: {
+        case "newline": {
           nodes = Editor.createNewLineNode()
           break
         }
+        default: {
+          throw "插入节点类型有误：" + type
+        }
       }
-      
-      if (this.contextMenu.insertState.onLeft)
+
+      // insert
+      if (isOnLeft)
         Editor.insertBefore(this.contextMenu.node, nodes)
       else
         Editor.insertAfter(this.contextMenu.node, nodes)
     },
-    onClickInsertMark() { this.onClickInsertType(ENodeType.Mark) },
-    onClickInsertText() { this.onClickInsertType(ENodeType.Text) },
-    onClickInsertNewLine() { this.onClickInsertType(ENodeType.NewLine) }
+    onContextButtonMouseEnter(tip) {
+      this.contextMenu.tip.show = true
+      this.contextMenu.tip.content = tip
+    },
+    onContextButtonMouseLeave() {
+      this.contextMenu.tip.show = false
+    },
   },
   watch: {
     "layout.toolWidthPercentage": function () {
@@ -664,63 +699,67 @@ export default {
 .context {
   position: fixed;
   display: flex;
-  overflow: hidden;
   user-select: none;
   z-index: 20;
-
-  border-radius: 10px;
-
-  &::before {
-    position: absolute;
-    content: "";
-
-    width: 100%;
-    height: 100%;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    background: rgb(49, 100, 88);
-    opacity: 0.9;
-  }
 }
 
 #editor_context {
+  z-index: 21;
+  width: 140px;
+  flex-direction: column;
   #editor_context_menu {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    border-radius: 10px;
+    background: rgb(49, 100, 88, 0.9);
+  }
+
+  #editor_context_tip {
+    left: 50%;
+    bottom: -40px;
+    transform: translateX(-50%);
+    position: absolute;
     padding: 10px;
-
-    width: 100%;
-  }
-}
-
-#editor_context_insert_pos {
-  #editor_context_menu_insert_pos,
-  #editor_context_menu_insert_type {
+    font-size: 12px;
     display: flex;
-    height: 30px;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    white-space: nowrap;
+    
+    border-radius: 10px;
+    background: rgb(49, 100, 88, 0.9);
   }
 }
 
-.editor_context_menu_item {
+.context_menu_item {
   position: relative;
   color: white;
-  padding: 5% calc(var(--base-font-size));
+  padding: 5%;
   transition: all 0.2s ease-out;
-  cursor: pointer;
   border-radius: 10px;
 
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  white-space: nowrap;
 
-  z-index: 21;
+  .context_icon {
+    margin: 5px;
+    height: 20px;
+    width: 20px;
+    fill: white;
+    transition: fill 0.1s ease-out;
+  }
+}
 
+.context_menu_button {
+  cursor: pointer;
   &:hover {
-    text-decoration: underline;
+    fill: var(--theme-color); // for svg icon
+    text-decoration: underline; // for text
   }
 }
 
@@ -956,5 +995,17 @@ export default {
 :deep(text:hover::after) {
   border: 2px solid var(--sheet-theme-color);
   box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
+}
+</style>
+
+<style scoped>
+.trans_fade-enter-active,
+.trans_fade-leave-active {
+  transition: opacity 0.3s ease-out;
+}
+
+.trans_fade-enter-from,
+.trans_fade-leave-to {
+  opacity: 0;
 }
 </style>

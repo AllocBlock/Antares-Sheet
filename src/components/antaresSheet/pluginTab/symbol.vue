@@ -13,7 +13,7 @@ const SvgStrokeBody = `<svg viewBox="0 0 100 127.92" preserveAspectRatio="none">
 const SvgStrokeTail = `<svg viewBox="0 0 100 71.61" preserveAspectRatio="none"><rect x="45.62" y="62.77" width="8.76" height="8.76" rx="4.38" ry="4.38"/><rect x="45.62" width="8.76" height="67.15"/></svg>`;
 
 export default {
-  name: "TabSvg",
+  name: "TabSymbol",
   data() {
     return {
       svg: "<svg></svg>",

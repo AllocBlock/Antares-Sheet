@@ -1,19 +1,19 @@
 <template>
   <note-stum :direction="direction" :style="getStumStyle()">
-    <TabSvg class="note_stum_arrow flex_center" :svg-name="svgArrowName" />
-    <TabSvg class="note_stum_head flex_center" :svg-name="svgHeadName" />
-    <TabSvg class="note_stum_body flex_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)" :key="i" />
-    <TabSvg class="note_stum_tail flex_center" :svg-name="svgTailName" />
+    <TabSymbol class="note_stum_arrow flex_center" :svg-name="svgArrowName" />
+    <TabSymbol class="note_stum_head flex_center" :svg-name="svgHeadName" />
+    <TabSymbol class="note_stum_body flex_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)" :key="i" />
+    <TabSymbol class="note_stum_tail flex_center" :svg-name="svgTailName" />
   </note-stum>
 </template>
 
 <script>
-import TabSvg from './svg.vue'
+import TabSymbol from './symbol.vue'
 
 export default {
   name: "TabStum",
   components: {
-    TabSvg
+    TabSymbol
   },
   data() {
     return {

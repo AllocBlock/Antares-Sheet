@@ -7,26 +7,25 @@
     >{{hintCoverText}}</div>
     <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="addMark()">
-        <img src="@/assets/icons/mark.svg" type="image/svg+xml" />
+        <Svg src="/icons/mark.svg" class="icon" />
       </div>
       <div class="audio_button flex_center" @click="jumpToPrevMark()">
-        <img src="@/assets/icons/prevArrow.svg" type="image/svg+xml" />
+        <Svg src="/icons/prevArrow.svg" class="icon" />
       </div>
       <div class="audio_button flex_center" @click="jumpToNextMark()">
-        <img src="@/assets/icons/nextArrow.svg" type="image/svg+xml" />
+        <Svg src="/icons/nextArrow.svg" class="icon" />
       </div>
       <div class="audio_button flex_center" @click="removeAllMark()">
-        <img src="@/assets/icons/trash.svg" type="image/svg+xml" />
+        <Svg src="/icons/trash.svg" class="icon" />
       </div>
 
       <div class="audio_button-seperater"></div>
 
       <div class="audio_button_with_text flex_center" @click="toggleMute()">
-        <img id="audio_volume_icon" src="@/assets/icons/volume.svg" type="image/svg+xml" />
-        <img id="audio_mute_icon" src="@/assets/icons/muted.svg" type="image/svg+xml" class="hide" />
+        <Svg src="/icons/muted.svg" class="icon" v-if="this.setting.mute" />
+        <Svg src="/icons/volume.svg" class="icon" v-else />
         <div
-          id="audio_volume_text"
-          class="flex_center"
+          class="text flex_center"
         >{{ setting.mute ? "静音" : Math.round(setting.volume * 100) + "%" }}</div>
       </div>
       <input
@@ -40,8 +39,8 @@
       />
 
       <div class="audio_button_with_text flex_center" @click="resetSpeed()">
-        <img src="@/assets/icons/speed.svg" type="image/svg+xml" />
-        <div id="audio_speed_text" class="flex_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
+        <Svg src="/icons/speed.svg" class="icon" />
+        <div class="text flex_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
       </div>
       <input
         id="slider_audio_speed"
@@ -55,7 +54,7 @@
       />
 
       <div class="audio_button flex_center" @click="resetDetune()">
-        <img src="@/assets/icons/pitch.svg" type="image/svg+xml" />
+        <Svg src="/icons/pitch.svg" class="icon" />
       </div>
       <input
         id="slider_audio_detune"
@@ -75,7 +74,7 @@
 
       
       <div class="audio_button flex_center" @click="close()" style="position: absolute; right: 0; z-index: 2;">
-        <img src="@/assets/icons/close.svg" type="image/svg+xml" />
+        <Svg src="/icons/close.svg" class="icon" />
       </div>
     </div>
     <div id="audio_slider_zone" ref="progressSliderZone" 
@@ -109,11 +108,11 @@
     </div>
     <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="togglePlay()">
-        <img id="audio_play_icon" v-if="!setting.playing" src="@/assets/icons/play.svg" type="image/svg+xml" />
-        <img id="audio_pause_icon" v-else src="@/assets/icons/pause.svg" type="image/svg+xml" />
+        <Svg id="audio_play_icon" v-if="!setting.playing" src="/icons/play.svg" class="icon" />
+        <Svg id="audio_pause_icon" v-else src="/icons/pause.svg" class="icon" />
       </div>
       <div class="audio_button flex_center" @click="stop()">
-        <img id="audio_stop_icon" src="@/assets/icons/stop.svg" type="image/svg+xml" />
+        <Svg id="audio_stop_icon" src="/icons/stop.svg" class="icon" />
       </div>
 
       <div id="slider_tick_progress" class="flex_center">
@@ -138,6 +137,7 @@
 </template>
 
 <script>
+import Svg from "@/components/svg.vue";
 import AudioPlayer from "@/utils/audioPlayer.js";
 import HotKey from "@/utils/hotKey.js";
 import { getEnv, clone } from "@/utils/common.js";
@@ -168,6 +168,7 @@ function base64ToArrayBuffer(base64) {
 
 export default {
   name: "SheetEditorAudioPlayer",
+  components: { Svg },
   emits: [ "close" ],
   data() {
     return {
@@ -683,11 +684,6 @@ export default {
 </style>
 
 <style scoped>
-img {
-  width: 28px;
-  height: 28px;
-  pointer-events: none;
-}
 
 a,
 a:visited,
@@ -702,6 +698,13 @@ a:hover {
 ::selection {
   background-color: rgb(51, 61, 80);
   color: white;
+}
+
+.icon {
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  fill: white;
 }
 
 .audio_player {
@@ -739,16 +742,16 @@ a:hover {
 
   position: relative;
 }
-.audio_button_with_text img {
+.audio_button_with_text *{
   pointer-events: none;
   position: absolute;
+}
+.audio_button_with_text .icon {
   width: 20px;
   height: 20px;
   top: 4px;
 }
-.audio_button_with_text div {
-  pointer-events: none;
-  position: absolute;
+.audio_button_with_text .text {
   width: 100%;
   height: 12px;
   bottom: 0;
@@ -932,9 +935,6 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.hide {
-  display: none;
 }
 
 /* 默认滑动条样式 */

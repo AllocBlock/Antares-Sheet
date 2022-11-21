@@ -126,7 +126,7 @@ export default {
 <style scoped>
 @font-face {
     font-family: MusicNotation;
-    src: url(@/assets/fonts/Aruvarb.ttf);
+    src: url(./fonts/Aruvarb.ttf);
 }
 
 tab-box {
