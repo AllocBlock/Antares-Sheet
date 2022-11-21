@@ -39,6 +39,20 @@ function _delete(e) {
   gCurNode = null
 }
 
+function _insertNewLineBefore(e) {
+  e.preventDefault()
+  if (!gCurNode) return
+  
+  Editor.insertBefore(gCurNode, Editor.createNewLineNode())
+}
+
+function _insertNewLineAfter(e) {
+  e.preventDefault()
+  if (!gCurNode) return
+  
+  Editor.insertAfter(gCurNode, Editor.createNewLineNode())
+}
+
 export default {
   tip: `【基础编辑模式】双击可以编辑文字/添加下划线\n右键可以打开菜单`,
   componentEvents: {
@@ -93,15 +107,19 @@ export default {
       }
     }))
 
-    // 按下tab键快速在前方添加文本节点，而后可以快速添加和弦
+    // 按下tab键快速在前方添加空格
     gHookIds.push(HotKey.addListener("Tab", false, false, false, _insertSpaceBefore))
 
-    // 按下space键快速在后方添加
+    // 按下space键快速在后方添加空格
     gHookIds.push(HotKey.addListener(" ", false, false, false, _insertSpaceAfter))
 
     // 按下delete/r键快速删除
     gHookIds.push(HotKey.addListener("Delete", false, false, false, _delete))
     gHookIds.push(HotKey.addListener("r", false, false, false, _delete))
+
+    // 按下enter键快速在后方添加换行，同时按下shift则在前方添加
+    gHookIds.push(HotKey.addListener("Enter", false, false, false, _insertNewLineBefore))
+    gHookIds.push(HotKey.addListener("Enter", false, true, false, _insertNewLineAfter))
   },
   release: function() {
     for (let id of gHookIds) {
