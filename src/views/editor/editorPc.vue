@@ -353,11 +353,9 @@ export default {
     },
     beginTyping() {
       this.isTyping = true
-      console.log("typing!!!")
     },
     endTyping() {
       this.isTyping = false
-      console.log("not typing!!!")
     },
     playChord(chord) {
       let volume = 0.3;

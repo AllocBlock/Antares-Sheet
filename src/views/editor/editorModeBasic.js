@@ -53,6 +53,23 @@ function _insertNewLineAfter(e) {
   Editor.insertAfter(gCurNode, Editor.createNewLineNode())
 }
 
+function _addUnderline(e) {
+  e.preventDefault()
+  if (!gCurNode) return
+  if (!Editor.isChord(gCurNode)) return
+
+  EditorAction.addUnderlineForChord(gCurNode)
+}
+
+function _removeUnderline(e) {
+  e.preventDefault()
+  if (!gCurNode) return
+  if (!Editor.isChord(gCurNode)) return
+  if (!Editor.hasUnderlineToNextChord(gCurNode)) return
+
+  EditorAction.removeUnderlineOfChord(gCurNode)
+}
+
 export default {
   tip: `【基础编辑模式】双击可以编辑文字/添加下划线\n右键可以打开菜单`,
   componentEvents: {
@@ -120,6 +137,10 @@ export default {
     // 按下enter键快速在后方添加换行，同时按下shift则在前方添加
     gHookIds.push(HotKey.addListener("Enter", false, false, false, _insertNewLineBefore))
     gHookIds.push(HotKey.addListener("Enter", false, true, false, _insertNewLineAfter))
+
+    // 按下w键快速添加下划线，s删除下划线
+    gHookIds.push(HotKey.addListener("w", false, false, false, _addUnderline))
+    gHookIds.push(HotKey.addListener("s", false, false, false, _removeUnderline))
   },
   release: function() {
     for (let id of gHookIds) {
