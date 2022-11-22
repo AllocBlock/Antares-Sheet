@@ -1,4 +1,4 @@
-import { Editor, EditorAction } from "./editor.js";
+import { NodeUtils, EditAction } from "./editor.js";
 import HotKey from "@/utils/hotKey.js";
 import ChordManager from "@/utils/chordManager.js";
 
@@ -53,7 +53,7 @@ export default {
       gHookIds.push(HotKey.addListener(keyName, false, false, false, (e, [shift, isMajor]) => {
         if (!gCurNode) return
         let chordName = ChordManager.shiftKey(gThis.sheetInfo.sheetKey, shift)
-        if (Editor.isChord(gCurNode)) {
+        if (NodeUtils.isChord(gCurNode)) {
           if (ChordManager.getDistance(gCurNode.chord, chordName) == 0) { // 同级的和弦，再次按下则切换大小和弦
             let isCurMajor = ChordManager.isMajor(gCurNode.chord)
             isMajor = !isCurMajor
@@ -61,7 +61,7 @@ export default {
         }
 
         if (!isMajor) chordName += "m"
-        gCurNode = EditorAction.convertToChord(gCurNode, chordName)
+        gCurNode = EditAction.convertToChord(gCurNode, chordName)
       }, [shift, isMajor]))
     })
   },

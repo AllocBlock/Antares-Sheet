@@ -1,4 +1,4 @@
-import { Editor, EditorAction } from "./editor.js";
+import { NodeUtils, EditAction } from "./editor.js";
 import HotKey from "@/utils/hotKey.js";
 import ChordManager from "@/utils/chordManager.js";
 
@@ -27,30 +27,30 @@ function _insertSpaceBefore(e) {
   e.preventDefault()
   if (!gCurNode) return
   
-  let emptyNode = Editor.createTextNode(" ")
-  Editor.insertBefore(gCurNode, emptyNode)
+  let emptyNode = NodeUtils.createTextNode(" ")
+  NodeUtils.insertBefore(gCurNode, emptyNode)
 }
 
 function _insertSpaceAfter(e) {
   e.preventDefault()
   if (!gCurNode) return
   
-  let emptyNode = Editor.createTextNode(" ")
-  Editor.insertAfter(gCurNode, emptyNode)
+  let emptyNode = NodeUtils.createTextNode(" ")
+  NodeUtils.insertAfter(gCurNode, emptyNode)
 }
 
 function _delete(e) {
   e.preventDefault()
   if (!gCurNode) return
   
-  EditorAction.remove(gCurNode)
+  EditAction.removeSafely(gCurNode)
   gCurNode = null
 }
 
 function _recoverChordToText(e) {
   e.preventDefault()
-  if (Editor.isChord(gCurNode)) {
-    gCurNode = EditorAction.convertToText(gCurNode)
+  if (NodeUtils.isChord(gCurNode)) {
+    gCurNode = EditAction.convertToText(gCurNode)
   }
 }
 
@@ -58,38 +58,46 @@ function _insertNewLineBefore(e) {
   e.preventDefault()
   if (!gCurNode) return
   
-  Editor.insertBefore(gCurNode, Editor.createNewLineNode())
+  NodeUtils.insertBefore(gCurNode, NodeUtils.createNewLineNode())
 }
 
 function _insertNewLineAfter(e) {
   e.preventDefault()
   if (!gCurNode) return
   
-  Editor.insertAfter(gCurNode, Editor.createNewLineNode())
+  NodeUtils.insertAfter(gCurNode, NodeUtils.createNewLineNode())
 }
 
 function _addUnderline(e) {
   e.preventDefault()
   if (!gCurNode) return
-  if (!Editor.isChord(gCurNode)) return
+  if (!NodeUtils.isChord(gCurNode)) return
 
-  EditorAction.addUnderlineForChord(gCurNode)
+  EditAction.addUnderlineForChord(gCurNode)
 }
 
 function _removeUnderline(e) {
   e.preventDefault()
   if (!gCurNode) return
-  if (!Editor.isChord(gCurNode)) return
-  if (!Editor.hasUnderlineToNextChord(gCurNode)) return
+  if (!NodeUtils.isChord(gCurNode)) return
+  if (!NodeUtils.hasUnderlineToNextChord(gCurNode)) return
 
-  EditorAction.removeUnderlineOfChord(gCurNode)
+  EditAction.removeUnderlineOfChord(gCurNode)
+}
+
+function _switchChordType(e) {
+  e.preventDefault()
+  if (!gCurNode) return
+  if (!NodeUtils.isChord(gCurNode)) return
+
+  gThis.editSwitchChordType(gCurNode)
 }
 
 export default {
   tip: `【基础编辑模式】双击可以编辑文字/添加下划线\n右键可以打开菜单`,
   componentEvents: {
     text: {
-      dblclick: (e, node) => EditorAction.editTextWithNeighbor(node),
+      dblclick: (e, node) => EditAction.editTextWithNeighbor(node),
       contextmenu: (e, node) => gThis.openContext(e, node),
       mouseenter: _cbMouseEnter,
       mouseleave: _cbMouseLeave
@@ -100,10 +108,10 @@ export default {
       },
       dblclick: (e, node) => {
         if (!e.shiftKey) {
-          EditorAction.addUnderlineForChord(node);
+          EditAction.addUnderlineForChord(node);
         }
-        else if (Editor.hasUnderlineToNextChord(node)){
-          EditorAction.removeUnderlineOfChord(node);
+        else if (NodeUtils.hasUnderlineToNextChord(node)){
+          EditAction.removeUnderlineOfChord(node);
         }
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
@@ -112,7 +120,7 @@ export default {
     },
     mark: {
       dblclick: (e, node) => {
-        EditorAction.editContent(node);
+        EditAction.editContent(node);
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
       mouseenter: _cbMouseEnter,
@@ -148,6 +156,9 @@ export default {
     // 按下U键快速添加下划线，J删除下划线
     gHookIds.push(HotKey.addListener("u", false, false, false, _hotkeySwitcher(_addUnderline)))
     gHookIds.push(HotKey.addListener("j", false, false, false, _hotkeySwitcher(_removeUnderline)))
+
+    // 按下Z键快速切换和弦类型
+    gHookIds.push(HotKey.addListener("z", false, false, false, _hotkeySwitcher(_switchChordType)))
   },
   release: function() {
     for (let id of gHookIds) {

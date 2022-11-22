@@ -107,7 +107,7 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
-import { Editor, EditorAction } from "./editor.js";
+import { NodeUtils, EditAction } from "./editor.js";
 
 let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
@@ -145,7 +145,7 @@ export default {
         chords: [],
         rhythms: [],
         originalSheetKey: "",
-        sheetTree: Editor.createRootNode(),
+        sheetTree: NodeUtils.createRootNode(),
       },
       editorMode: EditorModeMobileDrag,
       toolChordStyles: {
@@ -196,7 +196,7 @@ export default {
   methods: {
     loadSheet(sheetText) {
       let rootNode = reactive(parseSheet(sheetText));
-      Editor.normalizeSheetTree(rootNode);
+      NodeUtils.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
       }
@@ -257,14 +257,14 @@ export default {
       e.preventDefault()
     },
     openRawLyricPanel() {
-      this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)
+      this.rawLyricPanel.lyrics = NodeUtils.toString(this.sheetInfo.sheetTree, true)
       this.rawLyricPanel.show = true
     },
     confirmLyric() {
       if (!confirm("是否确认覆盖歌词？此前制作的和弦将全部被删除！！")) return;
 
-      let root = Editor.createRootNode()
-      Editor.append(root, Editor.createTextNodes(this.rawLyricPanel.lyrics))
+      let root = NodeUtils.createRootNode()
+      NodeUtils.append(root, NodeUtils.createTextNodes(this.rawLyricPanel.lyrics))
       this.sheetInfo.sheetTree = root
       this.rawLyricPanel.show = false
     },
@@ -273,9 +273,9 @@ export default {
       this.contextMenu.show = true;
       this.contextMenu.node = node;
 
-      let isChord = Editor.isChord(node);
+      let isChord = NodeUtils.isChord(node);
       this.contextMenu.enableAddUnderline = isChord;
-      this.contextMenu.enableRemoveUnderline = isChord && Editor.hasUnderlineToNextChord(node);
+      this.contextMenu.enableRemoveUnderline = isChord && NodeUtils.hasUnderlineToNextChord(node);
       this.contextMenu.enableRecoverChord = isChord;
     },
   },

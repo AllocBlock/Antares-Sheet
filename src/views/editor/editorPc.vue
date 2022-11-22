@@ -171,7 +171,7 @@ import { get } from "@/utils/request.js";
 import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
-import { Editor, EditorAction } from "./editor.js";
+import { NodeUtils, EditAction } from "./editor.js";
 import EditorModeBasic from './editorModeBasic.js'
 import EditorModeDrag from './editorModeDrag.js'
 import EditorModeProgression from './editorModeProgression.js'
@@ -221,7 +221,7 @@ export default {
         chords: [],
         rhythms: [],
         originalSheetKey: "C",
-        sheetTree: Editor.createRootNode(),
+        sheetTree: NodeUtils.createRootNode(),
       },
       toolChord: {
         showPanel: false,
@@ -326,17 +326,17 @@ export default {
       this.sheetInfo.chords = []
       this.sheetInfo.rhythms = []
       this.sheetInfo.originalSheetKey = "C"
-      this.sheetInfo.sheetTree = Editor.createRootNode()
+      this.sheetInfo.sheetTree = NodeUtils.createRootNode()
 
       this.toolChord.attachedChords = []
 
       // 初始文本
-      Editor.append(this.sheetInfo.sheetTree, Editor.createTextNodes("歌词"))
-      Editor.append(this.sheetInfo.sheetTree, Editor.createNewLineNode())
+      NodeUtils.append(this.sheetInfo.sheetTree, NodeUtils.createTextNodes("歌词"))
+      NodeUtils.append(this.sheetInfo.sheetTree, NodeUtils.createNewLineNode())
     },
     loadSheet(sheetText) {
       let rootNode = reactive(parseSheet(sheetText));
-      Editor.normalizeSheetTree(rootNode);
+      NodeUtils.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
       }
@@ -366,11 +366,11 @@ export default {
       this.contextMenu.style.left = `${e.clientX}px`;
       this.contextMenu.style.top = `${e.clientY}px`;
 
-      let isChord = Editor.isChord(node);
-      let isNewLine = Editor.isNewLine(node);
+      let isChord = NodeUtils.isChord(node);
+      let isNewLine = NodeUtils.isNewLine(node);
       this.contextMenu.enableEditContent = !isNewLine;
       this.contextMenu.enableAddUnderline = isChord;
-      this.contextMenu.enableRemoveUnderline = isChord && Editor.hasUnderlineToNextChord(node);
+      this.contextMenu.enableRemoveUnderline = isChord && NodeUtils.hasUnderlineToNextChord(node);
       this.contextMenu.enableRecoverChord = isChord;
       this.contextMenu.enableSwitchChordType = isChord;
     },
@@ -403,7 +403,7 @@ export default {
     },
     shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
-        if (Editor.isChord(node)) {
+        if (NodeUtils.isChord(node)) {
           node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
@@ -416,37 +416,37 @@ export default {
     },
     editContent(node = null) {
       node = node ?? this.contextMenu.node;
-      EditorAction.editContent(node)
+      EditAction.editContent(node)
     },
     editRemove(node = null) {
       node = node ?? this.contextMenu.node;
-      EditorAction.remove(node);
+      EditAction.removeSafely(node);
     },
     editRemoveUnderline(node = null) {
       node = node ?? this.contextMenu.node;
-      EditorAction.removeUnderlineOfChord(node);
+      EditAction.removeUnderlineOfChord(node);
     },
     editRecoverChord(node = null) {
       node = node ?? this.contextMenu.node;
-      EditorAction.convertToText(node);
+      EditAction.convertToText(node);
     },
     editSwitchChordType(node = null) {
       node = node ?? this.contextMenu.node;
       if (node.type == ENodeType.Chord) { // 标注和弦转纯和弦
         // 如果没有下划线，直接转换
-        if (!Editor.isInUnderline(node)) node.type = ENodeType.ChordPure
+        if (!NodeUtils.isInUnderline(node)) node.type = ENodeType.ChordPure
         else {
           // 获取最顶层的下划线
           let cur = node
           let topUnderline = null
           while (cur) {
-            if (Editor.isUnderline(cur)) topUnderline = cur;
+            if (NodeUtils.isUnderline(cur)) topUnderline = cur;
             cur = cur.parent
           }
 
           // 检查是否有非空文本存在
           let hasNonEmptyTextNode = false
-          Editor.traverseDFS(topUnderline, (n) => {
+          NodeUtils.traverseDFS(topUnderline, (n) => {
             if (n.type == ENodeType.Text && n.content != " ")
               hasNonEmptyTextNode = true;
           })
@@ -454,11 +454,11 @@ export default {
           // 如果有非空文本，则不能整体转为纯和弦，断开所有下划线并独立转为纯和弦
           // TODO: 是否加一个选项让用户选择？
           if (hasNonEmptyTextNode) {
-            EditorAction.removeAllUnderlineOnChord(node)
+            EditAction.removeAllUnderlineOnChord(node)
             node.type = ENodeType.ChordPure
           }
           else { // 否则，underline转underlinepure，chord转chordpure
-            Editor.traverseDFS(topUnderline, (n) => {
+            NodeUtils.traverseDFS(topUnderline, (n) => {
               if (n.type == ENodeType.Chord)
                 n.type = ENodeType.ChordPure;
               if (n.type == ENodeType.Underline)
@@ -470,17 +470,17 @@ export default {
       }
       else if (node.type == ENodeType.ChordPure) {
         // 如果没有下划线，直接转换
-        if (!Editor.isInUnderline(node)) node.type = ENodeType.Chord
+        if (!NodeUtils.isInUnderline(node)) node.type = ENodeType.Chord
         else { // 否则整体转换
           // 获取最顶层的下划线
           let cur = node
           let topUnderline = null
           while (cur) {
-            if (Editor.isUnderline(cur)) topUnderline = cur;
+            if (NodeUtils.isUnderline(cur)) topUnderline = cur;
             cur = cur.parent
           }
 
-          Editor.traverseDFS(topUnderline, (n) => {
+          NodeUtils.traverseDFS(topUnderline, (n) => {
             if (n.type == ENodeType.ChordPure)
               n.type = ENodeType.Chord;
             if (n.type == ENodeType.UnderlinePure)
@@ -493,7 +493,7 @@ export default {
     },
     editAddUnderline(node = null) {
       node = node ?? this.contextMenu.node;
-      EditorAction.addUnderlineForChord(node);
+      EditAction.addUnderlineForChord(node);
     },
     onChangeSheetKey(e) {
       let oldKey = this.sheetInfo.sheetKey
@@ -505,14 +505,14 @@ export default {
       this.shiftKey(oldKey, newKey)
     },
     openRawLyricPanel() {
-      this.rawLyricPanel.lyrics = Editor.toString(this.sheetInfo.sheetTree, true)
+      this.rawLyricPanel.lyrics = NodeUtils.toString(this.sheetInfo.sheetTree, true)
       this.rawLyricPanel.show = true
     },
     confirmLyric() {
       if (!confirm("是否确认覆盖歌词？此前制作的和弦将全部被删除！！")) return;
 
-      let root = Editor.createRootNode()
-      Editor.append(root, Editor.createTextNodes(this.rawLyricPanel.lyrics))
+      let root = NodeUtils.createRootNode()
+      NodeUtils.append(root, NodeUtils.createTextNodes(this.rawLyricPanel.lyrics))
       this.sheetInfo.sheetTree = root
       this.rawLyricPanel.show = false
     },
@@ -559,21 +559,21 @@ export default {
         case "text": {
           let text = prompt("插入文本", "请输入文本")
           if (!text) return;
-          nodes = Editor.createTextNodes(text)
+          nodes = NodeUtils.createTextNodes(text)
           break
         }
         case "space": {
-          nodes = Editor.createTextNodes(" ")
+          nodes = NodeUtils.createTextNodes(" ")
           break
         }
         case "mark": {
           let text = prompt("插入标记", "请输入标记内容")
           if (!text) return;
-          nodes = Editor.createMarkNode(text)
+          nodes = NodeUtils.createMarkNode(text)
           break
         }
         case "newline": {
-          nodes = Editor.createNewLineNode()
+          nodes = NodeUtils.createNewLineNode()
           break
         }
         default: {
@@ -583,9 +583,9 @@ export default {
 
       // insert
       if (isOnLeft)
-        Editor.insertBefore(this.contextMenu.node, nodes)
+        NodeUtils.insertBefore(this.contextMenu.node, nodes)
       else
-        Editor.insertAfter(this.contextMenu.node, nodes)
+        NodeUtils.insertAfter(this.contextMenu.node, nodes)
     },
     onContextButtonMouseEnter(tip) {
       this.contextMenu.tip.show = true

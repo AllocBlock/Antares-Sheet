@@ -1,4 +1,4 @@
-import { Editor, EditorAction } from "./editor.js";
+import { NodeUtils, EditAction } from "./editor.js";
 import ChordManager from "@/utils/chordManager.js";
 import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
@@ -54,7 +54,7 @@ function _onTouchEnd(e) {
         gToInsertChordNode.content = gToRemoveNode.content
       }
       // TODO: 检查是否能够替换，有没有不能直接替换的情况？
-      Editor.replace(gToRemoveNode, gToInsertChordNode)
+      NodeUtils.replace(gToRemoveNode, gToInsertChordNode)
     }
     gIsDragging = false
     gToInsertChordNode = null
@@ -68,9 +68,9 @@ function _setToRemoveNode(node) {
   if (node == gToInsertChordNode) return
 
   if (gToRemoveNode)
-    EditorAction.unhighlightNode(gToRemoveNode)
+    EditAction.unhighlightNode(gToRemoveNode)
   if (node)
-    EditorAction.highlightNode(node)
+    EditAction.highlightNode(node)
   gToRemoveNode = node
 }
 
@@ -81,7 +81,7 @@ export default {
       click: (e, node) => {
       },
       dblclick: (e, node) => {
-        EditorAction.editContent(node);
+        EditAction.editContent(node);
       },
       contextmenu: (e, node) => {
         gThis.openContext(e, node)
@@ -96,10 +96,10 @@ export default {
       },
       dblclick: (e, node) => {
         if (!e.shiftKey) {
-          EditorAction.addUnderlineForChord(node);
+          EditAction.addUnderlineForChord(node);
         }
-        else if (Editor.hasUnderlineToNextChord(node)){
-          EditorAction.removeUnderlineOfChord(node);
+        else if (NodeUtils.hasUnderlineToNextChord(node)){
+          EditAction.removeUnderlineOfChord(node);
         }
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
@@ -111,7 +111,7 @@ export default {
       click: (e, node) => {
       },
       dblclick: (e, node) => {
-        EditorAction.editContent(node);
+        EditAction.editContent(node);
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
     },
@@ -124,7 +124,7 @@ export default {
   toolChordEvents: {
     dragStart: (e, chord) => {
       gIsDragging = true
-      gToInsertChordNode = Editor.createChordNode('', chord.name)
+      gToInsertChordNode = NodeUtils.createChordNode('', chord.name)
       gToRemoveNode = null
       _onTouchMove(e)
       
