@@ -104,6 +104,7 @@
 - 播放/暂停：空格
 - 添加标记：W
 - 跳转到前/后一个标记：Q/E
+- 在进度条上按住Ctrl滚动滚轮可以放大缩小
     
 ## 组件
 - 曲谱格式
@@ -225,8 +226,11 @@
 - 删除下划线时，只考虑了删除右侧下划线，而不能删除位于左侧的下划线
 - 有下划线时，alt拖拽朝下划线外时会出错
 - 节点全部删除后交互都会失效...也许应该弄一个一键添加按钮
-- 播放器有时无法播放
+- 纯和弦与普通和弦混合时，下划线会出现跨越的情况
 
 # 开发
 - vue + vite
 - 部分图标来自Iconfont
+- 音频处理
+  - 使用JS原生的Audio相关功能，如Audio、AudioContext、AudioNode等等
+    - [Understanding The Web Audio Clock](https://sonoport.github.io/web-audio-clock.html)

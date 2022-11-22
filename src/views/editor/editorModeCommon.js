@@ -1,4 +1,4 @@
-import { assert } from "@vue/compiler-core"
+import { assert } from "@/utils/assert.js"
 
 const VariableType = {
   Object: 0,

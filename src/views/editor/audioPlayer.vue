@@ -22,8 +22,8 @@
       <div class="audio_button-seperater"></div>
 
       <div class="audio_button_with_text flex_center" @click="toggleMute()">
-        <Svg src="/icons/muted.svg" class="icon" v-if="this.setting.mute" />
-        <Svg src="/icons/volume.svg" class="icon" v-else />
+        <Svg src="/icons/muted.svg" class="icon" v-show="this.setting.mute" />
+        <Svg src="/icons/volume.svg" class="icon" v-show="!this.setting.mute" />
         <div
           class="text flex_center"
         >{{ setting.mute ? "静音" : Math.round(setting.volume * 100) + "%" }}</div>
@@ -108,8 +108,8 @@
     </div>
     <div class="audio_button_zone flex_center">
       <div class="audio_button flex_center" @click="togglePlay()">
-        <Svg id="audio_play_icon" v-if="!setting.playing" src="/icons/play.svg" class="icon" />
-        <Svg id="audio_pause_icon" v-else src="/icons/pause.svg" class="icon" />
+        <Svg id="audio_play_icon" v-show="!setting.playing" src="/icons/play.svg" class="icon" />
+        <Svg id="audio_pause_icon" v-show="setting.playing" src="/icons/pause.svg" class="icon" />
       </div>
       <div class="audio_button flex_center" @click="stop()">
         <Svg id="audio_stop_icon" src="/icons/stop.svg" class="icon" />
@@ -155,16 +155,6 @@ const PlaybackSpeedLevels = {
   9: 2.0,
   10: 2.5
 }
-/* 库函数：base64(dataurl)转binary */
-function base64ToArrayBuffer(base64) {
-  let binary_string = window.atob(base64);
-  let len = binary_string.length;
-  let bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary_string.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
 
 export default {
   name: "SheetEditorAudioPlayer",
@@ -175,7 +165,7 @@ export default {
       loading: false,
       loaded: false,
       loadState: ELoadState.Empty,
-      audioPlayer: null,
+      audioPlayer: new AudioPlayer(), // non-reactive
       audioInfo: {
         duration: 0,
         curTick: 0,
@@ -239,7 +229,6 @@ export default {
   created() {
     let that = this
 
-    this.audioPlayer = new AudioPlayer
     document.addEventListener("mouseup", this.onMouseUp)
     document.addEventListener("mousemove", this.onMouseMove)
 
@@ -267,58 +256,61 @@ export default {
       second = second - minute * 60; // 计算秒数
       return `${(minute).toString().padStart(2, '0')}:${(second).toString().padStart(2, '0')}`;
     },
-    drawWaveform(canvas, arrayBuffer, callback) {
-      let that = this
-      // 使用audiocontext解码音频(ArrayBuffer转AudioBuffer)
-      let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      audioCtx.decodeAudioData(arrayBuffer, cbAudioDecoded).catch(function (error) {
-        that.$toast("解码文件失败，请选择正确的音频文件！", 1.5);
-        this.loadState = ELoadState.Failed
-      });
+    drawWaveform(canvas, file) {
+      return new Promise(function(resolve, reject) {
+        let reader = new FileReader();
+        reader.onload = () => {
+          const resultDataBuffer = reader.result
 
-      // 音频解码完毕的回调
-      function cbAudioDecoded(buffer) {
-        let pen = canvas.getContext("2d"); // 画笔
-        // 关闭抗锯齿
-        pen.webkitImageSmoothingEnabled = false;
-        pen.mozImageSmoothingEnabled = false;
-        pen.imageSmoothingEnabled = false;
+          let tempContext = new AudioContext
 
-        let data = buffer.getChannelData(0); // 第一轨的数据
-        let dataLen = data.length; // 数据个数
+          tempContext.decodeAudioData(resultDataBuffer)
+            .then((decodedAudioDataBuffer) => {
+              let pen = canvas.getContext("2d"); // 画笔
+              // 关闭抗锯齿
+              pen.webkitImageSmoothingEnabled = false;
+              pen.mozImageSmoothingEnabled = false;
+              pen.imageSmoothingEnabled = false;
 
-        // 设置画布宽度
-        canvas.setAttribute("width", buffer.duration * 200);
+              let data = decodedAudioDataBuffer.getChannelData(0); // 第一轨的数据
+              let dataLen = data.length; // 数据个数
 
-        // 绘制参数
-        let width = canvas.getAttribute("width");
-        let height = canvas.getAttribute("height");
-        let interval = 50; // 采样间隔
-        let sampleCount = Math.floor(dataLen / interval); // 采样数
-        let amp = height / 2; // 振幅是高度的一般（注意音频数据是有正负的,-1.0到1.0）
+              // 设置画布宽度
+              canvas.setAttribute("width", decodedAudioDataBuffer.duration * 200);
 
-        // 开始绘制
-        pen.clearRect(0, 0, width, height); // 清空画布
-        pen.moveTo(0, amp); // 左侧中点开始
+              // 绘制参数
+              let width = canvas.getAttribute("width");
+              let height = canvas.getAttribute("height");
+              let interval = 50; // 采样间隔
+              let sampleCount = Math.floor(dataLen / interval); // 采样数
+              let amp = height / 2; // 振幅是高度的一般（注意音频数据是有正负的,-1.0到1.0）
 
-        for (let i = 0; i < sampleCount; i++) {
-          // 求区间平均值
-          let avg = 0.0;
-          for (let j = 0; j < interval; j++) {
-            avg += data[(i * interval) + j];
-          }
-          avg /= interval;
-          // 画线
-          let left = (i * interval) / dataLen * width;
-          let top = avg * amp + amp;
-          pen.lineTo(left, top);
-        }
-        pen.strokeStyle = "#ffddd3";
-        pen.stroke();  // 填充
+              // 开始绘制
+              pen.clearRect(0, 0, width, height); // 清空画布
+              pen.moveTo(0, amp); // 左侧中点开始
 
-        if (callback) callback()
-      }
-
+              for (let i = 0; i < sampleCount; i++) {
+                // 求区间平均值
+                let avg = 0.0;
+                for (let j = 0; j < interval; j++) {
+                  avg += data[(i * interval) + j];
+                }
+                avg /= interval;
+                // 画线
+                let left = (i * interval) / dataLen * width;
+                let top = avg * amp + amp;
+                pen.lineTo(left, top);
+              }
+              pen.strokeStyle = "#ffddd3";
+              pen.stroke();  // 填充
+              resolve()
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        };
+        reader.readAsArrayBuffer(file);
+      })
     },
     selectMusic() {
       // 如果正在加载，则暂时禁止选择文件
@@ -337,23 +329,35 @@ export default {
     },
     /* 加载音乐 */
     loadAudio(file) {
+      let that = this
       if (file == null) {
         this.$toast("打开文件失败！");
         return;
       }
 
       this.loadState = ELoadState.Loading;
-      this.audioPlayer.load(file, (data) => {
-        let base64 = data.replace(/.*base64,/, ""); // DataUrl转Base64
-        this.drawWaveform(this.$refs.audioWaveCanvas, base64ToArrayBuffer(base64), () => {
-          this.loadState = ELoadState.Loaded
-        });
-      }, () => {
-        this.audioInfo.duration = this.audioPlayer.audio.duration
-        this.audioPlayer.moveToTick(0)
-      }, () => {
-        this.pause()
-      })
+
+      // this.audioPlayer.load(file, () => this.pause())
+      this.audioPlayer.load(file, 
+        (duration) => {
+          this.audioInfo.duration = duration
+          if (this.audioPlayer.isLoaded())
+            this.audioPlayer.setTimePoint(0)
+        }, 
+        () => {
+          this.pause()
+        }
+      )
+        .then(() => {
+          that.drawWaveform(this.$refs.audioWaveCanvas, file)
+            .then(() => {
+              that.loadState = ELoadState.Loaded
+            })
+        })
+        .catch((error) => {
+          console.log(error)
+          this.loadState = ELoadState.Failed
+        })
     },
     togglePlay() {
       if (this.loadState != ELoadState.Loaded) {
@@ -371,7 +375,7 @@ export default {
       window.cancelAnimationFrame(this.timer.curTick)
       const updateCurTick = () => {
         if (!this.progressSlider.dragging) {
-          let curTick = this.audioPlayer.audio.currentTime
+          let curTick = this.audioPlayer.getTimePoint()
           this.audioInfo.curTick = curTick
           if (this.setting.follow)
             this.followTickMark(curTick, "inleft")
@@ -390,14 +394,14 @@ export default {
     },
     stop() {
       this.pause()
-      this.audioPlayer.moveToTick(0)
+      this.audioPlayer.setTimePoint(0)
       this.audioInfo.curTick = 0
     },
     toggleMute() {
       this.setting.mute = !this.setting.mute
     },
     onChangeProgressSlider() {
-      this.audioPlayer.moveToTick(this.audioInfo.curTick)
+      this.audioPlayer.setTimePoint(this.audioInfo.curTick)
       this.progressSlider.dragging = false
     },
     onProgressSliderMouseDown() {
@@ -406,7 +410,7 @@ export default {
     updateSpeed() {
       let speedLevel = parseInt(this.setting.speedLevel)
       this.setting.speed = PlaybackSpeedLevels[speedLevel]
-      this.audioPlayer.audio.playbackRate = this.setting.speed
+      this.audioPlayer.setPlaybackRate(this.setting.speed)
     },
     resetSpeed() {
       this.setting.speedLevel = 6
@@ -434,7 +438,7 @@ export default {
         return;
       }
 
-      timeTick = timeTick ? parseFloat(timeTick) : this.audioPlayer.audio.currentTime
+      timeTick = timeTick ? parseFloat(timeTick) : this.audioPlayer.getTimePoint()
       // 覆盖模式下，如果该位置已经有标记，则覆盖掉
       if (overwrite){
         let index = this.marks.findIndex((e) => e.tick == timeTick)
@@ -458,7 +462,7 @@ export default {
       return style;
     },
     jumpToMark(mark) {
-      this.audioPlayer.audio.currentTime = mark.tick
+      this.audioPlayer.setTimePoint(mark.tick)
       this.audioInfo.curTick = mark.tick
     },
     jumpToPrevMark() {

@@ -38,7 +38,8 @@ export default class Metronome {
 
       let loadSource = function(fileName, memberKey) {
         loadFileBuffer(fileName).then((buffer) => {
-          that.audioContext.decodeAudioData(buffer, (audioBuffer) => {
+          that.audioContext.decodeAudioData(buffer)
+            .then((audioBuffer) => {
             loadedAudioNum++
             that[memberKey] = audioBuffer
             if (callbacks.onLoadProgress) callbacks.onLoadProgress(loadedAudioNum / audioNum);
@@ -49,10 +50,11 @@ export default class Metronome {
               that.loaded = true
               resolve()
             }
-          }, (error) => {
+          })
+          .catch((error) => {
             errMsg =  "解码音频失败：" + error;
             if (callbacks.onFailed) callbacks.onFailed(errMsg);
-            throw errMsg;
+            reject(error);
           })
         })
       }
