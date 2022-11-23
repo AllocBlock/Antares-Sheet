@@ -51,8 +51,8 @@ $chords ${sheetChordsStr}
   return sheet;
 }
 
-const ReMatchChordAtStart = /^\s*((#?b?[A-Ga-g]#?b?)((maj|add|sus|aug|dim|[1-9])*)?[ \t]*)+/
-const ReSplitChord = /(#?b?[A-Ga-g]#?b?)((maj|add|sus|aug|dim|[1-9])*)?/g
+const ReMatchChordAtStart = /^\s*((#?b?[A-Ga-g]#?b?m?)((maj|add|sus|aug|dim|[1-9])*)?[ \t]*)+/
+const ReSplitChord = /(#?b?[A-Ga-g]#?b?m?)((maj|add|sus|aug|dim|[1-9])*)?/g
 
 export function convertXXX2Sheet(xxxText) {
   let sheetText = _toSheetText(xxxText)
@@ -123,9 +123,16 @@ export function convertXXX2Sheet(xxxText) {
   })
 
   // *在任何生成和弦/纯和弦之后执行
-  // 删除和弦名称为空的和弦/和弦
+  // 删除和弦名称为空的和弦/和弦，如果其有内容，则替换为文本节点
   NodeUtils.traverseDelete(root, (n) => {
-    return ((n.type == ENodeType.Chord || n.type == ENodeType.ChordPure) && (!n.chord || n.chord.trim() == ""));
+    let isEmptyChord = (n.type == ENodeType.Chord || n.type == ENodeType.ChordPure) && (!n.chord || n.chord.trim() == "")
+    if (isEmptyChord) {
+      if (NodeUtils.isPlaceholder(n.content)) return true
+      let textNode = new SheetNode(ENodeType.Text)
+      textNode.content = n.content
+      NodeUtils.replace(n, textNode)
+    }
+    return false
   })
 
   // 处理特殊情况：<Dm_>至少我<Em_>们中还<F_>有人能<D_>快乐<>+ 

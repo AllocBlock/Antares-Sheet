@@ -1,7 +1,7 @@
 <template>
   <chord-name>
-    <chord-key>{{key}}</chord-key>
-    <chord-suffix>{{suffix}}</chord-suffix>
+    <chord-main>{{main}}</chord-main>
+    <chord-decoration>{{decoration}}</chord-decoration>
   </chord-name>
 </template>
 
@@ -17,15 +17,15 @@ export default {
     },
   },
   computed: {
-    splitKeySuffix() {
+    splitMainDecoration() {
       if (ChordManager.isChord(this.chordName)) return ChordManager.splitChordDecoration(this.chordName)
       else return [this.chordName, ""]
     },
-    key() {
-      return this.splitKeySuffix[0];
+    main() {
+      return this.splitMainDecoration[0];
     },
-    suffix() {
-      return this.splitKeySuffix[1]
+    decoration() {
+      return this.splitMainDecoration[1]
     },
   },
 };
@@ -36,11 +36,11 @@ chord-name {
   display: inline-flex;
   align-items: flex-end;
 }
-chord-key {
+chord-main {
   white-space: nowrap;
 }
 
-chord-suffix {
+chord-decoration {
   font-size: 0.8em;
 }
 </style>
