@@ -107,7 +107,7 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
-import { NodeUtils, EditAction } from "./editor.js";
+import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 
 let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");

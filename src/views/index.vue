@@ -3,6 +3,7 @@
     <router-link to="/test">测试</router-link><br />
     <router-link to="/sheet?sheet=诺亚方舟">曲谱</router-link><br />
     <router-link to="/editor?sheet=诺亚方舟">编辑</router-link><br />
+    <router-link to="/xxxConverter">xxx转换</router-link><br />
   </div>
 </template>
 

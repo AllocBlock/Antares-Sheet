@@ -171,7 +171,7 @@ import { get } from "@/utils/request.js";
 import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
-import { NodeUtils, EditAction } from "./editor.js";
+import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 import EditorModeBasic from './editorModeBasic.js'
 import EditorModeDrag from './editorModeDrag.js'
 import EditorModeProgression from './editorModeProgression.js'

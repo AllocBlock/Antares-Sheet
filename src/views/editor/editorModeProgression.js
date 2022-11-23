@@ -1,4 +1,4 @@
-import { NodeUtils, EditAction } from "./editor.js";
+import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 import HotKey from "@/utils/hotKey.js";
 import ChordManager from "@/utils/chordManager.js";
 

@@ -92,12 +92,30 @@ export const NodeUtils = {
     }
     return node;
   },
-  /** 深度优先+后序遍历树 */
+  /** 深度优先+后序遍历树 
+   * FIXME: 遍历中添加/删除的情况如何处理？
+  */
   traverseDFS(root, callback) {
     for (let i = 0; i < root.children.length; ++i) {
       this.traverseDFS(root.children[i], callback);
     }
     callback(root);
+  },
+  /** 深度优先+后序遍历树，用于删除节点
+   * 返回true删除该节点
+   */
+   traverseDelete(root, callback) {
+    for (let i = 0; i < root.children.length; ++i) {
+      let child = root.children[i];
+      let needDelete = callback(child);
+      if (needDelete) {
+        this.remove(child)
+        i--;
+      }
+      else {
+        this.traverseDelete(child, callback);
+      }
+    }
   },
   /**
    * 向后寻找节点

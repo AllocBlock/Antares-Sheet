@@ -1,4 +1,4 @@
-import { NodeUtils, EditAction } from "./editor.js";
+import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 import ChordManager from "@/utils/chordManager.js";
 import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";

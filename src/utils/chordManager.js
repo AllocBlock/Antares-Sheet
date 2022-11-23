@@ -199,8 +199,8 @@ class ChordManager {
   }
 }
 
-const ReSplitChordSuffix = /^(#?b?[A-Ga-g]#?b?)([majaddsug1-9]*)?$/
-const ReSplitChordDecoration = /^(#?b?[A-Ga-g]#?b?m?)([majaddsug1-9]*)?$/
+const ReSplitChordSuffix = /^(#?b?[A-Ga-g]#?b?)((maj|add|sus|aug|dim|[1-9])*)?$/
+const ReSplitChordDecoration = /^(#?b?[A-Ga-g]#?b?m?)((maj|add|sus|aug|dim|[1-9])*)?$/
 
 function _getNumOfChar(str, char) {
   let n = 0;

@@ -17,11 +17,15 @@ export default {
     },
   },
   computed: {
+    splitKeySuffix() {
+      if (ChordManager.isChord(this.chordName)) return ChordManager.splitChordDecoration(this.chordName)
+      else return [this.chordName, ""]
+    },
     key() {
-      return ChordManager.splitChordDecoration(this.chordName)[0];
+      return this.splitKeySuffix[0];
     },
     suffix() {
-      return ChordManager.splitChordDecoration(this.chordName)[1]
+      return this.splitKeySuffix[1]
     },
   },
 };
@@ -33,7 +37,7 @@ chord-name {
   align-items: flex-end;
 }
 chord-key {
-
+  white-space: nowrap;
 }
 
 chord-suffix {

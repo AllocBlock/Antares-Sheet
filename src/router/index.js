@@ -3,6 +3,7 @@ import Index from '@/views/index.vue'
 import Test from '@/views/test.vue'
 import SheetViewer from '@/views/viewer/index.vue'
 import SheetEditor from '@/views/editor/index.vue'
+import XxxConverter from '@/views/xxxConverter.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/editor',
     name: 'SheetEditor',
     component: SheetEditor
+  },
+  {
+    path: '/xxxConverter',
+    name: 'XxxConverter',
+    component: XxxConverter
   },
   {
     path: "/:catchAll(.*)w",

@@ -71,7 +71,6 @@
         <span class="slider"></span>
         <div id="audio_follow_text" class="flex_center">跟随{{setting.follow ? "开" : "关"}}</div>
       </label>
-
       
       <div class="audio_button flex_center" @click="close()" style="position: absolute; right: 0; z-index: 2;">
         <Svg src="/icons/close.svg" class="icon" />
@@ -132,8 +131,6 @@
       </div>
     </div>
   </div>
-  
-  
 </template>
 
 <script>
