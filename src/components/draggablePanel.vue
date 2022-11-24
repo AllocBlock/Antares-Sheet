@@ -43,7 +43,7 @@ export default {
   },
   mounted() {
     document.addEventListener("mouseup", this.endDrag)
-    document.addEventListener("mouseover", this.onDragOver)
+    document.addEventListener("mousemove", this.onDragMove)
     window.addEventListener("resize", this.onResize)
     this.setPosImmediately(this.initPos.left, this.initPos.top)
   },
@@ -57,7 +57,7 @@ export default {
       this.curPanelPos.left = curPanelPos.left
       this.curPanelPos.top = curPanelPos.top
     },
-    onDragOver(e) {
+    onDragMove(e) {
       if (!this.isDragging) return
       let curMousePos = getCursorClientPos(e)
       this.setPosNextFrame(curMousePos[0] - this.startDragMousePos[0] + this.startDragPanelPos.left,
