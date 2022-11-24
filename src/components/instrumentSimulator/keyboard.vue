@@ -1,13 +1,13 @@
 <template>
-  <div class="instrument_piano_board" :style="boardSize">
+  <div class="instrument_keyboard_container" :style="boardSize">
     <div v-for="(key, index) in whiteKeys" :key="index" 
-      class="instrument_piano_white_key" 
+      class="instrument_keyboard_white_key" 
       :style="key.style"
       :pressed="key.pressed ? true : null"
       @mousedown="onPress(key)"
     />
     <div v-for="(key, index) in blackKeys" :key="index" 
-      class="instrument_piano_black_key" 
+      class="instrument_keyboard_black_key" 
       :style="key.style" 
       :pressed="key.pressed ? true : null"
       @mousedown="onPress(key)"
@@ -16,8 +16,9 @@
 </template>
 
 <script>
+import { Keyboard } from "@/utils/instrument.js"
 
-function calcPianoSize(whiteKeyWidth, length) {
+function calcKeyboardSize(whiteKeyWidth, length) {
   return {
     whiteKey: {
       width: whiteKeyWidth,
@@ -34,28 +35,38 @@ function toPx(num) {
   return num + "px"
 }
 
+const octaveWhiteKeyTone = ["C", "D", "E", "F", "G", "A", "B"]
 const blackKeyPoses = [0, 1, 3, 4, 5]
-function addOctave(pianoSize, offset, outWhiteKeys, outBlackKeys) {
-  let keyInterval = pianoSize.whiteKey.width
+const octaveBlackKeyTone = ["#C", "#D", "#F", "#G", "#A"]
+function addOctave(keyboardSize, offset, octave, outWhiteKeys, outBlackKeys) {
+  let keyInterval = keyboardSize.whiteKey.width
 
   for (let i = 0; i < 7; ++i) {
     outWhiteKeys.push({
       style: {
-        width: toPx(pianoSize.whiteKey.width),
-        height: toPx(pianoSize.whiteKey.length),
+        width: toPx(keyboardSize.whiteKey.width),
+        height: toPx(keyboardSize.whiteKey.length),
         left: toPx(offset + i * keyInterval),
+      },
+      tone: {
+        name: octaveWhiteKeyTone[i],
+        octave: i < 5 ? octave : octave + 1
       }
     })
   }
 
-  let blackKeyStart = pianoSize.whiteKey.width - pianoSize.blackKey.width * 0.5
+  let blackKeyStart = keyboardSize.whiteKey.width - keyboardSize.blackKey.width * 0.5
 
-  for (let pos of blackKeyPoses) {
+  for (let i = 0; i < 5; ++i) {
     outBlackKeys.push({
       style: {
-        width: toPx(pianoSize.blackKey.width),
-        height: toPx(pianoSize.blackKey.length),
-        left: toPx(offset + blackKeyStart + pos * keyInterval),
+        width: toPx(keyboardSize.blackKey.width),
+        height: toPx(keyboardSize.blackKey.length),
+        left: toPx(offset + blackKeyStart + blackKeyPoses[i] * keyInterval),
+      },
+      tone: {
+        name: octaveBlackKeyTone[i],
+        octave: i < 4 ? octave : octave + 1
       }
     })
   }
@@ -66,11 +77,11 @@ const StandardWhiteKeyWidth = 2.2; // cm
 const StandardBlackKeyWidth = 1.1; // cm
 const StandardWhiteKeyLength = 15; // cm
 const StandardBlackKeyLength = 9.5; // cm
-const gPianoSize = calcPianoSize(StandardWhiteKeyWidth * ScaleRatio, StandardWhiteKeyLength * ScaleRatio)
-console.log(gPianoSize)
+const gKeyboardSize = calcKeyboardSize(StandardWhiteKeyWidth * ScaleRatio, StandardWhiteKeyLength * ScaleRatio)
+console.log(gKeyboardSize)
 
 export default {
-  name: "InstrumentSimulatorPiano",
+  name: "InstrumentSimulatorKeyboard",
   data(){
     return {
       boardSize: {
@@ -79,20 +90,22 @@ export default {
       },
       whiteKeys: [],
       blackKeys: [],
-      pressedKeys: new Set()
+      pressedKeys: new Set(),
+      keyboard: new Keyboard()
     }
   },
   mounted() {
-    let octaveWidth = gPianoSize.whiteKey.width * 7
-    let octaveHeight = gPianoSize.whiteKey.length
+    let octaveWidth = gKeyboardSize.whiteKey.width * 7
+    let octaveHeight = gKeyboardSize.whiteKey.length
 
     let octaveNum = 2
+    let startOctave = 4
     
     this.boardSize.width = toPx(octaveWidth * octaveNum)
     this.boardSize.height = toPx(octaveHeight)
 
     for (let i = 0; i < octaveNum; ++i)
-      addOctave(gPianoSize, i * octaveWidth, this.whiteKeys, this.blackKeys)
+      addOctave(gKeyboardSize, i * octaveWidth, startOctave + i, this.whiteKeys, this.blackKeys)
 
     document.addEventListener("mouseup", this.onMouseRelease)
   },
@@ -100,6 +113,8 @@ export default {
     onPress(key) {
       key.pressed = true
       this.pressedKeys.add(key)
+
+      this.keyboard.playKey(key.tone, 0.2)
     },
     onMouseRelease() {
       for (let key of this.pressedKeys)
@@ -112,13 +127,13 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.instrument_piano_board {
+.instrument_keyboard_container {
   position: relative;
   background: red;
   user-select: none;
 }
 
-.instrument_piano_white_key {
+.instrument_keyboard_white_key {
   position: absolute;
   background: rgb(238, 239, 243);
   left: 0;
@@ -134,7 +149,7 @@ export default {
   }
 }
 
-.instrument_piano_black_key {
+.instrument_keyboard_black_key {
   position: absolute;
   background: rgb(12, 13, 52);
   left: 0;

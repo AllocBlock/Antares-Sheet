@@ -94,7 +94,7 @@
 <script>
 import { reactive } from "vue";
 import { getQueryVariable } from "@/utils/common.js";
-import Instrument from "@/utils/instrument.js";
+import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
@@ -109,8 +109,8 @@ import PanelChordSelector from "./panelChordSelector.vue";
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 
-let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
+let g_UkulelePlayer = new StringInstrument("Ukulele", "Ukulele");
+let g_OscillatorPlayer = new StringInstrument("Ukulele", "Oscillator");
 
 export default {
   name: "SheetEditor",

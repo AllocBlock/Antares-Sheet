@@ -1,4 +1,5 @@
 import { loadFileBuffer } from "@/utils/audio.js"
+import { assert } from "@/utils/assert.js";
 
 const g_ToneNameMap = {
   "A": 0,
@@ -10,7 +11,21 @@ const g_ToneNameMap = {
   "G": 10,
 }
 
-function _toneToIndex(tone) { // A0 = 0, C4 = 52
+const ReTone = /[A-G]\d/
+
+export function isToneStr(v) {
+  return typeof(v) == 'string' && v.test(ReTone)
+}
+
+export function isTone(v) {
+  return v.name && g_ToneNameMap[v.name] && typeof v.octave === 'number'
+}
+
+export function isIndex(v) {
+  return typeof v === 'number' && v % 1 === 0
+}
+
+export function toneToIndex(tone) { // A0 = 0, C4 = 52
   let res = tone.name.match(/[^b#]+/)
   if (!res) throw "未知错误：匹配音调失败";
   let keyWithoutDecoration = res[0]
@@ -33,7 +48,7 @@ function _toneToIndex(tone) { // A0 = 0, C4 = 52
   return index
 }
 
-function _indexToTone(index) {
+export function indexToTone(index) {
   let remainIndex = index % 12
   let octave = Math.floor(index / 12)
 
@@ -56,8 +71,8 @@ function _indexToTone(index) {
 
 const g_StandardFrequencyA = 440
 function _ToneToFrequency(tone) {
-  let absIndexA = _toneToIndex({ name: "A", octave: 4 })
-  let curIndex = _toneToIndex(tone)
+  let absIndexA = toneToIndex({ name: "A", octave: 4 })
+  let curIndex = toneToIndex(tone)
   let offset = curIndex - absIndexA
 
   let frequency = g_StandardFrequencyA * Math.pow(2, 1 / 12 * offset)
@@ -89,7 +104,11 @@ const InstrumentLibrary = [
   }
 ]
 
-class AudioSource {
+/**
+ * 有调音源
+ * 提供播放指定音调的能力
+ * */ 
+class PitchedAudioSource {
   constructor(audioContext) {
     this.audioContext = audioContext
     this.loaded = false
@@ -147,12 +166,12 @@ class AudioSource {
     console.log("振荡器音源配置完成")
   }
 
-  play(tone, volume = 0.5, delay = 0.0) {
-    let absIndex = _toneToIndex(tone)
+  playTone(tone, volume = 0.5, delay = 0.0) {
+    let absIndex = toneToIndex(tone)
     switch (this.type) {
       case "none": throw "音源未加载文件或振荡器"; break;
       case "sample": {
-        let basicIndex = _toneToIndex(this.basicTone)
+        let basicIndex = toneToIndex(this.basicTone)
         let audioBufferIndex = absIndex - basicIndex
         if (audioBufferIndex < 0 || audioBufferIndex > this.audioBuffers.length)
           throw "音调超出音源覆盖范围"
@@ -200,7 +219,11 @@ class AudioSource {
   }
 }
 
-class StringInstrument {
+/**
+ * 弦乐器接口尤克里里、吉他
+ * 提供各种弹奏接口，需要指定音源
+ * */ 
+class StringInstrumentInterface {
   constructor(audioContext, stringBasicTones) {
     this.audioContext = audioContext
     this.stringBasicTones = stringBasicTones
@@ -209,22 +232,65 @@ class StringInstrument {
     this.capo = 0
   }
 
-  play(audioSource, frets, volume, duration) {
-    this.stop()
-    if (!audioSource.loaded)
-      throw "乐器音源还未加载"
+  isChordMatch(chord) {
+    if (!chord.stringNum) return false
+    if (chord.stringNum != this.stringNum) return false
+    return true
+  }
 
-    for (let i = 0; i < this.stringNum; i++) {
-      if (frets[i] == null) continue;
-      this.playString(audioSource, i + 1, frets[i], volume, duration * i / this.stringNum)
+  getFretsOfChord(chord) {
+    assert(this.isChordMatch(chord), "和弦有误或与本乐器不匹配")
+
+    let stringNum = chord.stringNum
+    let fingerings = chord.fingerings
+    let disabledStrings = chord.disabledStrings
+
+    let frets = []
+    for (let i = 0; i < stringNum; ++i) // 填0
+      frets.push(0)
+
+    for (let fingering of fingerings) { // 根据指法找到品位
+      let fret = fingering.fret
+      let startString = fingering.startString
+      let endString = fingering.endString ? fingering.endString : startString
+
+      for (let i = startString - 1; i <= endString - 1; ++i) {
+        frets[i] = Math.max(frets[i], fret)
+      }
     }
+
+    for (let disabledString of disabledStrings) { // 禁用弦不弹
+      frets[disabledString - 1] = null
+    }
+
+    return frets
+  }
+
+  getFretOfStringOfChord(chord, string) {
+    assert(this.isChordMatch(chord), "和弦有误或与本乐器不匹配")
+
+    if (chord.disabledStrings.includes(string)) // 禁用弦不弹
+      return null;
+
+    let resFret = 0
+
+    for (let fingering of chord.fingerings) { // 根据指法找到品位
+      let fret = fingering.fret
+      let startString = fingering.startString
+      let endString = fingering.endString ? fingering.endString : startString
+
+      if (startString <= string && string <= endString)
+        resFret = Math.max(fret, fret)
+    }
+
+    return resFret
   }
 
   playString(audioSource, string, fret, volume, delay) {
     this.stopString(string)
-    let stringBasicToneIndex = _toneToIndex(this.stringBasicTones[string - 1])
+    let stringBasicToneIndex = toneToIndex(this.stringBasicTones[string - 1])
     let toneIndex = stringBasicToneIndex + fret + this.capo
-    let tone = _indexToTone(toneIndex)
+    let tone = indexToTone(toneIndex)
 
     this.playingNodes[string - 1] = audioSource.play(tone, volume / this.stringNum, delay)
   }
@@ -245,36 +311,44 @@ class StringInstrument {
 
     this.playingNodes[string - 1] = null;
   }
+
+  playFingering(audioSource, frets, volume, duration) {
+    this.stop()
+    if (!audioSource.loaded)
+      throw "乐器音源还未加载"
+
+    for (let i = 0; i < this.stringNum; i++) {
+      if (frets[i] == null) continue;
+      this.playString(audioSource, i + 1, frets[i], volume, duration * i / this.stringNum)
+    }
+  }
+
+  playChord(audioSource, chord, volume, duration) {
+    let frets = this.getFretsOfChord(chord)
+    this.playFingering(audioSource, frets, volume, duration)
+  }
 }
 
-/* 
+/** 
+ * 乐器
  * 管理音频上下文，创建音源和乐器并连接
+ * 提供各种播放、演奏接口
  */
-export default class Instrument {
-  constructor(instrumentName = "Ukulele", audioSourceName = "Oscillator", callbacks = {}) {
+class Instrument {
+  constructor(audioSourceName, callbacks = {}) {
     this.audioContext = new AudioContext()
+    this.loadAudioSource(audioSourceName, callbacks)
+  }
 
-    // 创建乐器
-    let instrumentInfo = InstrumentLibrary.find(e => e.name == instrumentName)
-    if (!instrumentInfo) throw `未找到乐器${instrumentName}`;
-    switch (instrumentInfo.type) {
-      case "string": {
-        this.instrument = new StringInstrument(this.audioContext, instrumentInfo.stringBasicTones)
-        break;
-      }
-      default:
-        throw "不支持乐器类型：" + instrumentInfo.type
-    }
-    this.type = instrumentInfo.type
-
+  loadAudioSource(name, callbacks) {
     // 创建音源
-    this.audioSource = new AudioSource(this.audioContext)
+    this.audioSource = new PitchedAudioSource(this.audioContext)
 
-    if (audioSourceName == "Oscillator") {
+    if (name == "Oscillator") {
       this.audioSource.createOscillator(5, callbacks)
     }
     else {
-      let audioSourceInfo = AudioSourceLibrary.find(e => e.name == audioSourceName)
+      let audioSourceInfo = AudioSourceLibrary.find(e => e.name == name)
       if (!audioSourceInfo) {
         let errMsg = `未找到音源：${audioSource}`;
         if (callbacks.onFailed) callbacks.onFailed(errMsg);
@@ -288,76 +362,76 @@ export default class Instrument {
     }
   }
 
-  play(tone, volume = 0.5) {
-    if (this.audioSource.loaded)
-      this.audioSource.play(tone, volume)
-    else
-      console.log("乐器音源还未加载完成")
+  playTone(tone, volume = 0.5, delay = 0.0) {
+    assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
+    return this.audioSource.playTone(tone, volume, delay)
+  }
+}
+
+/** 
+ * 弦乐器
+ */
+export class StringInstrument extends Instrument {
+  constructor(instrumentName = "Ukulele", audioSourceName = "Oscillator", callbacks = {}) {
+    super(audioSourceName, callbacks)
+
+    // 创建乐器
+    let instrumentInfo = InstrumentLibrary.find(e => e.name == instrumentName)
+    if (!instrumentInfo) throw `未找到乐器${instrumentName}`;
+    assert(instrumentInfo.type == "string", `StringInstrument只能用于弦乐器（string），而${instrumentName}属于${instrumentInfo.type}类乐器`)
+    this.instrument = new StringInstrumentInterface(this.audioContext, instrumentInfo.stringBasicTones)
   }
 
   playChord(chord, volume = 0.5, duration = 0.0) {
-    let stringNum = chord.stringNum
-    let fingerings = chord.fingerings
-    let disabledStrings = chord.disabledStrings
-    if (!stringNum)
-      throw "和弦格式有误"
-
-    let frets = []
-    for (let i = 0; i < stringNum; ++i) // 填0
-      frets.push(0)
-
-    for (let fingering of fingerings) { // 根据指法找到品位
-      let fret = fingering.fret
-      let startString = fingering.startString
-      let endString = fingering.endString ? fingering.endString : startString
-
-      for (let i = startString - 1; i <= endString - 1; ++i) {
-        frets[i] = Math.max(frets[i], fret)
-      }
-    }
-
-    for (let disabledString of disabledStrings) { // 禁用弦不弹
-      frets[disabledString - 1] = null
-    }
-
-    if (this.audioSource.loaded)
-      this.instrument.play(this.audioSource, frets, volume, duration)
-    else
-      console.log("乐器音源还未加载完成")
-  }
-
-  getFret(chord, string) {
-    if (chord.disabledStrings.includes(string)) // 禁用弦不弹
-      return null;
-
-    let resFret = 0
-
-    for (let fingering of chord.fingerings) { // 根据指法找到品位
-      let fret = fingering.fret
-      let startString = fingering.startString
-      let endString = fingering.endString ? fingering.endString : startString
-
-      if (startString <= string && string <= endString)
-        resFret = Math.max(fret, fret)
-    }
-
-    return resFret
+    assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
+    this.instrument.playChord(this.audioSource, chord, volume, duration)
   }
 
   playString(string, fret, volume = 1.0, delay = 0.0) {
-    if (this.type != "string") throw "乐器非有弦乐器，不能调用该函数";
     this.instrument.playString(this.audioSource, string, fret, volume, delay)
   }
 
   setCapo(capo) {
-    if (!(this.instrument instanceof StringInstrument)) throw "非弦乐器，不能设置变调夹"
     capo = parseInt(capo)
     if (isNaN(capo) || capo < 0) throw "无效的变调夹位置"
     this.instrument.capo = capo
   }
 
   getCapo() {
-    if (!(this.instrument instanceof StringInstrument)) throw "非弦乐器，不能设置变调夹"
     return this.instrument.capo
+  }
+}
+
+/** 
+ * 键盘
+ */
+export class Keyboard extends Instrument {
+  constructor(audioSourceName = "Oscillator", callbacks = {}) {
+    super(audioSourceName, callbacks)
+    this.toneShift = 0
+  }
+
+  // key可以是索引也可以是音名
+  playKey(key, volume = 1.0, delay = 0.0) {
+    assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
+    let index = (isIndex(key) ? key : toneToIndex(key))
+    index += this.toneShift
+    let tone = indexToTone(index)
+    return this.playTone(tone, volume, delay)
+  }
+
+  // key可以是索引也可以是音名
+  playKeys(keys, volume = 0.5, duration = 0.0) {
+    assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
+    for (let i in keys)
+      this.playKey(keys[i], volume, duration, duration * i / keys.length)
+  }
+
+  setToneShift(shift) {
+    this.toneShift = shift
+  }
+
+  getToneShift() {
+    return this.toneShift = 0
   }
 }

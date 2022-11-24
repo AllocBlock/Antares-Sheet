@@ -28,13 +28,13 @@
 
 <script type="module">
 import ChordManager from "@/utils/chordManager.js";
-import Instrument from "@/utils/instrument.js";
+import { StringInstrument } from "@/utils/instrument.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { convertXXX2Sheet } from "@/utils/xxxConverter.js"
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 
-let g_Player = new Instrument("Ukulele", "Ukulele") 
+let g_Player = new StringInstrument("Ukulele", "Ukulele") 
 // let g_Player = new Instrument("Ukulele", "Oscillator") 
 
 const EDropFileState = {

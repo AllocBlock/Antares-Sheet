@@ -156,7 +156,7 @@
     <DraggablePanel title="键盘"
       :initPos="{left: 200, top: 200}"
     >
-      <InstrumentSimulatorPiano />
+      <InstrumentSimulatorKeyboard />
     </DraggablePanel>
   </div>
 </template>
@@ -170,7 +170,7 @@ import Chord from "@/components/chord/index.vue";
 import CapoSelector from "@/components/capoSelector.vue";
 import Svg from "@/components/svg.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
-import InstrumentSimulatorPiano from "@/components/instrumentSimulator/piano.vue";
+import InstrumentSimulatorKeyboard from "@/components/instrumentSimulator/keyboard.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
@@ -185,12 +185,12 @@ import EditorModeDrag from './editorModeDrag.js'
 import EditorModeProgression from './editorModeProgression.js'
 import { mergeEditorModeArray } from "./editorModeCommon.js";
 
-import Instrument from "@/utils/instrument.js";
+import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import Storage from "@/utils/storage.js";
 
-let g_UkulelePlayer = new Instrument("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new Instrument("Ukulele", "Oscillator");
+let g_UkulelePlayer = new StringInstrument("Ukulele", "Ukulele");
+let g_OscillatorPlayer = new StringInstrument("Ukulele", "Oscillator");
 const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, EditorModeProgression],  `【组合编辑模式】详细操作见其他模式的介绍`)
 
 export default {
@@ -204,7 +204,7 @@ export default {
     KeySelector,
     CapoSelector,
     DraggablePanel,
-    InstrumentSimulatorPiano,
+    InstrumentSimulatorKeyboard,
     "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {

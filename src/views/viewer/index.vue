@@ -93,7 +93,7 @@
 
 <script type="module">
 import { getQueryVariable, getEnv } from "@/utils/common.js";
-import Instrument from "@/utils/instrument.js";
+import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
@@ -344,19 +344,6 @@ export default {
         g_Player.setCapo(capo);
         g_Player.playChord(chord, volume, duration);
       }
-
-      // FIXME: cant record one string more than one otherwise old record will be replaced
-      // play with rhythm
-      // let rhythm = [[1, 2], [3], [1, 2], [3], [1, 2], [3], [1, 2], [3]]
-      // let frets = []
-      // for (let i = 0; i < chord.stringNum; ++i)
-      //   frets.push(g_Player.getFret(chord, i + 1))
-
-      // const perNoteTime = (1 / bpm) * 60 * (4 / rhythm.length) // 均匀分布
-      // rhythm.forEach((note, i) => {
-      //   for (let string of note) 
-      //     g_Player.playString(string, frets[string - 1], volume / chord.stringNum, i * perNoteTime)
-      // })
     },
     shiftKey(offset) {
       let curKey = this.sheetInfo.sheetKey;
@@ -414,7 +401,7 @@ export default {
       
       if (this.tools.player.instrument.update) {
         let callbacks = createCallbacks(curIndex);
-        g_Player = new Instrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
+        g_Player = new StringInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
         
         this.tools.player.instrument.update = false;
         curIndex++;
