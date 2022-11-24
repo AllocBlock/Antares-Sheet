@@ -156,9 +156,7 @@
     <DraggablePanel title="键盘"
       :initPos="{left: 200, top: 200}"
     >
-      <div style="width: 300px; background: red;">
-        Slottttttttttt
-      </div>
+      <InstrumentSimulatorPiano />
     </DraggablePanel>
   </div>
 </template>
@@ -172,6 +170,7 @@ import Chord from "@/components/chord/index.vue";
 import CapoSelector from "@/components/capoSelector.vue";
 import Svg from "@/components/svg.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
+import InstrumentSimulatorPiano from "@/components/instrumentSimulator/piano.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
@@ -205,6 +204,7 @@ export default {
     KeySelector,
     CapoSelector,
     DraggablePanel,
+    InstrumentSimulatorPiano,
     "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {

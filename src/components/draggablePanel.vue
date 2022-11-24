@@ -1,6 +1,6 @@
 <template>
-  <div class="draggable_panel" @mousedown="startDrag" ref="panel">
-    <div class="draggable_title">
+  <div class="draggable_panel" ref="panel">
+    <div class="draggable_title" @mousedown="startDrag">
       {{title}}
     </div>
     <div class="draggable_content">
@@ -118,7 +118,6 @@ export default {
 
 .draggable_content {
   width: 100%;
-  height: 100px;
   padding: 4px;
   box-sizing: border-box;
 }
