@@ -38,7 +38,8 @@ export function getRelativePos(element, pageX, pageY) {
   }
 }
 
-// 可以在元素时也获取到正确值
+// 从内到外是element, padding, border, margin
+// getInnerSize获取element+padding
 export function getInnerSize(element) {
   let $e = $(element)
 	let w = $e.innerWidth()
@@ -47,6 +48,22 @@ export function getInnerSize(element) {
   return {
     w, h
   }
+}
+
+// getOuterSize获取element+padding+border
+export function getOuterSize(element) {
+  let $e = $(element)
+	let w = $e.outerWidth()
+	let h = $e.outerHeight()
+
+  return {
+    w, h
+  }
+}
+
+// 获取窗口大小（浏览器中可以看见页面部分的大小）
+export function getWindowSize() {
+  return { w: window.innerWidth, h: window.innerHeight }
 }
 
 export function getQueryVariable(key) {

@@ -152,6 +152,14 @@
     <div id="drop_hint_panel">
       <div id="drop_hint_text">拖拽文件加载</div>
     </div>
+
+    <DraggablePanel title="键盘"
+      :initPos="{left: 200, top: 200}"
+    >
+      <div style="width: 300px; background: red;">
+        Slottttttttttt
+      </div>
+    </DraggablePanel>
   </div>
 </template>
 
@@ -163,6 +171,7 @@ import PanelChordSelector from "./panelChordSelector.vue";
 import Chord from "@/components/chord/index.vue";
 import CapoSelector from "@/components/capoSelector.vue";
 import Svg from "@/components/svg.vue";
+import DraggablePanel from "@/components/draggablePanel.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
@@ -195,6 +204,7 @@ export default {
     AntaresSheet,
     KeySelector,
     CapoSelector,
+    DraggablePanel,
     "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {
@@ -982,7 +992,7 @@ export default {
 
 #playerOpenTag {
   position: absolute;
-  z-index: 10000;
+  z-index: 30;
   left: 0;
   top: -30px;
   height: 30px;
