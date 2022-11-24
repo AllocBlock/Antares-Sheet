@@ -52,6 +52,21 @@ let gUI = {
   },
   hideDragMark() {
     gThis.dragChord.isDragging = false
+  },
+  willUpdateNextFrame: false,
+  willUpdatePos: {
+    left: 0,
+    top: 0
+  },
+  setDragMarkPosNextFrame(left, top) {
+    this.willUpdatePos = { left, top }
+    if (!this.willUpdateNextFrame) {
+      this.willUpdateNextFrame = true
+      window.requestAnimationFrame(() => {
+        setPos(gThis.$refs.dragMark, this.willUpdatePos.left, this.willUpdatePos.top) // 触发时是最新数据
+        this.willUpdateNextFrame = false
+      })
+    }
   }
 }
 
@@ -83,7 +98,7 @@ function _onCursorMove(e) {
   let [x, y] = getCursorClientPos(e);
 
   if (gDragChord.is) { // 普通拖放和弦模式
-    setPos(gThis.$refs.dragMark, x, y)
+    gUI.setDragMarkPosNextFrame(x, y)
   } else if (gShiftChord.is) { // 偏移和弦模式
     let dx = x - gShiftChord.lastPosX
     gShiftChord.lastPosX = x
