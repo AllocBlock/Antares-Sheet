@@ -26,7 +26,7 @@ export default {
         left: 0,
         top: 0
       },
-      updateTimer: null
+      willUpdateNextFrame: false
     }
   },
   props: {
@@ -56,49 +56,38 @@ export default {
       this.startDragPanelPos.top = curPanelPos.top
       this.curPanelPos.left = curPanelPos.left
       this.curPanelPos.top = curPanelPos.top
-
-      this.startUpdateTimer()
     },
     onDragOver(e) {
       if (!this.isDragging) return
       let curMousePos = getCursorClientPos(e)
-      this.updatePos(curMousePos[0] - this.startDragMousePos[0] + this.startDragPanelPos.left,
+      this.setPosNextFrame(curMousePos[0] - this.startDragMousePos[0] + this.startDragPanelPos.left,
         curMousePos[1] - this.startDragMousePos[1] + this.startDragPanelPos.top)
     },
     endDrag(e) {
       this.isDragging = false
-      this.endUpdateTimer()
     },
-    updatePos(left, top) {
+    setPosNextFrame(left, top) {
+      this.curPanelPos.left = left
+      this.curPanelPos.top = top
+      if (!this.willUpdateNextFrame) {
+        this.willUpdateNextFrame = true
+        window.requestAnimationFrame(() => {
+          this.setPosImmediately(this.curPanelPos.left, this.curPanelPos.top) // 触发时是最新数据
+          this.willUpdateNextFrame = false
+        })
+      }
+    },
+    setPosImmediately(left, top) {
       let windowSize = getWindowSize()
       let elementSize = getOuterSize(this.$refs.panel)
 
       left = Math.max(0, Math.min(windowSize.w - elementSize.w, left))
       top = Math.max(0, Math.min(windowSize.h - elementSize.h, top))
 
-      this.curPanelPos.left = left
-      this.curPanelPos.top = top
-    },
-    setPosImmediately(left, top) {
       setPos(this.$refs.panel, left, top)
     },
-    startUpdateTimer() {
-      let that = this
-      let updateFunc = function() {
-        that.setPosImmediately(that.curPanelPos.left, that.curPanelPos.top)
-        that.updateTimer = window.requestAnimationFrame(updateFunc)
-      }
-
-      this.updateTimer = window.requestAnimationFrame(updateFunc)
-    },
-    endUpdateTimer() {
-      window.cancelAnimationFrame(this.updateTimer)
-      this.updateTimer = null
-    },
     onResize() {
-      // TODO: delay update
-      this.updatePos(this.curPanelPos.left, this.curPanelPos.top)
-      this.setPosImmediately(this.curPanelPos.left, this.curPanelPos.top)
+      this.setPosNextFrame(this.curPanelPos.left, this.curPanelPos.top)
     }
   }
 };
