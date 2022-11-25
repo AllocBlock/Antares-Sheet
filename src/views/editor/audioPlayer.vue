@@ -237,10 +237,10 @@ export default {
       }
     }
 
-    HotKey.addListener(" ", false, false, false, hotkeySwitcher((e) => this.togglePlay(), true))
-    HotKey.addListener("w", false, false, false, hotkeySwitcher(() => this.addMark()))
-    HotKey.addListener("q", false, false, false, hotkeySwitcher(() => this.jumpToPrevMark()))
-    HotKey.addListener("e", false, false, false, hotkeySwitcher(() => this.jumpToNextMark()))
+    HotKey.addListener("Space", hotkeySwitcher((e) => this.togglePlay(), true))
+    HotKey.addListener("KeyW", hotkeySwitcher(() => this.addMark()))
+    HotKey.addListener("KeyQ", hotkeySwitcher(() => this.jumpToPrevMark()))
+    HotKey.addListener("KeyE", hotkeySwitcher(() => this.jumpToNextMark()))
   },
   methods: {
     getEnv,

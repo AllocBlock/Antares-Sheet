@@ -50,7 +50,7 @@ export default {
     // 按下1-7应用对应级数的和弦
     progressionList.forEach(function([shift, isMajor], i) {
       const keyName = (i + 1).toString()
-      gHookIds.push(HotKey.addListener(keyName, false, false, false, (e, [shift, isMajor]) => {
+      gHookIds.push(HotKey.addListener(keyName, (e, [shift, isMajor]) => {
         if (!gCurNode) return
         let chordName = ChordManager.shiftKey(gThis.sheetInfo.sheetKey, shift)
         if (NodeUtils.isChord(gCurNode)) {

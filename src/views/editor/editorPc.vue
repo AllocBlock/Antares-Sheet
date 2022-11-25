@@ -155,8 +155,9 @@
 
     <DraggablePanel title="键盘"
       :initPos="{left: 200, top: 200}"
+       v-model:isFocused="keyboard.isFocused"
     >
-      <InstrumentSimulatorKeyboard />
+      <InstrumentSimulatorKeyboard :mute-hot-key="muteKeyboardHotKey"/>
     </DraggablePanel>
   </div>
 </template>
@@ -171,6 +172,7 @@ import CapoSelector from "@/components/capoSelector.vue";
 import Svg from "@/components/svg.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
 import InstrumentSimulatorKeyboard from "@/components/instrumentSimulator/keyboard.vue";
+import Focusable from "@/components/focusable.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
@@ -205,6 +207,7 @@ export default {
     CapoSelector,
     DraggablePanel,
     InstrumentSimulatorKeyboard,
+    Focusable,
     "AudioPlayer" : defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {
@@ -244,6 +247,9 @@ export default {
         bpm: 120,
         stum: true,
         capo: 0
+      },
+      keyboard: {
+        isFocused: false,
       },
       contextMenu: {
         show: false,
@@ -286,6 +292,9 @@ export default {
     muteEditorModeHotkey() {
       return this.rawLyricPanel.show || this.isTyping;
     },
+    muteKeyboardHotKey() {
+      return this.rawLyricPanel.show || this.isTyping || !this.keyboard.isFocused;
+    }
   },
   created() {
     this.editorMode.init(this)

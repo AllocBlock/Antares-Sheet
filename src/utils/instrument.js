@@ -11,10 +11,10 @@ const g_ToneNameMap = {
   "G": 10,
 }
 
-const ReTone = /[A-G]\d/
+const ReToneStr = /[A-G]\d/
 
 export function isToneStr(v) {
-  return typeof(v) == 'string' && v.test(ReTone)
+  return typeof(v) == 'string' && v.test(ReToneStr)
 }
 
 export function isTone(v) {
@@ -193,7 +193,7 @@ class PitchedAudioSource {
 
         source.start(this.audioContext.currentTime + delay)
         source.stop(this.audioContext.currentTime + delay + audioBuffer.duration)
-        return [source, gainNode]
+        return { sourceNode: source, gainNode: gainNode }
       }
       case "oscillator": {
         const fadeInTime = 0.01
@@ -210,12 +210,19 @@ class PitchedAudioSource {
         oscillator.connect(gainNode)
         oscillator.start(this.audioContext.currentTime + delay)
         oscillator.stop(this.audioContext.currentTime + delay + this.oscillatorDuration)
-        return [oscillator, gainNode]
+        return { sourceNode: oscillator, gainNode: gainNode }
       }
       default: {
         throw "不支持的音源类型：" + this.type
       }
     }
+  }
+
+  stopTone(sourceNode, gainNode) {
+    const fadeOutTime = 0.2;
+    gainNode.gain.cancelScheduledValues(this.audioContext.currentTime)
+    gainNode.gain.linearRampToValueAtTime(0.0, this.audioContext.currentTime + fadeOutTime)
+    sourceNode.stop(this.audioContext.currentTime + fadeOutTime)
   }
 }
 
@@ -292,7 +299,8 @@ class StringInstrumentInterface {
     let toneIndex = stringBasicToneIndex + fret + this.capo
     let tone = indexToTone(toneIndex)
 
-    this.playingNodes[string - 1] = audioSource.play(tone, volume / this.stringNum, delay)
+    this.playingNodes[string - 1] = audioSource.playTone(tone, volume / this.stringNum, delay)
+    this.playingNodes[string - 1].audioSource = audioSource
   }
 
   stop() {
@@ -303,12 +311,7 @@ class StringInstrumentInterface {
 
   stopString(string) {
     if (!this.playingNodes[string - 1]) return;
-    const fadeOutTime = 0.2;
-    let [audio, gainNode] = this.playingNodes[string - 1]
-    gainNode.gain.cancelScheduledValues(this.audioContext.currentTime)
-    gainNode.gain.linearRampToValueAtTime(0.0, this.audioContext.currentTime + fadeOutTime)
-    audio.stop(this.audioContext.currentTime + fadeOutTime)
-
+    this.playingNodes[string - 1].audioSource.stopTone(this.playingNodes[string - 1].sourceNode, this.playingNodes[string - 1].gainNode)
     this.playingNodes[string - 1] = null;
   }
 
@@ -366,6 +369,10 @@ class Instrument {
     assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
     return this.audioSource.playTone(tone, volume, delay)
   }
+
+  stopTone(sourceNode, gainNode) {
+    this.audioSource.stopTone(sourceNode, gainNode)
+  }
 }
 
 /** 
@@ -409,22 +416,42 @@ export class Keyboard extends Instrument {
   constructor(audioSourceName = "Oscillator", callbacks = {}) {
     super(audioSourceName, callbacks)
     this.toneShift = 0
+    this.keyPlayMap = new Map()
+  }
+
+  keyToToneWithTuneShift(key) {
+    let index = (isIndex(key) ? key : toneToIndex(key))
+    index += this.toneShift
+    return indexToTone(index)
   }
 
   // key可以是索引也可以是音名
   playKey(key, volume = 1.0, delay = 0.0) {
     assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
-    let index = (isIndex(key) ? key : toneToIndex(key))
-    index += this.toneShift
-    let tone = indexToTone(index)
-    return this.playTone(tone, volume, delay)
+    let tone = this.keyToToneWithTuneShift(key)
+    let uniqueKeyId = toneToIndex(tone)
+    if (this.keyPlayMap.has(uniqueKeyId)) this.stopKey(key)
+    this.keyPlayMap.set(uniqueKeyId, this.playTone(tone, volume, delay))
   }
 
   // key可以是索引也可以是音名
   playKeys(keys, volume = 0.5, duration = 0.0) {
     assert(this.audioSource.loaded, "播放失败：音源还未加载完成")
+
+    let res = []
     for (let i in keys)
-      this.playKey(keys[i], volume, duration, duration * i / keys.length)
+      res.push(this.playKey(keys[i], volume, duration, duration * i / keys.length))
+    return res
+  }
+
+  stopKey(key) {
+    let tone = this.keyToToneWithTuneShift(key)
+    let uniqueKeyId = toneToIndex(tone)
+    let nodes = this.keyPlayMap.get(uniqueKeyId)
+    if (nodes) {
+      this.stopTone(nodes.sourceNode, nodes.gainNode)
+      this.keyPlayMap.delete(uniqueKeyId)
+    }
   }
 
   setToneShift(shift) {

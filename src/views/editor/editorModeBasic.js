@@ -139,26 +139,26 @@ export default {
     gThis = instance
     
     // 按下~移除和弦
-    gHookIds.push(HotKey.addListener("`", false, false, false, _hotkeySwitcher(_recoverChordToText)))
+    gHookIds.push(HotKey.addListener("Backquote", _hotkeySwitcher(_recoverChordToText)))
 
     // 按下tab键快速在前方添加空格，+Shift则在后方
-    gHookIds.push(HotKey.addListener("Tab", false, false, false, _hotkeySwitcher(_insertSpaceBefore)))
-    gHookIds.push(HotKey.addListener("Tab", false, true, false, _hotkeySwitcher(_insertSpaceAfter)))
+    gHookIds.push(HotKey.addListener("Tab", _hotkeySwitcher(_insertSpaceBefore)), null, false, null)
+    gHookIds.push(HotKey.addListener("Tab", _hotkeySwitcher(_insertSpaceAfter)), null, true, null)
 
     // 按下delete/R键快速删除
-    gHookIds.push(HotKey.addListener("Delete", false, false, false, _hotkeySwitcher(_delete)))
-    gHookIds.push(HotKey.addListener("r", false, false, false, _hotkeySwitcher(_delete)))
+    gHookIds.push(HotKey.addListener("Delete", _hotkeySwitcher(_delete)))
+    gHookIds.push(HotKey.addListener("KeyR", _hotkeySwitcher(_delete)))
 
     // 按下enter键快速在后方添加换行，同时按下shift则在前方添加
-    gHookIds.push(HotKey.addListener("Enter", false, false, false, _hotkeySwitcher(_insertNewLineBefore)))
-    gHookIds.push(HotKey.addListener("Enter", false, true, false, _hotkeySwitcher(_insertNewLineAfter)))
+    gHookIds.push(HotKey.addListener("Enter", _hotkeySwitcher(_insertNewLineBefore), null, false, null))
+    gHookIds.push(HotKey.addListener("Enter", _hotkeySwitcher(_insertNewLineAfter), null, true, null))
 
     // 按下U键快速添加下划线，J删除下划线
-    gHookIds.push(HotKey.addListener("u", false, false, false, _hotkeySwitcher(_addUnderline)))
-    gHookIds.push(HotKey.addListener("j", false, false, false, _hotkeySwitcher(_removeUnderline)))
+    gHookIds.push(HotKey.addListener("KeyU", _hotkeySwitcher(_addUnderline)))
+    gHookIds.push(HotKey.addListener("KeyJ", _hotkeySwitcher(_removeUnderline)))
 
     // 按下Z键快速切换和弦类型
-    gHookIds.push(HotKey.addListener("z", false, false, false, _hotkeySwitcher(_switchChordType)))
+    gHookIds.push(HotKey.addListener("KeyZ", _hotkeySwitcher(_switchChordType)))
   },
   release: function() {
     for (let id of gHookIds) {

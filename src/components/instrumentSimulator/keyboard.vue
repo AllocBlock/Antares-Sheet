@@ -17,6 +17,7 @@
 
 <script>
 import { Keyboard } from "@/utils/instrument.js"
+import HotKey from "@/utils/hotKey.js";
 
 function calcKeyboardSize(whiteKeyWidth, length) {
   return {
@@ -78,7 +79,6 @@ const StandardBlackKeyWidth = 1.1; // cm
 const StandardWhiteKeyLength = 15; // cm
 const StandardBlackKeyLength = 9.5; // cm
 const gKeyboardSize = calcKeyboardSize(StandardWhiteKeyWidth * ScaleRatio, StandardWhiteKeyLength * ScaleRatio)
-console.log(gKeyboardSize)
 
 export default {
   name: "InstrumentSimulatorKeyboard",
@@ -90,8 +90,14 @@ export default {
       },
       whiteKeys: [],
       blackKeys: [],
-      pressedKeys: new Set(),
-      keyboard: new Keyboard()
+      pressedKeys: new Map(),
+      keyboard: new Keyboard(),
+    }
+  },
+  props: {
+    muteHotKey: {
+      type: Boolean,
+      default: false
     }
   },
   mounted() {
@@ -108,18 +114,59 @@ export default {
       addOctave(gKeyboardSize, i * octaveWidth, startOctave + i, this.whiteKeys, this.blackKeys)
 
     document.addEventListener("mouseup", this.onMouseRelease)
+    this.bindHotKeys()
   },
   methods: {
     onPress(key) {
-      key.pressed = true
-      this.pressedKeys.add(key)
-
-      this.keyboard.playKey(key.tone, 0.2)
+      this.pressKey(key, true)
     },
     onMouseRelease() {
-      for (let key of this.pressedKeys)
-        key.pressed = false
-      this.pressedKeys.clear()
+      this.pressedKeys.forEach((entry, key) =>{
+        if (entry.isMouse) {
+          this.releaseKey(key)
+        }
+      })
+    },
+    pressKey(key, isMouse) {
+      key.pressed = true
+      let nodes = this.keyboard.playKey(key.tone, 0.2)
+      this.pressedKeys.set(key, {
+        nodes,
+        isMouse
+      })
+    },
+    releaseKey(key) {
+      key.pressed = false
+      if (!this.pressedKeys.has(key)) return
+      this.keyboard.stopKey(key.tone)
+      this.pressedKeys.delete(key)
+    },
+    bindHotKeys() {
+      let that = this
+      function hotkeySwitcher(callback, preventDefault = false) {
+        return (e) => {
+          if (that.muteHotKey) return
+          if (preventDefault) e.preventDefault()
+          callback(e)
+        }
+      }
+
+      const whiteKeyHotKeys = [
+        "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "ShiftRight"
+      ]
+      const blackKeyHotKeys = [
+        "KeyS", "KeyD", "KeyG", "KeyH", "KeyJ", "KeyL", "Semicolon", 
+      ]
+
+      for (let i = 0; i < whiteKeyHotKeys.length; ++i) {
+        HotKey.addKeyDownListener(whiteKeyHotKeys[i], hotkeySwitcher((e) => this.pressKey(this.whiteKeys[i])))
+        HotKey.addKeyUpListener(whiteKeyHotKeys[i], hotkeySwitcher((e) => this.releaseKey(this.whiteKeys[i])))
+      }
+
+      for (let i = 0; i < blackKeyHotKeys.length; ++i) {
+        HotKey.addKeyDownListener(blackKeyHotKeys[i], hotkeySwitcher((e) => this.pressKey(this.blackKeys[i])))
+        HotKey.addKeyUpListener(blackKeyHotKeys[i], hotkeySwitcher((e) => this.releaseKey(this.blackKeys[i])))
+      }
     }
   }
 };
@@ -145,7 +192,7 @@ export default {
   }
 
   &[pressed] {
-    background: rgb(164, 162, 140);
+    background: rgb(165, 165, 165);
   }
 }
 
@@ -160,7 +207,7 @@ export default {
     background: rgb(85, 84, 61);
   }
   &[pressed] {
-    background: rgb(58, 57, 19);
+    background: rgb(62, 62, 62);
   }
 }
 </style>

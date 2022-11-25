@@ -1,5 +1,10 @@
 <template>
-  <div class="draggable_panel" ref="panel">
+  <div class="draggable_panel" ref="panel"
+    tabindex="0"
+    @focus="updateFocusState(true)" 
+    @blur="updateFocusState(false)" 
+    :focused="this.isFocused"
+  >
     <div class="draggable_title" @mousedown="startDrag">
       {{title}}
     </div>
@@ -26,7 +31,7 @@ export default {
         left: 0,
         top: 0
       },
-      willUpdateNextFrame: false
+      willUpdateNextFrame: false,
     }
   },
   props: {
@@ -39,6 +44,10 @@ export default {
         left: 0,
         top: 0
       }
+    },
+    isFocused: {
+      type: Boolean,
+      default: false
     }
   },
   mounted() {
@@ -88,13 +97,16 @@ export default {
     },
     onResize() {
       this.setPosNextFrame(this.curPanelPos.left, this.curPanelPos.top)
-    }
+    },
+    updateFocusState(state) {
+      this.$emit("update:isFocused", state)
+    },
   }
 };
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .draggable_panel {
   position: fixed;
   left: 0;
@@ -102,6 +114,18 @@ export default {
   outline: 2px solid black;
   background: white;
   z-index: 20;
+
+  transition: opacity 0.3s ease-out;
+
+  &[focused=true] {
+    opacity: 1.0;
+  }
+  &[focused=false] {
+    opacity: 0.8;
+    &:hover {
+      opacity: 0.9;
+    }
+  }
 }
 
 .draggable_title {
