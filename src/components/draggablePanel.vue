@@ -7,8 +7,9 @@
   >
     <div class="draggable_title" @mousedown="startDrag">
       {{title}}
+      <div class="draggable_fold_mark" @click="onFoldMarkClick">{{isFolded ? "⇲" : "⇱"}}</div>
     </div>
-    <div class="draggable_content">
+    <div class="draggable_content" v-show="!isFolded">
       <slot></slot>
     </div>
   </div>
@@ -48,7 +49,11 @@ export default {
     isFocused: {
       type: Boolean,
       default: false
-    }
+    },
+    isFolded: {
+      type: Boolean,
+      default: false
+    },
   },
   mounted() {
     document.addEventListener("mouseup", this.endDrag)
@@ -101,6 +106,12 @@ export default {
     updateFocusState(state) {
       this.$emit("update:isFocused", state)
     },
+    onFoldMarkClick() {
+      this.$emit("update:isFolded", !this.isFolded)
+      this.$nextTick(() => {
+        this.onResize()
+      })
+    }
   }
 };
 
@@ -138,6 +149,15 @@ export default {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+
+  .draggable_fold_mark {
+    width: 20px;
+    margin-left: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
 }
 
 .draggable_content {

@@ -156,6 +156,7 @@
     <DraggablePanel title="键盘"
       :initPos="{left: 200, top: 200}"
        v-model:isFocused="keyboard.isFocused"
+       v-model:isFolded="keyboard.isFolded"
     >
       <InstrumentSimulatorKeyboard :mute-hot-key="muteKeyboardHotKey"/>
     </DraggablePanel>
@@ -250,6 +251,7 @@ export default {
       },
       keyboard: {
         isFocused: false,
+        isFolded: false,
       },
       contextMenu: {
         show: false,
@@ -293,7 +295,7 @@ export default {
       return this.rawLyricPanel.show || this.isTyping;
     },
     muteKeyboardHotKey() {
-      return this.rawLyricPanel.show || this.isTyping || !this.keyboard.isFocused;
+      return this.rawLyricPanel.show || this.isTyping || !this.keyboard.isFocused || this.keyboard.isFolded;
     }
   },
   created() {
