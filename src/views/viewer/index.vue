@@ -879,6 +879,10 @@ html, body {
   #auto_scroll_block {
     flex-direction: row;
   }
+  #metronome_panel {
+    display: none;
+    touch-action: none; // this can prevent scroll by touchmove on mobile 
+  }
 }
 </style>
 

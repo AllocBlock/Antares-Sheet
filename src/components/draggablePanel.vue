@@ -5,7 +5,7 @@
     @blur="updateFocusState(false)" 
     :focused="this.isFocused"
   >
-    <div class="draggable_title" @mousedown="startDrag">
+    <div class="draggable_title" @mousedown="startDrag" @touchstart="startDrag">
       {{title}}
       <div class="draggable_fold_mark" @click="onFoldMarkClick">{{isFolded ? "⇲" : "⇱"}}</div>
     </div>
@@ -53,8 +53,10 @@ export default {
     },
   },
   mounted() {
-    document.addEventListener("mouseup", this.endDrag)
-    document.addEventListener("mousemove", this.onDragMove)
+    for (let type of ["mouseup", "touchend"])
+      document.addEventListener(type, this.endDrag)
+    for (let type of ["mousemove", "touchmove"])
+      document.addEventListener(type, this.onDragMove)
     window.addEventListener("resize", this.onResize)
 
     let w = document.body.clientWidth
@@ -83,6 +85,7 @@ export default {
     onDragMove(e) {
       if (!this.isDragging) return
       let [dx, dy] = this.mouseDelta.tick(e)
+      console.log(dx,dy)
       this.curPanelPos.left += dx
       this.curPanelPos.top += dy
       this.limitPos()

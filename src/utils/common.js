@@ -100,9 +100,9 @@ export function setEnv(env) {
 export function getCursorClientPos(e) {
   if (e.originalEvent) e = originalEvent
 
-  if (e.clientX != undefined) {
+  if (e.clientX != undefined) { // pc mouse event
     return [e.clientX, e.clientY];
-  } else {
+  } else { // mobile touch event
     return [
       e.changedTouches[0].clientX,
       e.changedTouches[0].clientY,

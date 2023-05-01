@@ -46,7 +46,7 @@ html, body {
 #title {
   font-size: 10vw;
   color: white;
-  font-family: SmileySans;
+  font-family: "得意黑", SmileySans;
   letter-spacing: 20px;
   text-shadow: white 1px 0 2px;
 }
@@ -75,7 +75,6 @@ html, body {
 
   &:hover {
     background: #ff689d;
-
   }
 }
 
