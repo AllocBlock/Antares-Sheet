@@ -43,12 +43,19 @@
           <div>{{ toolsPlayerLoadingText }}</div>
         </div>
       </transition>
-      <Metronome ref="metronome"/>
       <select id="instrument_combo" v-model="tools.player.instrument.audioSource">
         <option value="Oscillator">合成器音源</option>
         <option value="Ukulele">尤克里里音源</option>
       </select>
     </div>
+
+    <DraggablePanel id="metronome_panel" title="节拍器" v-if="tools.metronome.enable" 
+      :initPos="{left: -240, top: -200}"
+      v-model:isFocused="tools.metronome.isFocused"
+      v-model:isFolded="tools.metronome.isFolded"
+    >
+      <Metronome ref="metronome"/>
+    </DraggablePanel>
     
     <div id="sheet">
       <div id="song_title" class="title">{{sheetInfo.title}}</div>
@@ -80,7 +87,11 @@
         </div>
         <div class="sidebar_block" @click="tools.player.enable = !tools.player.enable" :class="getSidebarStateClass(tools.player.enable)">
           <img src="/icons/player.svg" type="image/svg+xml" />
-          <div class="sidebar_block_text">播放器</div>
+          <div class="sidebar_block_text">和弦播放</div>
+        </div>
+        <div class="sidebar_block" @click="tools.metronome.enable = !tools.metronome.enable" :class="getSidebarStateClass(tools.metronome.enable)">
+          <img src="/icons/player.svg" type="image/svg+xml" />
+          <div class="sidebar_block_text">节拍器</div>
         </div>
         <div class="sidebar_block" @click="tools.sheetControl.enable = !tools.sheetControl.enable" :class="getSidebarStateClass(tools.sheetControl.enable)">
           <img src="/icons/layout.svg" type="image/svg+xml" />
@@ -104,6 +115,7 @@ import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
 import CapoSelector from "@/components/capoSelector.vue";
+import DraggablePanel from "@/components/draggablePanel.vue";
 
 let g_Player = null
 
@@ -113,7 +125,8 @@ export default {
     Metronome,
     AntaresSheet,
     Chord,
-    CapoSelector
+    CapoSelector,
+    DraggablePanel
   },
   data() {
     return {
@@ -181,11 +194,14 @@ export default {
             update: true,
             capo: 0,
           },
-          metronome: {
-            update: true,
-          },
           loadState: ELoadState.Loading,
           loadProgress: 0.0,
+        },
+        metronome: {
+          enable: true,
+          update: true,
+          isFocused: false,
+          isFolded: false
         },
         sheetControl: {
           enable: true,
@@ -366,7 +382,7 @@ export default {
 
       let resNum = 0
       if (this.tools.player.instrument.update) resNum++;
-      if (this.tools.player.metronome.update) resNum++;
+      if (this.tools.metronome.update) resNum++;
       let progressList = new Array(resNum).fill(0.0)
       let loadedResNum = 0
 
@@ -406,11 +422,11 @@ export default {
         this.tools.player.instrument.update = false;
         curIndex++;
       }
-      if (this.tools.player.metronome.update) {
+      if (this.tools.metronome.update) {
         let callbacks = createCallbacks(curIndex);
         that.$refs['metronome'].load(callbacks)
         
-        this.tools.player.metronome.update = false;
+        this.tools.metronome.update = false;
         curIndex++;
       }
      
@@ -873,7 +889,7 @@ html, body {
     width: 100%;
   }
 
-  #sidebar, #tools_sheet_control, #tools_player, #tip_chord, #sheet_padding {
+  #sidebar, #tools_sheet_control, #tools_player, #tip_chord, #sheet_padding, #metronome_panel {
     display: none;
   }
 }

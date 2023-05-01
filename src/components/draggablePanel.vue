@@ -16,18 +16,15 @@
 </template>
 
 <script>
-import { getCursorClientPos, getPos, setPos, getOuterSize, getWindowSize } from '@/utils/common.js';
+import { setPos, getOuterSize, getWindowSize } from '@/utils/common.js';
+import { MouseDelta } from '@/utils/mouse.js';
 
 export default {
   name: "DraggablePanel",
   data() {
     return {
       isDragging: false,
-      startDragPanelPos: {
-        left: 0,
-        top: 0
-      },
-      startDragMousePos: [0, 0],
+      mouseDelta: new MouseDelta(),
       curPanelPos: {
         left: 0,
         top: 0
@@ -59,23 +56,37 @@ export default {
     document.addEventListener("mouseup", this.endDrag)
     document.addEventListener("mousemove", this.onDragMove)
     window.addEventListener("resize", this.onResize)
-    this.setPosImmediately(this.initPos.left, this.initPos.top)
+
+    let w = document.body.clientWidth
+    let h = document.body.clientHeight
+    if (this.initPos.left < 0)
+      this.initPos.left += w
+    if (this.initPos.top < 0)
+      this.initPos.top += h
+
+    this.curPanelPos.left = this.initPos.left
+    this.curPanelPos.top = this.initPos.top
+    this.setPosImmediately(this.curPanelPos.left, this.curPanelPos.top)
   },
   methods: {
     startDrag(e) {
       this.isDragging = true
-      this.startDragMousePos = getCursorClientPos(e)
-      let curPanelPos = getPos(this.$refs.panel)
-      this.startDragPanelPos.left = curPanelPos.left
-      this.startDragPanelPos.top = curPanelPos.top
-      this.curPanelPos.left = curPanelPos.left
-      this.curPanelPos.top = curPanelPos.top
+      this.mouseDelta.start(e)
+    },
+    limitPos() {
+      let windowSize = getWindowSize()
+      let elementSize = getOuterSize(this.$refs.panel)
+
+      this.curPanelPos.left = Math.max(0, Math.min(windowSize.w - elementSize.w, this.curPanelPos.left))
+      this.curPanelPos.top = Math.max(0, Math.min(windowSize.h - elementSize.h, this.curPanelPos.top))
     },
     onDragMove(e) {
       if (!this.isDragging) return
-      let curMousePos = getCursorClientPos(e)
-      this.setPosNextFrame(curMousePos[0] - this.startDragMousePos[0] + this.startDragPanelPos.left,
-        curMousePos[1] - this.startDragMousePos[1] + this.startDragPanelPos.top)
+      let [dx, dy] = this.mouseDelta.tick(e)
+      this.curPanelPos.left += dx
+      this.curPanelPos.top += dy
+      this.limitPos()
+      this.setPosNextFrame(this.curPanelPos.left, this.curPanelPos.top)
     },
     endDrag(e) {
       this.isDragging = false
@@ -92,12 +103,6 @@ export default {
       }
     },
     setPosImmediately(left, top) {
-      let windowSize = getWindowSize()
-      let elementSize = getOuterSize(this.$refs.panel)
-
-      left = Math.max(0, Math.min(windowSize.w - elementSize.w, left))
-      top = Math.max(0, Math.min(windowSize.h - elementSize.h, top))
-
       setPos(this.$refs.panel, left, top)
     },
     onResize() {
@@ -124,7 +129,7 @@ export default {
   top: 0;
   outline: 2px solid black;
   background: white;
-  z-index: 20;
+  z-index: 10;
 
   transition: opacity 0.3s ease-out;
 
@@ -149,6 +154,7 @@ export default {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  white-space: nowrap;
 
   .draggable_fold_mark {
     width: 20px;

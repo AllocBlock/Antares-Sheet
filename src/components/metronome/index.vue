@@ -23,6 +23,7 @@
 </template>
 
 <script>
+import { assert } from '@/utils/assert.js';
 import Metronome from "./metronome.js";
 
 export default {
@@ -44,6 +45,8 @@ export default {
       this.updateBpm()
     },
     togglePlay() {
+      assert(this.metronome, "Call load before play")
+      console.log(this.metronome)
       if (!this.started && !this.metronome.isReady()) {
         alert("节拍器加载未完成，请稍后");
         return;
