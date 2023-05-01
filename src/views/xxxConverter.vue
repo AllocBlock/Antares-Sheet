@@ -7,6 +7,7 @@
     </transition>
 
     <div id="sheet">
+      <div class="button" @click="saveSheetToFile">保存</div>
       <div id="song_title" class="title">{{sheetInfo.title}}</div>
       <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
       <div id="sheet_key_block">
@@ -31,6 +32,7 @@ import ChordManager from "@/utils/chordManager.js";
 import { StringInstrument } from "@/utils/instrument.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { convertXXX2Sheet } from "@/utils/xxxConverter.js"
+import { toSheetFileString } from "@/utils/sheetWriter.js";
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 
@@ -180,6 +182,27 @@ export default {
           node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.sheetKey);
         }
       })
+    },
+    getSheetRaw() {
+      return toSheetFileString(
+        this.sheetInfo.sheetTree,
+        this.sheetInfo.title,
+        this.sheetInfo.singer,
+        this.sheetInfo.by,
+        this.sheetInfo.originalKey,
+        this.sheetInfo.sheetKey,
+      )
+    },
+    saveSheetToFile() {
+      let fileData = this.getSheetRaw()
+      let time = new Date().toLocaleDateString().replace(/\//g, "_")
+    
+      let blob = new Blob([fileData], {type: 'text/plain'})
+      let download = document.createElement("a");
+      download.href = window.URL.createObjectURL(blob)
+      download.setAttribute('download', `${this.sheetInfo.title}-${this.sheetInfo.singer}-${time}.atrs`)
+      download.click()
+      download.remove()
     },
   }
 }
@@ -442,3 +465,5 @@ html, body {
   }
 }
 </style>
+
+<style scoped src="./editor/common.css"></style>

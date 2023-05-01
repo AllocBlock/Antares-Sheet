@@ -1,0 +1,18 @@
+:root {
+  --theme-color: #e9266a;
+  --theme-color-rgb: 233, 38, 106;
+  --base-font-size: 18px;
+}
+
+.flex {
+  display: flex;
+}
+.flex_h_center {
+  display: flex;
+  justify-content: center;
+}
+.flex_hv_center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

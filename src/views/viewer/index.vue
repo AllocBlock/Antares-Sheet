@@ -242,7 +242,7 @@ export default {
     }
 
     this.load.params.sheetName = sheetName
-    get(`sheets/${sheetName}.sheet`).then((res) => {
+    get(`sheets/${sheetName}.atrs`).then((res) => {
       let rootNode = parseSheet(res)
       if (!rootNode) {
         this.load.state = ELoadState.Failed

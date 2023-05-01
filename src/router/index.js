@@ -4,6 +4,7 @@ import Test from '@/views/test.vue'
 import SheetViewer from '@/views/viewer/index.vue'
 import SheetEditor from '@/views/editor/index.vue'
 import XxxConverter from '@/views/xxxConverter.vue'
+import Project from '@/views/user/project.vue'
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/editor',
     name: 'SheetEditor',
     component: SheetEditor
+  },
+  {
+    path: '/user/project',
+    name: 'Project',
+    component: Project
   },
   {
     path: '/xxxConverter',

@@ -2,13 +2,9 @@
   <router-view />
 </template>
 
-<style>
-:root {
-  --theme-color: #e9266a;
-  --theme-color-rgb: 233, 38, 106;
-  --base-font-size: 18px;
-}
+<style src="./common.css"></style>
 
+<style>
 html,
 body {
   width: 100%;
@@ -24,19 +20,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
-}
-
-#nav {
-  padding: 30px;
-}
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
 }
 
 ::selection {

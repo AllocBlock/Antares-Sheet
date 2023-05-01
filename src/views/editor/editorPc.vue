@@ -310,7 +310,7 @@ export default {
     if (!storageSheet) {
       console.log("从文件加载曲谱...");
       let sheetName = getQueryVariable("sheet");
-      get(`sheets/${sheetName}.sheet`)
+      get(`sheets/${sheetName}.atrs`)
         .then((res) => {
           that.loadSheet(res)
         })
@@ -556,14 +556,14 @@ export default {
       let blob = new Blob([fileData], {type: 'text/plain'})
       let download = document.createElement("a");
       download.href = window.URL.createObjectURL(blob)
-      download.setAttribute('download', `${this.sheetInfo.title}-${this.sheetInfo.singer}-${time}.sheetEdit`)
+      download.setAttribute('download', `${this.sheetInfo.title}-${this.sheetInfo.singer}-${time}.atrs`)
       download.click()
       download.remove()
     },
     loadSheetFromFile() {
       let input = document.createElement('input');
       input.type = 'file';
-      input.accept = ".sheet,.sheetEdit"
+      input.accept = ".atrs"
       input.onchange = e => { 
         let file = e.target.files[0]; 
         let fileReader = new FileReader()

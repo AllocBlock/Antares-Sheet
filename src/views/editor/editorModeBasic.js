@@ -142,8 +142,8 @@ export default {
     gHookIds.push(HotKey.addListener("Backquote", _hotkeySwitcher(_recoverChordToText)))
 
     // 按下tab键快速在前方添加空格，+Shift则在后方
-    gHookIds.push(HotKey.addListener("Tab", _hotkeySwitcher(_insertSpaceBefore)), null, false, null)
-    gHookIds.push(HotKey.addListener("Tab", _hotkeySwitcher(_insertSpaceAfter)), null, true, null)
+    gHookIds.push(HotKey.addListener("Tab", _hotkeySwitcher(_insertSpaceBefore), null, false, null))
+    gHookIds.push(HotKey.addListener("Tab", _hotkeySwitcher(_insertSpaceAfter), null, true, null))
 
     // 按下delete/R键快速删除
     gHookIds.push(HotKey.addListener("Delete", _hotkeySwitcher(_delete)))

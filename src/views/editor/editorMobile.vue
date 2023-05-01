@@ -185,7 +185,7 @@ export default {
     let that = this
 
     let sheetName = getQueryVariable("sheet");
-    get(`sheets/${sheetName}.sheet`)
+    get(`sheets/${sheetName}.atrs`)
       .then((res) => {
         that.loadSheet(res)
       })
