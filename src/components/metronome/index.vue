@@ -46,7 +46,6 @@ export default {
     },
     togglePlay() {
       assert(this.metronome, "Call load before play")
-      console.log(this.metronome)
       if (!this.started && !this.metronome.isReady()) {
         alert("节拍器加载未完成，请稍后");
         return;

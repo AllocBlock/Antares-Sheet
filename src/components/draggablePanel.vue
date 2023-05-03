@@ -85,7 +85,6 @@ export default {
     onDragMove(e) {
       if (!this.isDragging) return
       let [dx, dy] = this.mouseDelta.tick(e)
-      console.log(dx,dy)
       this.curPanelPos.left += dx
       this.curPanelPos.top += dy
       this.limitPos()

@@ -1,0 +1,251 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  min-width: 300px;
+}
+
+::selection {
+  background: var(--theme-color);
+}
+
+#viewer {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  position: relative;
+
+  display: flex;
+}
+
+#sidebar {
+  --fold-width: 60px;
+  --full-width: 160px;
+
+  width: var(--fold-width);
+  height: 100%;
+  flex-shrink: 0;
+
+  #sidebar_fixed {
+    position: fixed;
+    z-index: 11;
+    top: 0;
+    right: calc(var(--fold-width) - var(--full-width));
+    height: 100%;
+    width: var(--full-width);
+    background-color: var(--sheet-theme-color);
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    overflow: hidden;
+    color: white;
+    opacity: 0.3;
+    user-select: none;
+
+    transition: right 0.2s ease-out, opacity 0.2s ease-out;
+
+    img {
+      width: 30px;
+      height: 30px;
+      margin: calc((var(--fold-width) - 30px) / 2);
+    }
+
+    .sidebar_block {
+      width: 100%;
+      height: var(--fold-width);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      * {
+        flex-shrink: 0;
+      }
+
+      .sidebar_block_text {
+        margin-right: auto;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    &:hover {
+      right: 0px;
+      opacity: 1;
+    }
+  }
+}
+
+#sheet {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px;
+  padding-right: 20px;
+  box-sizing: border-box;
+  font-size: var(--base-font-size);
+
+  * {
+    flex-shrink: 0;
+  }
+}
+
+.title {
+  flex-shrink: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  word-break: break-all;
+  text-overflow: ellipsis;
+}
+
+#song_title {
+  margin: calc(var(--title-base-font-size) * 0.2) 0;
+  height: calc(var(--title-base-font-size) * 2);
+  line-height: calc(var(--title-base-font-size) * 2);
+  font-size: calc(var(--title-base-font-size) * 1.5);
+  color: black;
+  width: 100%;
+}
+
+#song_singer {
+  height: calc(var(--title-base-font-size) * 0.9);
+  line-height: calc(var(--title-base-font-size) * 0.9);
+  font-size: calc(var(--title-base-font-size) * 0.8);
+  color: #aaaaaa;
+}
+
+#sheet_key_block {
+  margin-top: 10px;
+  line-height: var(--title-base-font-size);
+  font-size: calc(var(--title-base-font-size) * 0.9);
+  color: black;
+
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#sheet_original_key,
+#sheet_current_key {
+  margin-right: 10px;
+}
+
+#sheet_current_key {
+  display: flex;
+  align-items: center;
+}
+
+#sheet_key_shift {
+  width: 30px;
+  margin: 0 10px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+
+#sheet_key_shift_up,
+#sheet_key_shift_down {
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#sheet_key_shift_up:hover,
+#sheet_key_shift_down:hover {
+  color: rgb(187, 73, 73);
+}
+
+#sheet_capo_block {
+  display: flex;
+  line-height: var(--title-base-font-size);
+  font-size: calc(var(--title-base-font-size) * 0.9);
+  color: #888;
+}
+
+#capo_selector {
+  margin: 0 10px;
+  background-color: transparent;
+  font-size: calc(var(--title-base-font-size) * 0.8);
+  border: none;
+  outline: 2px solid grey;
+}
+
+#sheet_by {
+  margin-top: 5px;
+  height: calc(var(--title-base-font-size) * 0.8);
+  line-height: calc(var(--title-base-font-size) * 0.8);
+  font-size: calc(var(--title-base-font-size) * 0.7);
+  color: rgb(156, 156, 156);
+}
+
+#sheet_body_block {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+#sheet_padding {
+  height: 50vh;
+}
+
+.sheet_body {
+  white-space: pre-wrap;
+  margin: 0;
+  width: 100%;
+}
+
+
+:deep(chord::after) {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: calc(-8px - var(--sheet-font-size));
+  right: -10px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+:deep(chord-pure::after) {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: -2px;
+  right: -10px;
+  bottom: -2px;
+  border: 2px solid transparent;
+  transition: 0.3s ease-out;
+  border-radius: 5px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+:deep(chord:hover::after),
+:deep(chord-pure:hover::after) {
+  border: 2px solid var(--sheet-theme-color);
+  box-shadow: 0 0 5px 2px black;
+}
+
+:deep(chord-ruby::before),
+:deep(chord-pure::before) {
+  content: "▶";
+  position: absolute;
+  font-size: 20px;
+  color: black;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+}
+
+:deep(chord:hover chord-ruby::before),
+:deep(chord-pure:hover::before) {
+  opacity: 0.8;
+}

@@ -1,10 +1,6 @@
 <template>
   <div id="viewer" :env="env" :style="globalCssVar">
-    <transition name="trans_fade_out">
-      <div id="cover" v-show="showLoadCover">
-        <div>{{ loadStateString }}</div>
-      </div>
-    </transition>
+    <SheetViewerLoadCover :state="this.load.state" />
 
     <div id="tools_sheet_control" class="tools_block" v-if="tools.sheetControl.enable">
       <div id="scale_block">
@@ -28,8 +24,8 @@
           step="0.1"
           min="0"
           max="10"
-          v-model="tools.sheetControl.autoScroll.speed"
-          @input="changeAutoScrollSpeed()"
+          v-model="tools.sheetControl.autoScrollSpeed"
+          @input="onAutoScrollSpeedChange()"
         />
         <div id="auto_scroll_text" class="tools_text">{{autoScrollSpeedText}}</div>
       </div>
@@ -70,8 +66,7 @@
           </div>
         </div>
         <div id="sheet_capo_block">
-          <div class="title">变调夹</div>
-          <CapoSelector id="capo_selector" v-model:value="tools.player.instrument.capo"/>
+          <div class="title">变调夹 {{ capoName }}</div>
         </div>
       </div>
       <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
@@ -109,6 +104,8 @@ import ChordManager from "@/utils/chordManager.js";
 import { SheetNode, ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
+import AutoScroll from "./autoScroll.js"
+import SheetInfo from "./sheetInfo.ts"
 
 import Metronome from "@/components/metronome/index.vue"
 import AntaresSheet from "@/components/antaresSheet/index.vue"
@@ -116,8 +113,9 @@ import Chord from "@/components/chord/index.vue"
 import { get } from "@/utils/request.js"
 import CapoSelector from "@/components/capoSelector.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
+import SheetViewerLoadCover from "./loadCover.vue";
 
-let g_Player = null
+let gPlayer = null
 
 export default {
   name: "SheetViewer",
@@ -126,12 +124,12 @@ export default {
     AntaresSheet,
     Chord,
     CapoSelector,
-    DraggablePanel
+    DraggablePanel,
+    SheetViewerLoadCover
   },
   data() {
     return {
       globalCssVar: {
-        "font-size": "var(--base-font-size)", 
         "--sheet-font-size": "var(--base-font-size)", 
         "--title-base-font-size": "30px", 
         "--title-scale": "1",
@@ -142,20 +140,9 @@ export default {
       },
       env: "pc",
       load: {
-        params: {},
         state: ELoadState.Loading,
       },
-      sheetInfo: {
-        title: '加载中',
-        singer: '',
-        by: '',
-        originalKey: '',
-        sheetKey: '',
-        chords: [],
-        rhythms: [],
-        originalSheetKey: '',
-        sheetTree: new SheetNode(ENodeType.Root)
-      },
+      sheetInfo: new SheetInfo(),
       sheetEvents: {
         text: {
           click: (e, node) => {
@@ -195,7 +182,6 @@ export default {
             capo: 0,
           },
           loadState: ELoadState.Loading,
-          loadProgress: 0.0,
         },
         metronome: {
           enable: true,
@@ -206,28 +192,12 @@ export default {
         sheetControl: {
           enable: true,
           scale: 1,
-          autoScroll: {
-            started: false,
-            speed: 0.0,
-            timer: null
-          },
+          autoScrollSpeed: 0.0
         }
       }
     }
   },
   computed: {
-    loadStateString: function () {
-      switch (this.load.state) {
-        case ELoadState.Loading: return "加载中...";
-        case ELoadState.Loaded: return "加载完成";
-        case ELoadState.Failed: return "曲谱解析失败，请重试";
-        case ELoadState.Empty: return this.load.params.sheetName ? `未找到指定文件 [${this.load.params.sheetName}]` : "未指定曲谱文件";
-        default: return "未知状态";
-      }
-    },
-    showLoadCover() {
-      return this.load.state != ELoadState.Loaded;
-    },
     toolsPlayerLoadingText: function () {
       switch (this.tools.player.loadState) {
         case ELoadState.Loading: return "加载中...";
@@ -240,8 +210,13 @@ export default {
       return this.tools.player.loadState != ELoadState.Loaded;
     },
     autoScrollSpeedText() {
-      const speed = this.tools.sheetControl.autoScroll.speed
+      let speed = parseFloat(this.tools.sheetControl.autoScrollSpeed)
       return speed > 0.0 ? `x${parseFloat(speed).toFixed(1)}` : "停止"
+    },
+    capoName() {
+      let capo = this.tools.player.instrument.capo
+      if (capo == 0) return "无"
+      else return `${capo}品`
     }
   },
   mounted() {
@@ -257,7 +232,6 @@ export default {
       return
     }
 
-    this.load.params.sheetName = sheetName
     get(`sheets/${sheetName}.atrs`).then((res) => {
       let rootNode = parseSheet(res)
       if (!rootNode) {
@@ -314,39 +288,9 @@ export default {
         `${defaultTitleFontSize * scale}${unit}`
       );
     },
-    changeAutoScrollSpeed() {
-      if (!this.tools.sheetControl.autoScroll.started) {
-        this.startAutoScroll()
-      }
-    },
-    startAutoScroll() {
-      let that = this
-      let autoScroll = that.tools.sheetControl.autoScroll
-      function scroll(amount) {
-        document.documentElement.scrollTop += amount
-        document.body.scrollTop += amount // 兼容老版chrome，好像小程序也需要用body
-      }
-
-      let lastTimeStamp = new Date().getTime()
-      function scrollLoop() {
-        let speed = autoScroll.speed
-        if (speed == 0) {
-          window.cancelAnimationFrame(autoScroll.timer)
-          autoScroll.timer = null
-          autoScroll.started = false
-          return
-        }
-        const delay = 100 / speed
-        let curTimeStamp = new Date().getTime()
-        if (curTimeStamp - lastTimeStamp > delay) {
-          let amount = (curTimeStamp - lastTimeStamp) / delay
-          scroll(amount)
-          lastTimeStamp = curTimeStamp
-        }
-        autoScroll.timer = window.requestAnimationFrame(scrollLoop)
-      }
-      autoScroll.started = true
-      scrollLoop()
+    onAutoScrollSpeedChange() {
+      let speed = parseFloat(this.tools.sheetControl.autoScrollSpeed)
+      AutoScroll.setSpeed(speed)
     },
     playChord(chord) {
       const capo = parseInt(this.tools.player.instrument.capo) ?? 0
@@ -356,9 +300,9 @@ export default {
 
       // play chord
       let duration = (1 / bpm) * 60 * 4;
-      if (g_Player && g_Player.audioSource.loaded) {
-        g_Player.setCapo(capo);
-        g_Player.playChord(chord, volume, duration);
+      if (gPlayer && gPlayer.audioSource.loaded) {
+        gPlayer.setCapo(capo);
+        gPlayer.playChord(chord, volume, duration);
       }
     },
     shiftKey(offset) {
@@ -379,57 +323,30 @@ export default {
     },
     loadPlayer() {
       let that = this
-
-      let resNum = 0
-      if (this.tools.player.instrument.update) resNum++;
-      if (this.tools.metronome.update) resNum++;
-      let progressList = new Array(resNum).fill(0.0)
-      let loadedResNum = 0
-
-      function createCallbacks(i) {
-        return {
+      
+      if (this.tools.player.instrument.update) {
+        let callbacks = {
           onLoadStart: function() {
-            if (that.tools.player.loadState == ELoadState.Failed) return;
             that.tools.player.loadState = ELoadState.Loading
-            progressList[i] = 0.0
-          },
-          onLoadProgress: function(progress) {
-            progressList[i] = progress
-            let allProgress = progressList.reduce((p, c) => p + c) / resNum
-            // console.log("loading progress " + allProgress)
-            that.tools.player.loadProgress = allProgress
           },
           onLoaded: function() {
-            loadedResNum++;
-            that.tools.player.loadProgress = 1.0
-            if (loadedResNum == resNum) {
-              // console.log("end loading")
-              that.tools.player.loadState = ELoadState.Loaded
-            }
+            that.tools.player.loadState = ELoadState.Loaded
           },
           onFailed: function() {
             that.tools.player.loadState = ELoadState.Failed
           }
         }
-      }
-      
-      let curIndex = 0;
-      
-      if (this.tools.player.instrument.update) {
-        let callbacks = createCallbacks(curIndex);
-        g_Player = new StringInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
+        
+        gPlayer = new StringInstrument(this.tools.player.instrument.type, this.tools.player.instrument.audioSource, callbacks)
         
         this.tools.player.instrument.update = false;
-        curIndex++;
       }
+
       if (this.tools.metronome.update) {
-        let callbacks = createCallbacks(curIndex);
-        that.$refs['metronome'].load(callbacks)
+        that.$refs['metronome'].load()
         
         this.tools.metronome.update = false;
-        curIndex++;
       }
-     
     }
   },
   watch: {
@@ -441,223 +358,9 @@ export default {
 }
 </script>
 
-<style>
-html, body {
-  width: 100%;
-  height: 100%;
-  min-width: 300px;
-}
-
-::selection {
-  background: var(--theme-color);
-}
-
-</style>
+<style src="./common.scss" scoped></style>
 
 <style scoped lang="scss">
-#viewer {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  position: relative;
-  font-size: var(--base-font-size);
-
-  display: flex;
-}
-
-#cover {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: wheat;
-  color: var(--sheet-theme-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 50px;
-  letter-spacing: 5px;
-  z-index: 20;
-  margin-right: auto;
-}
-
-#sidebar {
-  --fold-width: 60px;
-  --full-width: 160px;
-
-  width: var(--fold-width);
-  height: 100%;
-  flex-shrink: 0;
-
-  #sidebar_fixed {
-    position: fixed;
-    z-index: 11;
-    top: 0;
-    right: calc(var(--fold-width) - var(--full-width));
-    height: 100%;
-    width: var(--full-width);
-    background-color: var(--sheet-theme-color);
-    
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    overflow: hidden;
-    color: white;
-    opacity: 0.3;
-    user-select: none;
-
-    transition: right 0.2s ease-out, opacity 0.2s ease-out;
-    img {
-      width: 30px;
-      height: 30px;
-      margin: calc((var(--fold-width) - 30px) / 2);
-    }
-
-    .sidebar_block {
-      width: 100%;
-      height: var(--fold-width);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      
-      * {
-        flex-shrink: 0;
-      }
-
-      .sidebar_block_text {
-        margin-right: auto;
-        display: flex;
-        justify-content: center;
-      }
-    }
-
-    &:hover {
-      right: 0px;
-      opacity: 1;
-    }
-  }
-}
-
-#sheet {
-  display: flex;
-  flex-direction: column;
-  padding-left: 20px;
-  padding-right: 20px;
-  box-sizing: border-box;
-
-  * {
-    flex-shrink: 0;
-  }
-}
-
-.title {
-  flex-shrink: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  word-break: break-all;
-  text-overflow: ellipsis;
-}
-
-#song_title {
-  margin: calc(var(--title-base-font-size) * 0.2) 0;
-  height: calc(var(--title-base-font-size) * 2);
-  line-height: calc(var(--title-base-font-size) * 2);
-  font-size: calc(var(--title-base-font-size) * 1.5);
-  color: black;
-  width: 100%;
-}
-
-#song_singer {
-  height: calc(var(--title-base-font-size) * 0.9);
-  line-height: calc(var(--title-base-font-size) * 0.9);
-  font-size: calc(var(--title-base-font-size) * 0.8);
-  color: #aaaaaa;
-}
-
-#sheet_key_block {
-  margin-top: 10px;
-  line-height: var(--title-base-font-size);
-  font-size: calc(var(--title-base-font-size) * 0.9);
-  color: black;
-
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-#sheet_original_key, #sheet_current_key {
-  margin-right: 10px;
-}
-
-#sheet_current_key {
-  display: flex;
-  align-items: center;
-}
-
-#sheet_key_shift {
-  width: 30px;
-  margin: 0 10px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  user-select: none;
-}
-
-#sheet_key_shift_up,
-#sheet_key_shift_down {
-  width: 100%;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#sheet_key_shift_up:hover,
-#sheet_key_shift_down:hover {
-  color: rgb(187, 73, 73);
-}
-
-#sheet_capo_block {
-  display: flex;
-  line-height: var(--title-base-font-size);
-  font-size: calc(var(--title-base-font-size) * 0.9);
-  color: #888;
-}
-
-#capo_selector {
-  margin: 0 10px;
-  background-color: transparent;
-  font-size: calc(var(--title-base-font-size) * 0.8);
-  border: none;
-  outline: 2px solid grey;
-}
-
-#sheet_by {
-  margin-top: 5px;
-  height: calc(var(--title-base-font-size) * 0.8);
-  line-height: calc(var(--title-base-font-size) * 0.8);
-  font-size: calc(var(--title-base-font-size) * 0.7);
-  color: rgb(156, 156, 156);
-}
-
-#sheet_body_block {
-  width: 100%;
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-}
-
-#sheet_padding {
-  height: 50vh;
-}
-
-.sheet_body {
-  white-space: pre-wrap;
-  margin: 0;
-  width: 100%;
-}
-
 #tip_chord {
   position: fixed;
   right: 80px;
@@ -707,17 +410,6 @@ html, body {
     font-size: 30px;
   }
 }
-
-#page_type_block {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#paper_size_slider {
-  display: none;
-}
 </style>
 
 <style scoped>
@@ -730,59 +422,6 @@ html, body {
 }
 .trans_fade_out-leave-active{
 	transition: opacity 1s;
-}
-</style>
-
-<style scoped>
-:deep(chord::after) {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: calc(-8px - var(--sheet-font-size));
-  right: -10px;
-  bottom: -2px;
-  border: 2px solid transparent;
-  transition: 0.3s ease-out;
-  border-radius: 5px;
-  z-index: 1;
-  pointer-events: none;
-}
-
-:deep(chord-pure::after) {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: -2px;
-  right: -10px;
-  bottom: -2px;
-  border: 2px solid transparent;
-  transition: 0.3s ease-out;
-  border-radius: 5px;
-  z-index: 1;
-  pointer-events: none;
-}
-
-:deep(chord:hover::after),
-:deep(chord-pure:hover::after) {
-  border: 2px solid var(--sheet-theme-color);
-  box-shadow: 0 0 5px 2px black;
-}
-
-:deep(chord-ruby::before),
-:deep(chord-pure::before) {
-  content: "▶";
-  position: absolute;
-  font-size: 20px;
-  color: black;
-  transform: translate(-50%, -50%);
-  top: 50%;
-  left: 50%;
-  opacity: 0;
-}
-
-:deep(chord:hover chord-ruby::before),
-:deep(chord-pure:hover::before) {
-  opacity: 0.8;
 }
 </style>
 
