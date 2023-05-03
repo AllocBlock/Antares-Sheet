@@ -449,7 +449,7 @@ export default {
 
 <style scoped lang="scss">
 /* printing */
-#viewer[printing] {
+#viewer[printing=true] {
   #sheet {
     width: 100%;
     margin: 0px;
