@@ -22,7 +22,6 @@ function loopScroll() {
 
     let amount = Math.floor(gAccumulate)
     gAccumulate -= amount
-    console.log("scroll", amount)
 
     scroll(amount)
     gLoopTimer = window.requestAnimationFrame(loopScroll)
@@ -30,7 +29,7 @@ function loopScroll() {
 
 export default {
     start: function(speed) {
-        assert(speed > 0, "scroll speed muse > 0")
+        assert(speed > 0, "scroll speed must > 0")
         if (gStarted) {
             this.setSpeed(speed)
             return;
