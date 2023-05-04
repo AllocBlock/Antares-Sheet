@@ -41,6 +41,7 @@ export class SheetNode {
     this.children = []
     this.style = {}
     this.index = 0
+    this.content = ''
   }
 
   getSelfIndex() {

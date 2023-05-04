@@ -5,6 +5,14 @@
         <div id="help_button">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
+          <div id="tools_title" class="flex_center">
+            <div class="button" v-if="this.editor.canUndo()" @click="this.editor.undo()" >
+              撤销
+            </div>
+            <div class="button" v-if="this.editor.canRedo()" @click="this.editor.redo()">
+              重做
+            </div>
+          </div>
           <ToolChord id="chord_tool" v-model:chords="toolChord.attachedChords" v-on="toolChord.events" />
           <div class="button" @click="this.toolChord.showPanel = true">
             编辑和弦
@@ -78,48 +86,48 @@
             @click="insertNode(item.type, true)" 
             @mouseenter="onContextButtonMouseEnter('在左侧' + item.tip)"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
         </div>
         <div class="context_menu_item">
           <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`" class="context_icon context_menu_button" 
             @click="insertNode(item.type, false)" 
             @mouseenter="onContextButtonMouseEnter('在右侧' + item.tip)"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
         </div>
         <div class="context_menu_item" @click="editContent()" v-show="contextMenu.enableEditContent">
           <Svg src="/icons/edit.svg" class="context_icon context_menu_button" 
             @mouseenter="onContextButtonMouseEnter('编辑内容')"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
         </div>
         <div class="context_menu_item" @click="editRemove()">
           <Svg src="/icons/trash.svg" class="context_icon context_menu_button" 
             @mouseenter="onContextButtonMouseEnter('删除')"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
         </div>
         <div class="context_menu_item" v-show="contextMenu.enableAddUnderline || contextMenu.enableRemoveUnderline">
           下划线
           <Svg src="/icons/add.svg" class="context_icon context_menu_button" @click="editAddUnderline()" v-show="contextMenu.enableAddUnderline" 
             @mouseenter="onContextButtonMouseEnter('添加下划线')"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
           <Svg src="/icons/trash.svg" class="context_icon context_menu_button" @click="editRemoveUnderline()" v-show="contextMenu.enableRemoveUnderline"
             @mouseenter="onContextButtonMouseEnter('删除下划线')"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
         </div>
         <div class="context_menu_item" v-show="contextMenu.enableRecoverChord">
           和弦
           <Svg src="/icons/recover.svg" class="context_icon context_menu_button" @click="editRecoverChord()" v-show="contextMenu.enableRecoverChord" 
             @mouseenter="onContextButtonMouseEnter('将和弦恢复成文本')"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
           <Svg src="/icons/switch.svg" class="context_icon context_menu_button" @click="editSwitchChordType()" v-show="contextMenu.enableSwitchChordType" 
             @mouseenter="onContextButtonMouseEnter('切换和弦类别')"
             @mouseleave="onContextButtonMouseLeave()"
-          />
+          ></Svg>
         </div>
       </div>
       <Transition name="trans_fade">
@@ -183,6 +191,7 @@ import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
+import SheetEditor from "./editor";
 import EditorModeBasic from './editorModeBasic.js'
 import EditorModeDrag from './editorModeDrag.js'
 import EditorModeProgression from './editorModeProgression.js'
@@ -226,6 +235,7 @@ export default {
         audioPlayerHeight: 180,
         showAudioPlayer: false
       },
+      editor: new SheetEditor(),
       sheetInfo: {
         title: "加载中",
         singer: "",
@@ -437,7 +447,12 @@ export default {
     },
     editContent(node = null) {
       node = node ?? this.contextMenu.node;
-      EditAction.editContent(node)
+
+      if (!node) throw "节点为空"
+
+      let newContent = prompt("编辑内容", node.content);
+      if (!newContent) return;
+      this.editor.updateContent(node, newContent)
     },
     editRemove(node = null) {
       node = node ?? this.contextMenu.node;
@@ -604,9 +619,9 @@ export default {
 
       // insert
       if (isOnLeft)
-        NodeUtils.insertBefore(this.contextMenu.node, nodes)
+        this.editor.insertBefore(this.contextMenu.node, nodes)
       else
-        NodeUtils.insertAfter(this.contextMenu.node, nodes)
+        this.editor.insertAfter(this.contextMenu.node, nodes)
     },
     onContextButtonMouseEnter(tip) {
       this.contextMenu.tip.show = true

@@ -176,10 +176,12 @@ export const NodeUtils = {
     this.insert(node.parent, this.indexOf(node), data, 1);
   },
   /** 在后方插入节点，可以是数组 */
+  // FIXME: 已迁移，但有依赖
   insertAfter(node, data) {
     this.insert(node.parent, this.indexOf(node) + 1, data, 0);
   },
   /** 在前方插入节点，可以是数组 */
+  // FIXME: 已迁移，但有依赖
   insertBefore(node, data) {
     this.insert(node.parent, this.indexOf(node), data, 0);
   },
@@ -322,10 +324,11 @@ export const NodeUtils = {
       if (n.type == ENodeType.Text && n.content.length > 1) {
         this.replace(n, NodeUtils.createTextNodes(n.content));
       }
-      // 和弦内容拆分
-      else if (n.type == ENodeType.Chord && n.content.length > 1) {
-        EditAction.updateContent(n, n.content);
-      }
+      // FIXME: 暂时移除，因为本就不应该存在和弦内容是多字符的情况
+      // // 和弦内容拆分
+      // else if (n.type == ENodeType.Chord && n.content.length > 1) {
+      //   EditAction.updateContent(n, n.content);
+      // }
     });
   },
 };
@@ -569,50 +572,31 @@ export const EditAction = {
     node.chord = chordName
   },
   /** 文本节点转为和弦节点 */
+  // 默认内容是单个字符！
   convertToChord(node, chordName) {
     if (NodeUtils.isChord(node)) {
       this.updateChord(node, chordName);
       return node
     }
     else if (node.type == ENodeType.Text) {
+      if (node.content.length > 1)
+        console.warn(`文本内容 ${node.content} 超出一个字符，不符合规范`)
       let chordNode = NodeUtils.createChordNode(node.content, chordName)
       NodeUtils.replace(node, chordNode)
-      EditAction.updateChordContent(chordNode, chordNode.content);
       return chordNode
     }
     else {
       throw "类型错误，无法转换该节点为和弦节点"
     }
   },
-  /** 安全更新节点的内容 */
-  updateContent(node, content) {
-    switch (node.type) {
-      case ENodeType.Text: {
-        EditAction.updateTextContent(node, content);
-        break;
-      }
-      case ENodeType.Mark: {
-        EditAction.updateMarkContent(node, content);
-        break;
-      }
-      case ENodeType.Chord: {
-        EditAction.updateChordContent(node, content);
-        break;
-      }
-      default: {
-        console.warn("无法编辑该节点的内容", node);
-        break;
-      }
-    }
-  },
   /** 安全输入任意节点的内容 */
-  editContent(node) {
-    if (!node) throw "节点为空"
+  // editContent(node) {
+  //   if (!node) throw "节点为空"
 
-    let newContent = _getInputText("编辑内容", node.content);
-    if (!newContent) return;
-    this.updateContent(node, newContent)
-  },
+  //   let newContent = _getInputText("编辑内容", node.content);
+  //   if (!newContent) return;
+  //   this.updateContent(node, newContent)
+  // },
   /** 对连接的文本节点统一编辑输入 */
   editTextWithNeighbor(node) {
     if (!node) throw "节点为空"
