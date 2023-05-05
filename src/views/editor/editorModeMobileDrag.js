@@ -96,10 +96,10 @@ export default {
       },
       dblclick: (e, node) => {
         if (!e.shiftKey) {
-          EditAction.addUnderlineForChord(node);
+          gThis.editor.addUnderlineForChord(node);
         }
         else if (NodeUtils.hasUnderlineToNextChord(node)){
-          EditAction.removeUnderlineOfChord(node);
+          gThis.editor.removeUnderlineOnChord(node);
         }
       },
       contextmenu: (e, node) => gThis.openContext(e, node),

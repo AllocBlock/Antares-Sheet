@@ -1,3 +1,5 @@
+import { assert } from "@/utils/assert"
+
 let gNextId = 1
 
 export const ENodeType = {
@@ -68,6 +70,13 @@ export class SheetNode {
     if (index == this.parent.children.length - 1) return null;
     else return this.parent.children[index + 1];
   }
+
+  isUnderline() {
+    return this.type == ENodeType.Underline || this.type == ENodeType.UnderlinePure
+  }
+  isChord() {
+    return this.type == ENodeType.Chord || this.type == ENodeType.ChordPure
+  }
 }
 
 export var createUnknownNode = function(content, parent = null) {
@@ -83,17 +92,11 @@ export function traverseNode(node, callback) {
   callback(node)
 }
 
-export function isTreeStructureCorrect(root) {
-  try {
-    traverseNode(root, (n) => {
-      if (n != root) {
-        if (n.parent == null)
-          throw "tree structure error";
-      }
-    })
-    return true;
-  } catch {
-    console.error("tree structure error")
-    return false;
+export function validateTree(root) {
+  for (let child of root.children) {
+    if(child.parent != root) return false; // 树结构有误，子节点未指定父节点/或有错误的父节点
+    if (!validateTree(child))
+      return false;
   }
+  return true;
 }

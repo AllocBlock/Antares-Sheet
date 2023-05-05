@@ -31,7 +31,7 @@ class KeyListener {
   }
 
   // ctrl/shift/alt为null代表不关心（都可触发）
-  addListener(keyCode, callback, ctrl = null, shift = null, alt = null, customData = null) {
+  addListener(keyCode, callback, ctrl = false, shift = false, alt = false, customData = null) {
     if (!this.listeners[keyCode]) this.listeners[keyCode] = []
     this.listeners[keyCode].push({
       id: this.hookId, callback, ctrl, shift, alt, customData
@@ -54,7 +54,7 @@ const gKeyDownNormalListener = new KeyListener("keydown", true)
 const gKeyDownNoRepeatListener = new KeyListener("keydown", false)
 const gKeyUpListener = new KeyListener("keyup")
 
-function addListener(keyCode, callback, ctrl = null, shift = null, alt = null, customData = null) {
+function addListener(keyCode, callback, ctrl = false, shift = false, alt = false, customData = null) {
   return gKeyDownNormalListener.addListener(keyCode, callback, ctrl, shift, alt, customData)
 }
 
@@ -62,7 +62,7 @@ function removeListener(id) {
   return gKeyDownNormalListener.removeListener(id)
 }
 
-function addKeyDownListener(keyCode, callback, ctrl = null, shift = null, alt = null, customData = null) {
+function addKeyDownListener(keyCode, callback, ctrl = false, shift = false, alt = false, customData = null) {
   return gKeyDownNoRepeatListener.addListener(keyCode, callback, ctrl, shift, alt, customData)
 }
 
@@ -70,7 +70,7 @@ function removeKeyDownListener(id) {
   return gKeyDownNoRepeatListener.removeListener(id)
 }
 
-function addKeyUpListener(keyCode, callback, ctrl = null, shift = null, alt = null, customData = null) {
+function addKeyUpListener(keyCode, callback, ctrl = false, shift = false, alt = false, customData = null) {
   return gKeyUpListener.addListener(keyCode, callback, ctrl, shift, alt, customData)
 }
 

@@ -35,12 +35,13 @@ function _traversePrev(node, index, callback) {
   else return null;
 }
 
+// provide raw unsafe action on tree and node
 export const NodeUtils = {
   isChord(node) { return node && (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure); },
   isNewLine(node) { return node && node.type == ENodeType.NewLine; },
   isUnderline(node) { return node && (node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure); },
   indexOf(node) {
-    if (!node.parent) throw "该节点是根节点";
+    if (!node.parent) throw "该节点没有父节点，无法获取索引";
     return node.parent.children.findIndex((e) => e === node);
   },
   prevSibling(node) {
@@ -69,7 +70,7 @@ export const NodeUtils = {
   },
   /** 获取同级元素之间的所有元素 */
   getSiblingBetween(node1, node2, containStart = false, containEnd = false) {
-    if (node1.parent != node2.parent) throw "元素不同级";
+    if (node1.parent != node2.parent) throw "节点不同级";
     return node1.parent.children.slice(
       this.indexOf(node1) + (containStart ? 0 : 1),
       this.indexOf(node2) + (containEnd ? 1 : 0)
@@ -109,7 +110,7 @@ export const NodeUtils = {
       let child = root.children[i];
       let needDelete = callback(child);
       if (needDelete) {
-        this.remove(child)
+        this.removeFromParent(child)
         i--;
       }
       else {
@@ -149,6 +150,12 @@ export const NodeUtils = {
   findPrevNodeByType(node, type) {
     return this.findPrev(node, (n) => n != node && n.type == type);
   },
+  /** 设置节点的父节点，可以是数组 */
+  setParent(data, parent) {
+    if (!Array.isArray(data)) data = [data]
+    for (let n of data)
+      n.parent = parent;
+  },
   /**
    * 插入子节点
    * @param {SheetNode} parent - 目标节点
@@ -158,14 +165,9 @@ export const NodeUtils = {
    */
   insert(parent, index, data, replace = 0) {
     if (index < 0) throw "索引错误";
-
-    if (Array.isArray(data)) {
-      for (let newNode of data) newNode.parent = parent;
-      parent.children.splice(index, replace, ...data);
-    } else {
-      data.parent = parent;
-      parent.children.splice(index, replace, data);
-    }
+    if (!Array.isArray(data)) data = [data]
+    this.setParent(data, parent)
+    parent.children.splice(index, replace, ...data);
   },
   /**
    * 替换节点
@@ -175,18 +177,16 @@ export const NodeUtils = {
   replace(node, data) {
     this.insert(node.parent, this.indexOf(node), data, 1);
   },
-  /** 在后方插入节点，可以是数组 */
-  // FIXME: 已迁移，但有依赖
+  /** 在后方插入节点，可以是数组，自动更新父节点 */
   insertAfter(node, data) {
     this.insert(node.parent, this.indexOf(node) + 1, data, 0);
   },
-  /** 在前方插入节点，可以是数组 */
-  // FIXME: 已迁移，但有依赖
+  /** 在前方插入节点，可以是数组，自动更新父节点 */
   insertBefore(node, data) {
     this.insert(node.parent, this.indexOf(node), data, 0);
   },
-  /** 移除节点，可以是数组（没有树结构检查） */
-  remove(data) {
+  /** 移除节点，使其成为游离节点，可以是数组（没有树结构检查），自动更新父节点 */
+  removeFromParent(data) {
     if (Array.isArray(data)) {
       for (let node of data) {
         this.replace(node, []);
@@ -197,11 +197,11 @@ export const NodeUtils = {
       data.parent = null;
     }
   },
-  /** 在末尾插入节点，可以是数组 */
+  /** 在末尾插入节点，可以是数组，自动更新父节点 */
   append(parent, data) {
     this.insert(parent, parent.children.length, data, 0);
   },
-  /** 在起始插入节点，可以是数组 */
+  /** 在起始插入节点，可以是数组，自动更新父节点 */
   prepend(parent, data) {
     this.insert(parent, 0, data, 0);
   },
@@ -262,6 +262,10 @@ export const NodeUtils = {
   /** 创建一个换行节点 */
   createNewLineNode() {
     return reactive(new SheetNode(ENodeType.NewLine));
+  },
+  /** 创建一个下划线节点 */
+  createUnderlineNode(isPure) {
+    return reactive(new SheetNode(isPure ? ENodeType.UnderlinePure : ENodeType.Underline));
   },
   /** 判断是否有连向后方的下划线 */
   hasUnderlineToNextChord(chordNode) {
@@ -331,6 +335,28 @@ export const NodeUtils = {
       // }
     });
   },
+
+  _traverseForwardHelper(node, index, callback) {
+    // if index == 0, this node's all descendants will be tranversed, not considering parent
+    // else, only children after this index will be tranversed
+    if (callback(node))
+      return true;
+
+    for (let i = index; i < node.children.length; ++i)
+      if (_traverseForwardHelper(node.children[i], 0))
+        return true;
+    
+    if (index > 0 && node.parent)
+      if (_traverseForwardHelper(node.parent, node.getSelfIndex() + 1, callback))
+        return true;
+    return false;
+  },
+
+  // 深度优先，向前（右/末尾）继续遍历
+  // callback：回调函数，遍历到每个节点时会触发，返回true表示停止遍历，否则将继续遍历
+  traverseForward(startNode, includeSelfChildren, callback) {
+    this._traverseForwardHelper(startNode, includeSelfChildren ? 0 : startNode.children.length, callback)
+  }
 };
   
 export const EditAction = {
@@ -340,7 +366,7 @@ export const EditAction = {
     if (NodeUtils.isChord(node)) { 
       this.removeAllUnderlineOnChord(node)
     }
-    NodeUtils.remove(node) 
+    NodeUtils.removeFromParent(node) 
   },
   /** 更新文本内容，自动拆分 */
   updateTextContent(node, newContent) {
@@ -372,162 +398,163 @@ export const EditAction = {
     }
   },
   /** 添加一层下划线，即增加一层当前和弦和下一个和弦的连接 */
-  addUnderlineForChord(chordNode) {
-    if (!NodeUtils.isChord(chordNode)) throw "类型错误";
-    let chordType = chordNode.type;
-    let underlineType;
-    switch (chordType) {
-      case ENodeType.Chord:
-        underlineType = ENodeType.Underline;
-        break;
-      case ENodeType.ChordPure:
-        underlineType = ENodeType.UnderlinePure;
-        break;
-      default:
-        console.error("非和弦不能添加下划线");
-        return;
-    }
+  // FIXME: 已迁移并重构，删除此处
+  // addUnderlineForChord(chordNode) {
+  //   if (!NodeUtils.isChord(chordNode)) throw "类型错误";
+  //   let chordType = chordNode.type;
+  //   let underlineType;
+  //   switch (chordType) {
+  //     case ENodeType.Chord:
+  //       underlineType = ENodeType.Underline;
+  //       break;
+  //     case ENodeType.ChordPure:
+  //       underlineType = ENodeType.UnderlinePure;
+  //       break;
+  //     default:
+  //       console.error("非和弦不能添加下划线");
+  //       return;
+  //   }
 
-    let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
-    if (!nextChordNode) throw "未找到下一个和弦";
+  //   let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
+  //   if (!nextChordNode) throw "未找到下一个和弦";
 
-    if (chordNode.parent == nextChordNode.parent) {
-      // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
-      // console.log("s e");
-      let coveredNodes = NodeUtils.getSiblingBetween(chordNode, nextChordNode, true, true);
-      let newUnderlineNode = reactive(new SheetNode(underlineType));
-      NodeUtils.insertBefore(chordNode, newUnderlineNode);
-      NodeUtils.remove(coveredNodes);
-      NodeUtils.append(newUnderlineNode, coveredNodes);
-    } else if (NodeUtils.parentsOf(chordNode).includes(nextChordNode.parent)) {
-      // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
-      // console.log("[s] e");
-      let startUnderlineNode = NodeUtils.parentUntil(
-        chordNode,
-        nextChordNode.parent
-      );
-      let coveredNodes = NodeUtils.getSiblingBetween(
-        startUnderlineNode,
-        nextChordNode,
-        false,
-        true
-      );
-      NodeUtils.remove(coveredNodes);
-      NodeUtils.append(startUnderlineNode, coveredNodes);
-    } else if (NodeUtils.parentsOf(nextChordNode).includes(chordNode.parent)) {
-      // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
-      // console.log("s [e]");
-      let endUnderlineNode = NodeUtils.parentUntil(nextChordNode, chordNode.parent);
-      let coveredNodes = NodeUtils.getSiblingBetween(
-        chordNode,
-        endUnderlineNode,
-        true,
-        false
-      );
-      NodeUtils.remove(coveredNodes);
-      NodeUtils.prepend(endUnderlineNode, coveredNodes);
-    } else {
-      // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
-      // console.log("[s] [e]");
-      let commonAncestorNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
-      let startUnderlineNode = NodeUtils.parentUntil(chordNode, commonAncestorNode);
-      let endUnderlineNode = NodeUtils.parentUntil(
-        nextChordNode,
-        commonAncestorNode
-      );
-      let coveredNodes = NodeUtils.getSiblingBetween(
-        startUnderlineNode,
-        endUnderlineNode,
-        false,
-        false
-      );
-      NodeUtils.remove(coveredNodes);
-      NodeUtils.append(startUnderlineNode, coveredNodes);
-      let endUnderlineChildrenNodes = endUnderlineNode.children.map((n) => n); // map创建新数组
-      NodeUtils.remove(endUnderlineChildrenNodes);
-      NodeUtils.append(startUnderlineNode, endUnderlineChildrenNodes);
-      NodeUtils.remove(endUnderlineNode);
-    }
-  },
+  //   if (chordNode.parent == nextChordNode.parent) {
+  //     // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
+  //     // console.log("s e");
+  //     let coveredNodes = NodeUtils.getSiblingBetween(chordNode, nextChordNode, true, true);
+  //     let newUnderlineNode = reactive(new SheetNode(underlineType));
+  //     NodeUtils.insertBefore(chordNode, newUnderlineNode);
+  //     NodeUtils.remove(coveredNodes);
+  //     NodeUtils.append(newUnderlineNode, coveredNodes);
+  //   } else if (NodeUtils.parentsOf(chordNode).includes(nextChordNode.parent)) {
+  //     // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
+  //     // console.log("[s] e");
+  //     let startUnderlineNode = NodeUtils.parentUntil(
+  //       chordNode,
+  //       nextChordNode.parent
+  //     );
+  //     let coveredNodes = NodeUtils.getSiblingBetween(
+  //       startUnderlineNode,
+  //       nextChordNode,
+  //       false,
+  //       true
+  //     );
+  //     NodeUtils.remove(coveredNodes);
+  //     NodeUtils.append(startUnderlineNode, coveredNodes);
+  //   } else if (NodeUtils.parentsOf(nextChordNode).includes(chordNode.parent)) {
+  //     // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
+  //     // console.log("s [e]");
+  //     let endUnderlineNode = NodeUtils.parentUntil(nextChordNode, chordNode.parent);
+  //     let coveredNodes = NodeUtils.getSiblingBetween(
+  //       chordNode,
+  //       endUnderlineNode,
+  //       true,
+  //       false
+  //     );
+  //     NodeUtils.remove(coveredNodes);
+  //     NodeUtils.prepend(endUnderlineNode, coveredNodes);
+  //   } else {
+  //     // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
+  //     // console.log("[s] [e]");
+  //     let commonAncestorNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
+  //     let startUnderlineNode = NodeUtils.parentUntil(chordNode, commonAncestorNode);
+  //     let endUnderlineNode = NodeUtils.parentUntil(
+  //       nextChordNode,
+  //       commonAncestorNode
+  //     );
+  //     let coveredNodes = NodeUtils.getSiblingBetween(
+  //       startUnderlineNode,
+  //       endUnderlineNode,
+  //       false,
+  //       false
+  //     );
+  //     NodeUtils.remove(coveredNodes);
+  //     NodeUtils.append(startUnderlineNode, coveredNodes);
+  //     let endUnderlineChildrenNodes = endUnderlineNode.children.map((n) => n); // map创建新数组
+  //     NodeUtils.remove(endUnderlineChildrenNodes);
+  //     NodeUtils.append(startUnderlineNode, endUnderlineChildrenNodes);
+  //     NodeUtils.remove(endUnderlineNode);
+  //   }
+  // },
   /** 删除一层下划线，即删除一层当前和弦和下一个和弦的连接 */
-  removeUnderlineOfChord(chordNode) {
-    if (!NodeUtils.isChord(chordNode)) throw "类型错误";
-    if (!NodeUtils.isUnderline(chordNode.parent)) throw "和弦不在下划线下，无需删除";
+  // removeUnderlineOfChord(chordNode) {
+  //   if (!NodeUtils.isChord(chordNode)) throw "类型错误";
+  //   if (!NodeUtils.isUnderline(chordNode.parent)) throw "和弦不在下划线下，无需删除";
 
-    let chordType = chordNode.type;
-    let underlineType;
-    switch (chordType) {
-      case ENodeType.Chord:
-        underlineType = ENodeType.Underline;
-        break;
-      case ENodeType.ChordPure:
-        underlineType = ENodeType.UnderlinePure;
-        break;
-      default:
-        console.error("非和弦不能添加下划线");
-        return;
-    }
+  //   let chordType = chordNode.type;
+  //   let underlineType;
+  //   switch (chordType) {
+  //     case ENodeType.Chord:
+  //       underlineType = ENodeType.Underline;
+  //       break;
+  //     case ENodeType.ChordPure:
+  //       underlineType = ENodeType.UnderlinePure;
+  //       break;
+  //     default:
+  //       console.error("非和弦不能添加下划线");
+  //       return;
+  //   }
 
-    let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
-    if (!nextChordNode) throw "未找到下一个和弦";
+  //   let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
+  //   if (!nextChordNode) throw "未找到下一个和弦";
 
-    let commonAncestorNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
-    if (!commonAncestorNode || !NodeUtils.isUnderline(commonAncestorNode))
-      throw "不在下划线下";
-    // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
-    // 起始节点和终止节点一定是兄弟节点
-    let startNode = NodeUtils.parentUntil(chordNode, commonAncestorNode);
-    let endNode = NodeUtils.parentUntil(nextChordNode, commonAncestorNode);
+  //   let commonAncestorNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
+  //   if (!commonAncestorNode || !NodeUtils.isUnderline(commonAncestorNode))
+  //     throw "不在下划线下";
+  //   // 起始节点是一个包含（或等于）起始和弦的元素，终止节点同理
+  //   // 起始节点和终止节点一定是兄弟节点
+  //   let startNode = NodeUtils.parentUntil(chordNode, commonAncestorNode);
+  //   let endNode = NodeUtils.parentUntil(nextChordNode, commonAncestorNode);
 
-    // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
-    // 否则就要看兄弟节点其前其后是否有和弦节点
-    let beforeStartNodes = startNode.parent.children.slice(
-      0,
-      NodeUtils.indexOf(startNode)
-    );
-    let afterStartNodes = startNode.parent.children.slice(
-      NodeUtils.indexOf(startNode) + 1
-    );
-    let beforeEndNodes = endNode.parent.children.slice(
-      0,
-      NodeUtils.indexOf(endNode)
-    );
-    let afterEndNodes = endNode.parent.children.slice(
-      NodeUtils.indexOf(endNode) + 1
-    );
-    let hasPrev =
-      NodeUtils.isUnderline(startNode) ||
-      beforeStartNodes.filter((n) => n.type == chordType).length > 0;
-    let hasNextNext =
-      NodeUtils.isUnderline(endNode) ||
-      afterEndNodes.filter((n) => n.type == chordType).length > 0;
+  //   // 如果和弦在下划线内，起始和弦其前定有和弦，终止和弦则其后定有和弦
+  //   // 否则就要看兄弟节点其前其后是否有和弦节点
+  //   let beforeStartNodes = startNode.parent.children.slice(
+  //     0,
+  //     NodeUtils.indexOf(startNode)
+  //   );
+  //   let afterStartNodes = startNode.parent.children.slice(
+  //     NodeUtils.indexOf(startNode) + 1
+  //   );
+  //   let beforeEndNodes = endNode.parent.children.slice(
+  //     0,
+  //     NodeUtils.indexOf(endNode)
+  //   );
+  //   let afterEndNodes = endNode.parent.children.slice(
+  //     NodeUtils.indexOf(endNode) + 1
+  //   );
+  //   let hasPrev =
+  //     NodeUtils.isUnderline(startNode) ||
+  //     beforeStartNodes.filter((n) => n.type == chordType).length > 0;
+  //   let hasNextNext =
+  //     NodeUtils.isUnderline(endNode) ||
+  //     afterEndNodes.filter((n) => n.type == chordType).length > 0;
 
-    if (!hasPrev && !hasNextNext) {
-      // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
-      // console.log("_s e_");
-      NodeUtils.replace(commonAncestorNode, commonAncestorNode.children);
-    } else if (hasPrev && !hasNextNext) {
-      // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
-      // console.log("_xxx s e_");
-      NodeUtils.remove(afterStartNodes);
-      NodeUtils.insertAfter(commonAncestorNode, afterStartNodes);
-    } else if (!hasPrev && hasNextNext) {
-      // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
-      // console.log("_s e xxx_");
-      NodeUtils.remove(beforeEndNodes);
-      NodeUtils.insertBefore(commonAncestorNode, beforeEndNodes);
-    } else {
-      // 前后都有元素，需要从中间断开
-      // console.log("_xxx s e yyy_");
-      let newUnderlineNode = reactive(new SheetNode(underlineType));
-      NodeUtils.insertAfter(commonAncestorNode, newUnderlineNode);
-      NodeUtils.remove(afterStartNodes);
-      NodeUtils.append(newUnderlineNode, afterStartNodes);
-      beforeEndNodes = endNode.parent.children.slice(0, NodeUtils.indexOf(endNode)); // 这一堆被放到新位置的，需要更新，这里实际获取到的是之前after和before的交集
-      NodeUtils.remove(beforeEndNodes);
-      NodeUtils.insertBefore(newUnderlineNode, beforeEndNodes);
-    }
-  },
+  //   if (!hasPrev && !hasNextNext) {
+  //     // 下划线只有这两个和弦，则删除整个下划线，内容放到外面
+  //     // console.log("_s e_");
+  //     NodeUtils.replace(commonAncestorNode, commonAncestorNode.children);
+  //   } else if (hasPrev && !hasNextNext) {
+  //     // 起始和弦前面还有元素，但结束和弦后面没有，需要把起始和弦之后的所有元素移出
+  //     // console.log("_xxx s e_");
+  //     NodeUtils.removeFromParent(afterStartNodes);
+  //     NodeUtils.insertAfter(commonAncestorNode, afterStartNodes);
+  //   } else if (!hasPrev && hasNextNext) {
+  //     // 起始和弦前面没有，但结束和弦后面有元素，需要把结束和弦之前的所有元素移出
+  //     // console.log("_s e xxx_");
+  //     NodeUtils.removeFromParent(beforeEndNodes);
+  //     NodeUtils.insertBefore(commonAncestorNode, beforeEndNodes);
+  //   } else {
+  //     // 前后都有元素，需要从中间断开
+  //     // console.log("_xxx s e yyy_");
+  //     let newUnderlineNode = reactive(new SheetNode(underlineType));
+  //     NodeUtils.insertAfter(commonAncestorNode, newUnderlineNode);
+  //     NodeUtils.removeFromParent(afterStartNodes);
+  //     NodeUtils.append(newUnderlineNode, afterStartNodes);
+  //     beforeEndNodes = endNode.parent.children.slice(0, NodeUtils.indexOf(endNode)); // 这一堆被放到新位置的，需要更新，这里实际获取到的是之前after和before的交集
+  //     NodeUtils.removeFromParent(beforeEndNodes);
+  //     NodeUtils.insertBefore(newUnderlineNode, beforeEndNodes);
+  //   }
+  // },
   /** 删除所处的所有下划线 */
   removeAllUnderlineOnChord(chordNode) {
     // 首先对自己进行下划线删除操作，移除自己到后面和弦的下划线
@@ -551,7 +578,7 @@ export const EditAction = {
       let content = node.content
       if (NodeUtils.isPlaceholder(content)) { // 空和弦
         if (removeEmptyNode) { // 删除
-          NodeUtils.remove(node)
+          NodeUtils.removeFromParent(node)
           return null
         }
         else { // 全部标记为空格
@@ -624,7 +651,7 @@ export const EditAction = {
     let newText = _getInputText("编辑文本", text);
 
     NodeUtils.insertAfter(node, NodeUtils.createTextNodes(newText))
-    NodeUtils.remove(textNodes)
+    NodeUtils.removeFromParent(textNodes)
   },
   /** 高亮节点 */
   highlightNode(node) {

@@ -1,4 +1,4 @@
-import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, isTreeStructureCorrect } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode.js"
 
 const ReChord = /\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // [X] | [X]{word}
 const ReChordPure = /!\[([^\]]*)\]/ // ![X]
@@ -218,7 +218,7 @@ export function parseSheet(sheetText) {
   let sheetBody = lines.slice(lineIndex).join("\n");
   parseNodes(rootNode, sheetBody)
 
-  if (!isTreeStructureCorrect(rootNode)) {
+  if (!validateTree(rootNode)) {
     throw "bad tree"
   }
   return rootNode

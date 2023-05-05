@@ -187,7 +187,7 @@ import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
 import { get } from "@/utils/request.js";
 
-import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
+import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
@@ -367,6 +367,7 @@ export default {
     },
     loadSheet(sheetText) {
       let rootNode = reactive(parseSheet(sheetText));
+      validateTree(rootNode)
       NodeUtils.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
@@ -460,7 +461,7 @@ export default {
     },
     editRemoveUnderline(node = null) {
       node = node ?? this.contextMenu.node;
-      EditAction.removeUnderlineOfChord(node);
+      this.editor.removeUnderlineOnChord(node);
     },
     editRecoverChord(node = null) {
       node = node ?? this.contextMenu.node;
@@ -529,7 +530,7 @@ export default {
     },
     editAddUnderline(node = null) {
       node = node ?? this.contextMenu.node;
-      EditAction.addUnderlineForChord(node);
+      gThis.editor.addUnderlineForChord(node);
     },
     onChangeSheetKey(e) {
       let oldKey = this.sheetInfo.sheetKey

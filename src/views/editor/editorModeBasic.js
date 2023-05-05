@@ -73,7 +73,7 @@ function _addUnderline(e) {
   if (!gCurNode) return
   if (!NodeUtils.isChord(gCurNode)) return
 
-  EditAction.addUnderlineForChord(gCurNode)
+  gThis.editor.addUnderlineForChord(gCurNode)
 }
 
 function _removeUnderline(e) {
@@ -82,7 +82,7 @@ function _removeUnderline(e) {
   if (!NodeUtils.isChord(gCurNode)) return
   if (!NodeUtils.hasUnderlineToNextChord(gCurNode)) return
 
-  EditAction.removeUnderlineOfChord(gCurNode)
+  gThis.editor.removeUnderlineOnChord(gCurNode)
 }
 
 function _switchChordType(e) {
@@ -108,10 +108,10 @@ export default {
       },
       dblclick: (e, node) => {
         if (!e.shiftKey) {
-          EditAction.addUnderlineForChord(node);
+          gThis.editor.addUnderlineForChord(node);
         }
         else if (NodeUtils.hasUnderlineToNextChord(node)){
-          EditAction.removeUnderlineOfChord(node);
+          gThis.editor.removeUnderlineOnChord(node);
         }
       },
       contextmenu: (e, node) => gThis.openContext(e, node),
@@ -159,6 +159,18 @@ export default {
 
     // 按下Z键快速切换和弦类型
     gHookIds.push(HotKey.addListener("KeyZ", _hotkeySwitcher(_switchChordType)))
+
+    // Ctrl+Z 撤销， Ctrl+Y 重做
+    gHookIds.push(HotKey.addListener("KeyZ", function (){
+      if (gThis.editor.canUndo()) {
+        gThis.editor.undo()
+      }
+    }, true))
+    gHookIds.push(HotKey.addListener("KeyY", function (){
+      if (gThis.editor.canRedo()) {
+        gThis.editor.redo()
+      }
+    }, true))
   },
   release: function() {
     for (let id of gHookIds) {
