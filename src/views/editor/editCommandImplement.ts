@@ -102,7 +102,6 @@ export class SheetEditCommandRemoveUnderline extends SheetEditCommand {
 export class SheetEditCommandAddUnderline extends SheetEditCommand {
     nodes: SheetNode[];
 
-    isPure: boolean;
     underlineNode: SheetNode;
     index: number;
 
@@ -125,19 +124,18 @@ export class SheetEditCommandAddUnderline extends SheetEditCommand {
         })
 
         assert(!(hasChord && hasPureChord), "下划线内不能同时包含标注和弦和纯和弦")
-        this.isPure = hasPureChord
+        this.underlineNode = NodeUtils.createUnderlineNode(hasPureChord)
     }
 
     _executeV(): void {
-        this.underlineNode = NodeUtils.createUnderlineNode(this.isPure)
         NodeUtils.insertBefore(this.nodes[0], this.underlineNode)
         NodeUtils.removeFromParent(this.nodes)
         NodeUtils.append(this.underlineNode, this.nodes)
     }
 
     _withdrawV(): void {
+        NodeUtils.removeFromParent(this.nodes)
         NodeUtils.replace(this.underlineNode, this.nodes)
-        this.underlineNode = null
     }
 
     __assertBeginAndEnd() {
@@ -223,11 +221,11 @@ export class SheetEditCommandMergeUnderline extends SheetEditCommand {
         this.startNode = startNode
         this.endNode = endNode
         this.betweenNodes = NodeUtils.getSiblingBetween(startNode, endNode, false, false);
+
+        this.mergedNode = NodeUtils.createUnderlineNode(this.startNode.type == ENodeType.UnderlinePure)
     }
 
     _executeV(): void {
-        this.mergedNode = NodeUtils.createUnderlineNode(this.startNode.type == ENodeType.UnderlinePure)
-        
         NodeUtils.removeFromParent(this.betweenNodes)
 
         NodeUtils.append(this.mergedNode, this.startNode.children)
@@ -244,8 +242,6 @@ export class SheetEditCommandMergeUnderline extends SheetEditCommand {
 
         let nodes = [this.startNode, ...this.betweenNodes, this.endNode]
         NodeUtils.replace(this.mergedNode, nodes)
-
-        this.mergedNode = null
     }
 }
 

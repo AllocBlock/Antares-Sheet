@@ -1,5 +1,6 @@
 import { SheetNode, ENodeType } from "@/utils/sheetNode.js";
 import { reactive } from "vue";
+import { assert } from "./assert";
 
 function _getInputText(tips, defaultText = "") {
   return prompt(tips, defaultText);
@@ -35,15 +36,17 @@ function _traversePrev(node, index, callback) {
   else return null;
 }
 
+function forceArray(data) {
+  if (!Array.isArray(data)) return [data]
+  return data
+}
+
 // provide raw unsafe action on tree and node
 export const NodeUtils = {
   isChord(node) { return node && (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure); },
   isNewLine(node) { return node && node.type == ENodeType.NewLine; },
   isUnderline(node) { return node && (node.type == ENodeType.Underline || node.type == ENodeType.UnderlinePure); },
-  indexOf(node) {
-    if (!node.parent) throw "该节点没有父节点，无法获取索引";
-    return node.parent.children.findIndex((e) => e === node);
-  },
+  indexOf(node) { return node.getSelfIndex() },
   prevSibling(node) {
     let i = NodeUtils.indexOf(node)
     if (i == 0) return null
@@ -152,7 +155,7 @@ export const NodeUtils = {
   },
   /** 设置节点的父节点，可以是数组 */
   setParent(data, parent) {
-    if (!Array.isArray(data)) data = [data]
+    data = forceArray(data)
     for (let n of data)
       n.parent = parent;
   },
@@ -165,7 +168,7 @@ export const NodeUtils = {
    */
   insert(parent, index, data, replace = 0) {
     if (index < 0) throw "索引错误";
-    if (!Array.isArray(data)) data = [data]
+    data = forceArray(data)
     this.setParent(data, parent)
     parent.children.splice(index, replace, ...data);
   },
@@ -187,14 +190,11 @@ export const NodeUtils = {
   },
   /** 移除节点，使其成为游离节点，可以是数组（没有树结构检查），自动更新父节点 */
   removeFromParent(data) {
-    if (Array.isArray(data)) {
-      for (let node of data) {
-        this.replace(node, []);
-        node.parent = null;
-      }
-    } else {
-      this.replace(data, []);
-      data.parent = null;
+    data = forceArray(data)
+    for (let node of data) {
+      assert(node.parent, "节点早已游离，无需再操作")
+      this.replace(node, []);
+      node.parent = null;
     }
   },
   /** 在末尾插入节点，可以是数组，自动更新父节点 */

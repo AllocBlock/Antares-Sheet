@@ -261,7 +261,7 @@ export default {
       },
       keyboard: {
         isFocused: false,
-        isFolded: false,
+        isFolded: true,
       },
       contextMenu: {
         show: false,
@@ -454,6 +454,7 @@ export default {
       let newContent = prompt("编辑内容", node.content);
       if (!newContent) return;
       this.editor.updateContent(node, newContent)
+      validateTree(this.sheetInfo.sheetTree)
     },
     editRemove(node = null) {
       node = node ?? this.contextMenu.node;
@@ -462,6 +463,7 @@ export default {
     editRemoveUnderline(node = null) {
       node = node ?? this.contextMenu.node;
       this.editor.removeUnderlineOnChord(node);
+      validateTree(this.sheetInfo.sheetTree)
     },
     editRecoverChord(node = null) {
       node = node ?? this.contextMenu.node;
@@ -530,7 +532,8 @@ export default {
     },
     editAddUnderline(node = null) {
       node = node ?? this.contextMenu.node;
-      gThis.editor.addUnderlineForChord(node);
+      this.editor.addUnderlineForChord(node);
+      validateTree(this.sheetInfo.sheetTree)
     },
     onChangeSheetKey(e) {
       let oldKey = this.sheetInfo.sheetKey
@@ -623,6 +626,7 @@ export default {
         this.editor.insertBefore(this.contextMenu.node, nodes)
       else
         this.editor.insertAfter(this.contextMenu.node, nodes)
+      validateTree(this.sheetInfo.sheetTree)
     },
     onContextButtonMouseEnter(tip) {
       this.contextMenu.tip.show = true

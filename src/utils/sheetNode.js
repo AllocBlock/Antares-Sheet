@@ -47,7 +47,7 @@ export class SheetNode {
   }
 
   getSelfIndex() {
-    if (!this.parent) return null;
+    if (!this.parent) throw "节点没有父节点，不能获取索引";
     let index = this.parent.children.indexOf(this)
     if (index < 0) throw "wrong tree structure, parent dont contain this child";
     return index
@@ -95,6 +95,15 @@ export function traverseNode(node, callback) {
 export function validateTree(root) {
   for (let child of root.children) {
     if(child.parent != root) return false; // 树结构有误，子节点未指定父节点/或有错误的父节点
+
+    if (child.type == ENodeType.Underline) { // 下划线的起始/末尾必须是下划线或和弦
+      assert(child.children.length >= 2, "下划线节点必须包含两个及以上的节点")
+      let firstChild = child.children[0]
+      let lastChild = child.children[child.children.length - 1]
+      assert(firstChild.isChord() || firstChild.isUnderline(), "下划线的第一个子节点必须是和弦或下划线")
+      assert(lastChild.isChord() || lastChild.isUnderline(), "下划线的第一个子节点必须是和弦或下划线")
+    }
+
     if (!validateTree(child))
       return false;
   }
