@@ -398,8 +398,8 @@ export default {
       this.contextMenu.style.left = `${e.clientX}px`;
       this.contextMenu.style.top = `${e.clientY}px`;
 
-      let isChord = NodeUtils.isChord(node);
-      let isNewLine = NodeUtils.isNewLine(node);
+      let isChord = node && node.isChord();
+      let isNewLine = node && node.isNewLine();
       this.contextMenu.enableEditContent = !isNewLine;
       this.contextMenu.enableAddUnderline = isChord;
       this.contextMenu.enableRemoveUnderline = isChord && NodeUtils.hasUnderlineToNextChord(node);

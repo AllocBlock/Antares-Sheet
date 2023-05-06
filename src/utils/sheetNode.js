@@ -77,6 +77,7 @@ export class SheetNode {
   isChord() {
     return this.type == ENodeType.Chord || this.type == ENodeType.ChordPure
   }
+  isNewLine() { return this.type == ENodeType.NewLine; }
 }
 
 export var createUnknownNode = function(content, parent = null) {
@@ -97,7 +98,10 @@ export function validateTree(root) {
     if(child.parent != root) return false; // 树结构有误，子节点未指定父节点/或有错误的父节点
 
     if (child.type == ENodeType.Underline) { // 下划线的起始/末尾必须是下划线或和弦
-      assert(child.children.length >= 2, "下划线节点必须包含两个及以上的节点")
+      assert(child.children.length >= 1, "下划线节点必须包含两个及以上的节点")
+      if (child.children.length == 1)
+        assert(child.children[0].isUnderline(), "下划线节点如果只有一个子节点，则这个子节点必定是下划线节点")
+
       let firstChild = child.children[0]
       let lastChild = child.children[child.children.length - 1]
       assert(firstChild.isChord() || firstChild.isUnderline(), "下划线的第一个子节点必须是和弦或下划线")

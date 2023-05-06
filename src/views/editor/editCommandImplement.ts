@@ -369,11 +369,11 @@ export class SheetEditCommandRemove extends SheetEditCommand {
     }
 
     _executeV(): void {
-        this.parent.children.splice(this.index, 1)
+        NodeUtils.removeFromParent(this.node)
     }
 
     _withdrawV(): void {
-        this.parent.children.splice(this.index, 0, this.node)
+        NodeUtils.insert(this.parent, this.index, this.node)
     }
 }
 
@@ -425,5 +425,25 @@ export class SheetEditCommandUpdateContent extends SheetEditCommand {
             this.insertCmd.withdraw()
         }
         this.insertCmd = null;
+    }
+}
+
+// Warning: unsafe command, make sure contrain is not break when use this
+export class SheetEditCommandReplaceNode extends SheetEditCommand {
+    node: SheetNode;
+    newNode: SheetNode;
+
+    constructor(node: SheetNode, newNode: SheetNode) {
+        super();
+        this.node = node
+        this.newNode = newNode
+    }
+
+    _executeV(): void {
+        NodeUtils.replace(this.node, this.newNode)
+    }
+
+    _withdrawV(): void {
+        NodeUtils.replace(this.newNode, this.node)
     }
 }

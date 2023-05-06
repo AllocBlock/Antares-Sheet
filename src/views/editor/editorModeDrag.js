@@ -128,7 +128,8 @@ function _onCursorUp(e) {
         gDragChord.toInsertNode.content = gDragChord.toUpdateNode.content
       }
       // TODO: 检查是否能够替换，有没有不能直接替换的情况？
-      NodeUtils.replace(gDragChord.toUpdateNode, gDragChord.toInsertNode)
+      EditAction.unhighlightNode(gDragChord.toUpdateNode)
+      gThis.editor.replaceNode(gDragChord.toUpdateNode, gDragChord.toInsertNode)
     }
     gDragChord.clear()
     gUI.hideDragMark()
@@ -244,7 +245,8 @@ export default {
 
         if (e.shiftKey) {
           _startDragChord(e, node.chord)
-          EditAction.convertToText(node, false)
+          
+          gThis.editor.convertToText(node, false)
         } else if (e.ctrlKey){
           _startDragChord(e, node.chord)
         } else if (e.altKey && node.type == ENodeType.Chord){

@@ -10,7 +10,8 @@ import {
     SheetEditCommandMergeUnderline,
     SheetEditCommandRemoveUnderline,
     SheetEditCommandShrinkUnderline,
-    SheetEditCommandSplitUnderline
+    SheetEditCommandSplitUnderline,
+    SheetEditCommandReplaceNode
 } from "./editCommandImplement"
 import { assert } from "@/utils/assert"
 import { NodeUtils } from "@/utils/sheetEdit"
@@ -38,6 +39,12 @@ export default class SheetEditor {
     /** 更新节点的内容 */
     updateContent(node: SheetNode, content: string) {
         let cmd = new SheetEditCommandUpdateContent(node, content)
+        this.commandPool.execute(cmd)
+    }
+
+    /** 删除一个节点（不安全） */
+    remove(node: SheetNode) {
+        let cmd = new SheetEditCommandRemove(node)
         this.commandPool.execute(cmd)
     }
 
@@ -131,5 +138,41 @@ export default class SheetEditor {
 
         assert(cmd, "未知错误，未找到合适的命令")
         this.commandPool.execute(cmd)
+    }
+
+    replaceNode(node : SheetNode, newNode : SheetNode) {
+        let cmd = new SheetEditCommandReplaceNode(node, newNode)
+        this.commandPool.execute(cmd)
+    }
+
+    // FIXME: 不是单个命令，不能统一撤销
+    removeAllUnderlineOfChord(node : SheetNode) {
+        assert(node.isChord(), "输入应该是和弦节点")
+        while(node.parent.isUnderline()) {
+            let cmd = new SheetEditCommandRemoveUnderline(node.parent)
+            this.commandPool.execute(cmd)
+        }
+    }
+
+    // FIXME: 不是单个命令，不能统一撤销
+    // 返回转换后的文本节点
+    convertToText(node : SheetNode, removeEmptyNode : boolean) : SheetNode {
+        assert(node.isChord(), "仅和弦可以转换为文本")
+        this.removeAllUnderlineOfChord(node) // 删除和弦下划线
+
+        let content = node.content
+        if (NodeUtils.isPlaceholder(content)) { // 空和弦
+            if (removeEmptyNode) { // 删除
+                this.remove(node)
+                return null
+            }
+            else { // 全部标记为空格
+                content = " "
+            }
+        }
+
+        let textNode = NodeUtils.createTextNode(content)
+        this.replaceNode(node, textNode);
+        return textNode
     }
 }
