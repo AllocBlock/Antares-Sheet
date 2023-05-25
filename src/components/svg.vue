@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { get } from "@/utils/request.js";
+import Request from "@/utils/request.js";
 
 export default {
   name: "Svg",
@@ -24,7 +24,7 @@ export default {
   },
   created() {
     let that = this
-    get(this.src).then(res => {
+    Request.get(this.src).then(res => {
       that.svgData = res
     })
   },

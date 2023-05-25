@@ -5,6 +5,7 @@
       <ProjectCard v-for="(projectInfo, index) in projectInfos" :key="projectInfo.id" 
         :projectInfo="projectInfo" 
         @delete="deleteProject(index)"
+        @click="openProject(index)"
         class="project_card" 
       />
       <div id="add_project_card" class="project_card flex_hv_center" @click="addProject">
@@ -34,7 +35,7 @@ export default {
   mounted() {
     let projectInfos = JSON.parse(Storage.load("project")) ?? []
     this.projectInfos = projectInfos
-      console.log(this.projectInfos)
+    console.log(this.projectInfos)
   },
   methods: {
     addProject() {
@@ -62,6 +63,11 @@ export default {
     deleteProject(index) {
       this.projectInfos.splice(index, 1)
       this.saveProjectInfo()
+    },
+    openProject(index) {
+      let info = this.projectInfos[index]
+      let pid = info.pid
+      window.location.href = `/editor?pid=${pid}`
     },
     saveProjectInfo() {
       Storage.save("project", JSON.stringify(this.projectInfos)) ?? []

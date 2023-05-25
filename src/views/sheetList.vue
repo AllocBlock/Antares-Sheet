@@ -11,12 +11,12 @@
 </template>
 
 <script>
-import { get } from "@/utils/request.js";
+import Request from "@/utils/request.js";
 
 export default {
   name: "SheetList",
   mounted() {
-    get("api/sheet.php", {}).then(res => {
+    Request.get("api/sheet.php", {}).then(res => {
       this.list = res.data.list
     })
   },

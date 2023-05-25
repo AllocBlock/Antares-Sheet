@@ -25,16 +25,17 @@ function handleError(error, reject) {
   reportError(error.message, reject)
 }
 
-export function get(url, params = {}) {
-  return new Promise((resolve, reject) => {
-    axios.get(url, {
-      params: params
+export default {
+  get(url, params = {}) {
+    return new Promise((resolve, reject) => {
+      axios.get(url, {
+        params: params
+      })
+      .then(response => handleResponse(response, resolve, reject))
+      .catch(error => handleError(error, reject))
     })
-    .then(response => handleResponse(response, resolve, reject))
-    .catch(error => handleError(error, reject))
-  })
+  }
 }
-
 // export function post(url, form = {}) {
 //   return new Promise((resolve, reject) => {
 //     axios.post(url, form)

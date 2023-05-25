@@ -185,12 +185,12 @@ import Focusable from "@/components/focusable.vue";
 
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
-import { get } from "@/utils/request.js";
 
 import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
+import { loadSheetFromUrlParam, ESheetSource } from "./editorCommon";
 import SheetEditor from "./editor";
 import EditorModeBasic from './editorModeBasic.js'
 import EditorModeDrag from './editorModeDrag.js'
@@ -200,6 +200,7 @@ import { mergeEditorModeArray } from "./editorModeCommon.js";
 import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import Storage from "@/utils/storage.js";
+import { Project } from "@/utils/project";
 
 let g_UkulelePlayer = new StringInstrument("Ukulele", "Ukulele");
 let g_OscillatorPlayer = new StringInstrument("Ukulele", "Oscillator");
@@ -236,6 +237,7 @@ export default {
         showAudioPlayer: false
       },
       editor: new SheetEditor(),
+      pid: null,
       sheetInfo: {
         title: "加载中",
         singer: "",
@@ -314,35 +316,19 @@ export default {
       this.toolChord.events = this.editorMode.toolChordEvents
   },
   mounted() {
+    loadSheetFromUrlParam().then(res => {
+      let [sheetSource, sheetData, pid] = res
+      this.sheetSource = sheetSource
+      this.pid = pid
+      this.loadSheet(sheetData)
+    })
+
     let that = this
-
-    let storageSheet = Storage.load("tempSheet")
-    if (!storageSheet) {
-      console.log("从文件加载曲谱...");
-      let sheetName = getQueryVariable("sheet");
-      get(`sheets/${sheetName}.atrs`)
-        .then((res) => {
-          that.loadSheet(res)
-        })
-        .catch((e) => {
-          console.error("加载失败", e);
-        });
-    }
-    else {
-      console.log("从上次会话加载曲谱...");
-      that.loadSheet(storageSheet)
-    }
-    
-    document.addEventListener("click", () => this.closeContext());
-
-    function saveSheetToStorage() {
-      let data = that.getSheetRaw()
-      Storage.save("tempSheet", data)
-    }
     startRepeatTimeout(()=>{
-      console.log("Save sheet...")
-      saveSheetToStorage()
+      that.saveSheet()
     }, 5000)
+
+    document.addEventListener("click", () => this.closeContext());
   },
   methods: {
     clearSheet() {
@@ -584,6 +570,7 @@ export default {
       input.type = 'file';
       input.accept = ".atrs"
       input.onchange = e => { 
+        this.sheetSource = ESheetSource.FILE
         let file = e.target.files[0]; 
         let fileReader = new FileReader()
         fileReader.onload = ()=> this.loadSheet(fileReader.result)
@@ -591,6 +578,12 @@ export default {
       }
       input.click();
       input.remove()
+    },
+    saveSheet() {
+      if (this.sheetSource == ESheetSource.PROJECT) {
+        console.log("Save sheet...")
+        Project.update(this.pid, this.getSheetRaw())
+      }
     },
     insertNode(type, isOnLeft) {
       // init node

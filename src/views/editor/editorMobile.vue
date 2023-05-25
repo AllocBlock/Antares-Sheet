@@ -102,7 +102,7 @@ import { parseSheet } from "@/utils/sheetParser.js";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
 import Chord from "@/components/chord/index.vue";
-import { get } from "@/utils/request.js";
+import Request from "@/utils/request.js";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
@@ -185,7 +185,7 @@ export default {
     let that = this
 
     let sheetName = getQueryVariable("sheet");
-    get(`sheets/${sheetName}.atrs`)
+    Request.get(`sheets/${sheetName}.atrs`)
       .then((res) => {
         that.loadSheet(res)
       })
@@ -194,8 +194,8 @@ export default {
       });
   },
   methods: {
-    loadSheet(sheetText) {
-      let rootNode = reactive(parseSheet(sheetText));
+    loadSheet(sheetData) {
+      let rootNode = reactive(parseSheet(sheetData));
       NodeUtils.normalizeSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";

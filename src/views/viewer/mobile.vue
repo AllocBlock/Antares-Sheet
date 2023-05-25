@@ -69,7 +69,7 @@ import SheetInfo from "./sheetInfo.ts"
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
-import { get } from "@/utils/request.js"
+import Request from "@/utils/request.js"
 import SheetViewerLoadCover from "./loadCover.vue";
 
 let gPlayer = null
@@ -159,7 +159,7 @@ export default {
       return
     }
 
-    get(`sheets/${sheetName}.atrs`).then((res) => {
+    Request.get(`sheets/${sheetName}.atrs`).then((res) => {
       let rootNode = parseSheet(res)
       if (!rootNode) {
         this.load.state = ELoadState.Failed

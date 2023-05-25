@@ -110,7 +110,7 @@ import SheetInfo from "./sheetInfo.ts"
 import Metronome from "@/components/metronome/index.vue"
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
-import { get } from "@/utils/request.js"
+import Request from "@/utils/request.js"
 import CapoSelector from "@/components/capoSelector.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
 import SheetViewerLoadCover from "./loadCover.vue";
@@ -232,7 +232,7 @@ export default {
       return
     }
 
-    get(`sheets/${sheetName}.atrs`).then((res) => {
+    Request.get(`sheets/${sheetName}.atrs`).then((res) => {
       let rootNode = parseSheet(res)
       if (!rootNode) {
         this.load.state = ELoadState.Failed

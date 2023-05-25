@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { ProjectInfo } from "@/utils/project.js"
+import { ProjectInfo } from "@/utils/project"
 
 export default {
   name: "ProjectCard",
