@@ -95,7 +95,6 @@ export default {
 
   .project_card {
     width: 100px;
-    height: 80px;
     margin: 10px;
   }
 }

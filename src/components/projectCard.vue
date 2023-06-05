@@ -1,6 +1,8 @@
 <template>
   <div class="project_card">
     <div class="project_card_title">{{projectInfo.title}}</div>
+    <div class="project_card_song_title">{{projectInfo.sheetMeta.title}}</div>
+    <div class="project_card_song_singer">{{projectInfo.sheetMeta.singer}}</div>
     <div class="project_card_create_time">{{timestampToString(projectInfo.createTime)}}</div>
     <div class="project_card_update_time">{{timestampToString(projectInfo.updateTime)}}</div>
     <div class="project_card_pid">{{projectInfo.pid}}</div>
@@ -49,6 +51,14 @@ export default {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+  .project_card_song_title {
+    color: white;
+    font-size: 14px;
+  }
+  .project_card_song_singer {
+    color: grey;
+    font-size: 12px;
   }
   .project_card_create_time, .project_card_update_time {
     color: black;

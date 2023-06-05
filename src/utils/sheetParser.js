@@ -1,4 +1,5 @@
 import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode.js"
+import { SheetInfo, SheetMeta } from "@/utils/sheetInfo"
 
 const ReChord = /\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // [X] | [X]{word}
 const ReChordPure = /!\[([^\]]*)\]/ // ![X]
@@ -173,9 +174,10 @@ function parseNodes(parentNode, str) {
 }
 
 export function parseSheet(sheetData) {
+  let meta = new SheetMeta()
   let rootNode = new SheetNode(ENodeType.Root)
-  if (sheetData == "") return rootNode
-  else if (!sheetData) return null
+
+  if (!sheetData) return [meta, rootNode]
   // 解析标签信息，标签信息具有通用性，可以自定义标签
   // 标签可以是一个值或是数组，数组中的每个值用空格隔开
   // 如果值中有空格则使用""将值括起来，如果值中有"则在前面加一个反斜杠变成\"
@@ -210,8 +212,8 @@ export function parseSheet(sheetData) {
       }
 
       if (value.length == 1) value = value[0];
-
-      rootNode[key] = value;
+      
+      meta.update(key, value)
     } else break;
   }
   lineIndex--;
@@ -222,5 +224,5 @@ export function parseSheet(sheetData) {
   if (!validateTree(rootNode)) {
     throw "bad tree"
   }
-  return rootNode
+  return [meta, rootNode]
 }

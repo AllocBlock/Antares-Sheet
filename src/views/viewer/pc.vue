@@ -54,12 +54,12 @@
     </DraggablePanel>
     
     <div id="sheet">
-      <div id="song_title" class="title">{{sheetInfo.title}}</div>
-      <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
+      <div id="song_title" class="title">{{sheetInfo.meta.title}}</div>
+      <div id="song_singer" class="title">{{sheetInfo.meta.singer}}</div>
       <div id="sheet_key_block">
-        <div id="sheet_original_key" class="title">{{`原调 ${sheetInfo.originalKey}`}}</div>
+        <div id="sheet_original_key" class="title">{{`原调 ${sheetInfo.meta.originalKey}`}}</div>
         <div id="sheet_current_key" class="title">
-          {{`选调 ${sheetInfo.sheetKey}`}}
+          {{`选调 ${sheetInfo.meta.sheetKey}`}}
           <div id="sheet_key_shift">
             <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
             <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
@@ -69,8 +69,8 @@
           <div class="title">变调夹 {{ capoName }}</div>
         </div>
       </div>
-      <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
-      <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
+      <div id="sheet_by" class="title">{{sheetInfo.meta.by}}</div>
+      <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.root" :events="sheetEvents"/>
       <div id="sheet_padding"></div>
     </div>
     
@@ -104,8 +104,8 @@ import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
+import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
-import SheetInfo from "./sheetInfo.ts"
 
 import Metronome from "@/components/metronome/index.vue"
 import AntaresSheet from "@/components/antaresSheet/index.vue"
@@ -114,6 +114,7 @@ import Request from "@/utils/request.js"
 import CapoSelector from "@/components/capoSelector.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
 import SheetViewerLoadCover from "./loadCover.vue";
+import { SheetInfoRuntimeView } from "@/utils/sheetInfo";
 
 let gPlayer = null
 
@@ -142,7 +143,7 @@ export default {
       load: {
         state: ELoadState.Loading,
       },
-      sheetInfo: new SheetInfo(),
+      sheetInfo: new SheetInfoRuntimeView(),
       sheetEvents: {
         text: {
           click: (e, node) => {
@@ -226,28 +227,20 @@ export default {
     // setup
     this.changeScale()
 
-    let sheetName = getQueryVariable("sheet")
-    if (!sheetName) {
-      this.load.state = ELoadState.Empty
-      return
-    }
+    loadSheetFromUrlParam().then(res => {
+      let [sheetSource, sheetData, pid] = res
+      if (sheetSource == ESheetSource.UNKNOWN) {
+        this.load.state = ELoadState.Empty
+        return
+      }
 
-    Request.get(`sheets/${sheetName}.atrs`).then((res) => {
-      let rootNode = parseSheet(res)
-      if (!rootNode) {
-        this.load.state = ELoadState.Failed
+      let [meta, root] = parseSheet(sheetData)
+      if (!root) {
         throw "曲谱解析失败！"
       }
-      this.sheetInfo.title = rootNode.title
-      this.sheetInfo.singer = rootNode.singer
-      this.sheetInfo.by = rootNode.by
-      this.sheetInfo.originalKey = rootNode.originalKey
-      this.sheetInfo.sheetKey = rootNode.sheetKey
-      this.sheetInfo.chords = rootNode.chords
-      this.sheetInfo.rhythms = rootNode.rhythms
-      this.sheetInfo.sheetTree = rootNode
-      this.sheetInfo.originalSheetKey = rootNode.sheetKey
+      this.sheetInfo = new SheetInfoRuntimeView(meta, root)
       this.load.state = ELoadState.Loaded
+      console.log(this.sheetInfo)
     }).catch((e) => {
       this.load.state = ELoadState.Failed
       console.error("曲谱获取失败：", e)
@@ -296,15 +289,15 @@ export default {
       }
     },
     shiftKey(offset) {
-      let curKey = this.sheetInfo.sheetKey;
+      let curKey = this.sheetInfo.meta.sheetKey;
       let newKey = ChordManager.shiftKey(curKey, offset);
-      this.sheetInfo.sheetKey = newKey
+      this.sheetInfo.meta.sheetKey = newKey
 
-      traverseNode(this.sheetInfo.sheetTree, (node) => {
+      traverseNode(this.sheetInfo.root, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
           node.chord = ChordManager.shiftKey(node.chord, offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
-          node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.sheetKey);
+          node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.meta.sheetKey);
         }
       })
     },

@@ -65,7 +65,7 @@ import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
 import AutoScroll from "./autoScroll.js"
-import SheetInfo from "./sheetInfo.ts"
+import { SheetInfo } from "./sheetInfo.ts"
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
@@ -160,20 +160,11 @@ export default {
     }
 
     Request.get(`sheets/${sheetName}.atrs`).then((res) => {
-      let rootNode = parseSheet(res)
-      if (!rootNode) {
+      this.sheetInfo = parseSheet(res)
+      if (!this.sheetInfo) {
         this.load.state = ELoadState.Failed
         throw "曲谱解析失败！"
       }
-      this.sheetInfo.title = rootNode.title
-      this.sheetInfo.singer = rootNode.singer
-      this.sheetInfo.by = rootNode.by
-      this.sheetInfo.originalKey = rootNode.originalKey
-      this.sheetInfo.sheetKey = rootNode.sheetKey
-      this.sheetInfo.chords = rootNode.chords
-      this.sheetInfo.rhythms = rootNode.rhythms
-      this.sheetInfo.sheetTree = rootNode
-      this.sheetInfo.originalSheetKey = rootNode.sheetKey
       this.load.state = ELoadState.Loaded
     }).catch((e) => {
       this.load.state = ELoadState.Failed

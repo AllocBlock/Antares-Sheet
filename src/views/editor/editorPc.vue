@@ -31,7 +31,7 @@
               id="song_title_input"
               class="input"
               placeholder="在此处输入歌名"
-              v-model="sheetInfo.title"
+              v-model="sheetInfo.meta.title"
               @focus="beginTyping"
               @blur="endTyping"
             />
@@ -40,15 +40,15 @@
               id="song_singer_input"
               class="input"
               placeholder="在此处输入歌手"
-              v-model="sheetInfo.singer"
+              v-model="sheetInfo.meta.singer"
               @focus="beginTyping"
               @blur="endTyping"
             />
             <div id="sheet_key_block">
               <div class="title">原调</div>
-              <KeySelector class="select" v-model:value="sheetInfo.originalKey" />
+              <KeySelector class="select" v-model:value="sheetInfo.meta.originalKey" />
               <div class="title">选调</div>
-              <KeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
+              <KeySelector class="select" :value="sheetInfo.meta.sheetKey" @change="onChangeSheetKey" />
               <div id="sheet_capo_block">
                 <div class="title">变调夹</div>
                 <CapoSelector id="capo_selector" v-model:value="player.capo"/>
@@ -57,12 +57,12 @@
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
               <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
-              <div class="button" @click="saveSheetToFile">保存</div>
+              <div class="button" @click="saveSheet">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
             <AntaresSheet
               id="sheet_box"
-              :sheet-tree="sheetInfo.sheetTree"
+              :sheet-tree="sheetInfo.root"
               :events="editorMode.componentEvents"
             />
             <div id="sheet_padding"></div>
@@ -155,7 +155,7 @@
       class="panel"
       v-model:attachedChords="toolChord.attachedChords"
       v-model:show="toolChord.showPanel"
-      :tonic="sheetInfo.sheetKey"
+      :tonic="sheetInfo.meta.sheetKey"
     />
     <div id="drop_hint_panel">
       <div id="drop_hint_text">拖拽文件加载</div>
@@ -188,9 +188,10 @@ import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
 
 import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode.js";
 import { parseSheet } from "@/utils/sheetParser.js";
+import { SheetInfo, SheetMeta } from "@/utils/sheetInfo";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
-import { loadSheetFromUrlParam, ESheetSource } from "./editorCommon";
+import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import SheetEditor from "./editor";
 import EditorModeBasic from './editorModeBasic.js'
 import EditorModeDrag from './editorModeDrag.js'
@@ -238,17 +239,7 @@ export default {
       },
       editor: new SheetEditor(),
       pid: null,
-      sheetInfo: {
-        title: "加载中",
-        singer: "",
-        by: "",
-        originalKey: "C",
-        sheetKey: "C",
-        chords: [],
-        rhythms: [],
-        originalSheetKey: "C",
-        sheetTree: NodeUtils.createRootNode(),
-      },
+      sheetInfo: new SheetInfo(),
       toolChord: {
         showPanel: false,
         attachedChords: [],
@@ -335,43 +326,29 @@ export default {
       if (!confirm("是否清空曲谱？（无法撤销！）"))
         return
 
-      this.sheetInfo.title = "请输入歌名"
-      this.sheetInfo.singer = "请输入歌手"
-      this.sheetInfo.by = "锦瑟"
-      this.sheetInfo.originalKey = "C"
-      this.sheetInfo.sheetKey = "C"
-      this.sheetInfo.chords = []
-      this.sheetInfo.rhythms = []
-      this.sheetInfo.originalSheetKey = "C"
-      this.sheetInfo.sheetTree = NodeUtils.createRootNode()
+      this.sheetInfo.meta.reset()
+      this.sheetInfo.root = NodeUtils.createRootNode()
 
       this.toolChord.attachedChords = []
 
       // 初始文本
-      NodeUtils.append(this.sheetInfo.sheetTree, NodeUtils.createTextNodes("歌词"))
-      NodeUtils.append(this.sheetInfo.sheetTree, NodeUtils.createNewLineNode())
+      NodeUtils.append(this.sheetInfo.root, NodeUtils.createTextNodes("歌词"))
+      NodeUtils.append(this.sheetInfo.root, NodeUtils.createNewLineNode())
     },
     loadSheet(sheetText) {
-      let rootNode = reactive(parseSheet(sheetText));
-      validateTree(rootNode)
-      NodeUtils.normalizeSheetTree(rootNode);
-      if (!rootNode) {
+      let [meta, root] = parseSheet(sheetText)
+      validateTree(root)
+      NodeUtils.normalizeSheetTree(root);
+      if (!root) {
         throw "曲谱解析失败！";
       }
-      this.sheetInfo.title = rootNode.title ?? "";
-      this.sheetInfo.singer = rootNode.singer ?? "";
-      this.sheetInfo.by = rootNode.by ?? "";
-      this.sheetInfo.originalKey = rootNode.originalKey ?? "C";
-      this.sheetInfo.sheetKey = rootNode.sheetKey ?? "C";
-      this.sheetInfo.chords = rootNode.chords ?? [];
-      this.sheetInfo.rhythms = rootNode.rhythms ?? [];
-      this.sheetInfo.sheetTree = rootNode;
-      this.sheetInfo.originalSheetKey = rootNode.sheetKey;
+      this.sheetInfo.meta = meta
+      this.sheetInfo.root = root;
 
-      this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
+      this.toolChord.attachedChords = this.sheetInfo.meta.chords ? this.sheetInfo.meta.chords.map((chordName) =>
         ChordManager.getChord(chordName)
       ) : [];
-      console.log("加载曲谱：", this.sheetInfo, rootNode);
+      console.log("已加载曲谱：", meta, root);
     },
     openPanelChord() {
       this.showChordPanel = true;
@@ -420,7 +397,7 @@ export default {
       player.playChord(chord, volume, duration);
     },
     shiftKey(oldKey, newKey) {
-      traverseNode(this.sheetInfo.sheetTree, (node) => {
+      traverseNode(this.sheetInfo.root, (node) => {
         if (NodeUtils.isChord(node)) {
           node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
         }
@@ -440,7 +417,7 @@ export default {
       let newContent = prompt("编辑内容", node.content);
       if (!newContent) return;
       this.editor.updateContent(node, newContent)
-      validateTree(this.sheetInfo.sheetTree)
+      validateTree(this.sheetInfo.root)
     },
     editRemove(node = null) {
       node = node ?? this.contextMenu.node;
@@ -449,7 +426,7 @@ export default {
     editRemoveUnderline(node = null) {
       node = node ?? this.contextMenu.node;
       this.editor.removeUnderlineOnChord(node);
-      validateTree(this.sheetInfo.sheetTree)
+      validateTree(this.sheetInfo.root)
     },
     editRecoverChord(node = null) {
       node = node ?? this.contextMenu.node;
@@ -519,19 +496,19 @@ export default {
     editAddUnderline(node = null) {
       node = node ?? this.contextMenu.node;
       this.editor.addUnderlineForChord(node);
-      validateTree(this.sheetInfo.sheetTree)
+      validateTree(this.sheetInfo.root)
     },
     onChangeSheetKey(e) {
-      let oldKey = this.sheetInfo.sheetKey
+      let oldKey = this.sheetInfo.meta.sheetKey
       let newKey = e.currentTarget.value
       if (newKey == oldKey) return;
-      this.sheetInfo.sheetKey = newKey
+      this.sheetInfo.meta.sheetKey = newKey
       let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
       if (!confirmed) return
       this.shiftKey(oldKey, newKey)
     },
     openRawLyricPanel() {
-      this.rawLyricPanel.lyrics = NodeUtils.toString(this.sheetInfo.sheetTree, true)
+      this.rawLyricPanel.lyrics = NodeUtils.toString(this.sheetInfo.root, true)
       this.rawLyricPanel.show = true
     },
     confirmLyric() {
@@ -539,29 +516,18 @@ export default {
 
       let root = NodeUtils.createRootNode()
       NodeUtils.append(root, NodeUtils.createTextNodes(this.rawLyricPanel.lyrics))
-      this.sheetInfo.sheetTree = root
+      this.sheetInfo.root = root
       this.rawLyricPanel.show = false
-    },
-    getSheetRaw() {
-      return toSheetFileString(
-        this.sheetInfo.sheetTree,
-        this.sheetInfo.title,
-        this.sheetInfo.singer,
-        this.sheetInfo.by,
-        this.sheetInfo.originalKey,
-        this.sheetInfo.sheetKey,
-        this.toolChord.attachedChords.map(n => n.name),
-      )
     },
     saveSheetToFile() {
       // TODO: remove un used chord?
-      let fileData = this.getSheetRaw()
+      let fileData = this.sheetInfo.toText(this.toolChord.attachedChords.map(n => n.name))
       let time = new Date().toLocaleDateString().replace(/\//g, "_")
     
       let blob = new Blob([fileData], {type: 'text/plain'})
       let download = document.createElement("a");
       download.href = window.URL.createObjectURL(blob)
-      download.setAttribute('download', `${this.sheetInfo.title}-${this.sheetInfo.singer}-${time}.atrs`)
+      download.setAttribute('download', `${this.sheetInfo.meta.title}-${this.sheetInfo.meta.singer}-${time}.atrs`)
       download.click()
       download.remove()
     },
@@ -570,7 +536,11 @@ export default {
       input.type = 'file';
       input.accept = ".atrs"
       input.onchange = e => { 
-        this.sheetSource = ESheetSource.FILE
+        if (!confirm("确定：导入当前项目\n取消：单独作为新项目")) {
+          this.sheetSource = ESheetSource.FILE
+          this.pid = null
+        }
+
         let file = e.target.files[0]; 
         let fileReader = new FileReader()
         fileReader.onload = ()=> this.loadSheet(fileReader.result)
@@ -581,8 +551,11 @@ export default {
     },
     saveSheet() {
       if (this.sheetSource == ESheetSource.PROJECT) {
-        console.log("Save sheet...")
-        Project.update(this.pid, this.getSheetRaw())
+        Project.update(this.pid, this.sheetInfo, this.toolChord.attachedChords.map(n => n.name))
+        console.log("曲谱已保存")
+      }
+      else {
+        console.log("警告：并非项目，无法保存")
       }
     },
     insertNode(type, isOnLeft) {
@@ -619,7 +592,7 @@ export default {
         this.editor.insertBefore(this.contextMenu.node, nodes)
       else
         this.editor.insertAfter(this.contextMenu.node, nodes)
-      validateTree(this.sheetInfo.sheetTree)
+      validateTree(this.sheetInfo.root)
     },
     onContextButtonMouseEnter(tip) {
       this.contextMenu.tip.show = true
@@ -637,7 +610,7 @@ export default {
       );
     },
     "toolChord.attachedChords": function() {
-      this.sheetInfo.chords = this.toolChord.attachedChords.map(chord => chord.name)
+      this.sheetInfo.meta.chords = this.toolChord.attachedChords.map(chord => chord.name)
     }
   },
 };

@@ -4,6 +4,7 @@
     <div id="sub_title">- 和弦谱查看与编辑 -</div>
     <div id="button_list" class="flex">
       <router-link class="button" to="/sheet?sheet=诺亚方舟">查看曲谱Demo</router-link>
+      <router-link class="button" to="/user/space">曲谱列表</router-link>
       <router-link class="button" to="/user/project">曲谱编辑器</router-link>
 
       <a href="https://github.com/AllocBlock/AntaresSheet">

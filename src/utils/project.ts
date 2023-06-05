@@ -1,20 +1,29 @@
 import Storage from "@/utils/storage.js";
 import { generateRandomCode } from "@/utils/random.js"
 import { assert } from "./assert";
+import { parseSheet } from "./sheetParser";
+import { SheetInfo, SheetMeta } from "./sheetInfo";
 
 export class ProjectInfo {
     pid : string
-    title : string
     createTime : Date
     updateTime : Date
+
+    title : string
+    description : string
+    tags : string[]
+    sheetMeta : SheetMeta
     sheetData : string
     
-    constructor(pid : string, title : string, sheetData : string = "") {
+    constructor(pid : string, title : string, description : string = "") {
         this.pid = pid
-        this.title = title
         this.createTime = new Date()
         this.updateTime = this.createTime
-        this.sheetData = sheetData
+        this.title = title
+        this.description = description
+        this.tags = []
+        this.sheetMeta = new SheetMeta()
+        this.sheetData = ''
     }
 }
 
@@ -29,7 +38,7 @@ function saveProjectInfos(projectInfos : ProjectInfo[]) {
 }
 
 export const Project = {
-    create(title : string = "未命名项目", sheetData : string = "") : string {
+    create(title : string = "未命名项目", description : string = "") : string {
         let projectInfos = loadProjectInfos()
         // generate project id
         let existedPids = projectInfos.map(info => info.pid)
@@ -42,7 +51,7 @@ export const Project = {
         } while (true);
 
         // add new project
-        let projectInfo = new ProjectInfo(pid, title, sheetData)
+        let projectInfo = new ProjectInfo(pid, title, description)
         projectInfos.push(projectInfo)
 
         // save changes to storage
@@ -59,13 +68,19 @@ export const Project = {
         }
         return null
     },
-    update(pid : string, sheetData : string) : void {
+    getAll() : ProjectInfo[] {
+        return loadProjectInfos()
+    },
+    // TODO: update parameter passing
+    update(pid : string, sheetInfo : SheetInfo, attachedChords : string[] = []) : void {
         assert(pid)
         let projectInfos = loadProjectInfos()
         for (let i in projectInfos) {
             if (projectInfos[i].pid == pid) {
-                projectInfos[i].updateTime = new Date()
-                projectInfos[i].sheetData = sheetData
+                let projectInfo = projectInfos[i]
+                projectInfo.updateTime = new Date()
+                projectInfo.sheetMeta = sheetInfo.meta
+                projectInfo.sheetData = sheetInfo.toText(attachedChords)
                 saveProjectInfos(projectInfos)
                 return
             }
