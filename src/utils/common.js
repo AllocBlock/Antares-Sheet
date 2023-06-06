@@ -117,3 +117,14 @@ export function startRepeatTimeout(func, timeout = 1000) {
   }
   setTimeout(loop, timeout)
 }
+
+export function createDownloadTextFile(textData, fileName) {
+    let time = new Date().toLocaleDateString().replace(/\//g, "_")
+  
+    let blob = new Blob([textData], {type: 'text/plain'})
+    let download = document.createElement("a");
+    download.href = window.URL.createObjectURL(blob)
+    download.setAttribute('download', fileName)
+    download.click()
+    download.remove()
+}

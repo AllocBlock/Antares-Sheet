@@ -86,6 +86,17 @@ export const Project = {
             }
         }
         console.warn(`未找到pid为${pid}的项目，更新项目失败`)
+    },
+    remove(pid : string) {
+        assert(pid)
+        let projectInfos = loadProjectInfos()
+        for (let i = 0; i < projectInfos.length; ++i) {
+            if (projectInfos[i].pid == pid) {
+                projectInfos.splice(i, 1)
+                saveProjectInfos(projectInfos)
+                return
+            }
+        }
     }
 
 }

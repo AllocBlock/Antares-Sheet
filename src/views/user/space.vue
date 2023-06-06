@@ -1,10 +1,10 @@
 <template>
   <div id="main">
-    <p style="font-size:40px;">曲谱们</p>
+    <p style="font-size:40px;">曲谱列表</p>
     <div id="sheet-table">
       <div v-for="project in projectInfos" class="sheet_block button" @click="openProject(project)">
         <div class="sheet_name">{{ project.sheetMeta.title }}</div>
-        <div class="sheet_singer">- {{ project.sheetMeta.singer }}</div>
+        <div class="sheet_singer">—— {{ project.sheetMeta.singer }}</div>
       </div>
     </div>
   </div>
@@ -43,9 +43,7 @@ a:focus {
 }
 
 #main {
-  width: 60%;
-  padding: 0 20%;
-  max-width: 600px;
+  padding: 0 10vw;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -61,13 +59,15 @@ a:focus {
 
 #sheet-table {
   width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .sheet_block {
-  width: calc(100% - 20px);
   height: 60px;
-  padding: 10px;
-  margin: 10px 0;
+  padding: 10px 20px;
+  margin: 10px 20px;
 
   border-radius: 20px;
   border: 2px var(--theme-color) solid;
@@ -75,7 +75,7 @@ a:focus {
 }
 
 .sheet_block:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(243, 110, 163, 0.2);
 }
 
 .sheet_block[type=digital] {

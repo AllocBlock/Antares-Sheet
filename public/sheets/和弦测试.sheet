@@ -1,0 +1,16 @@
+$title 和弦测试
+$singer 锦瑟
+$by 锦瑟
+$originalKey C
+$sheetKey C
+$chords C D E F G A B
+
+!(和弦测试)
+!(大和弦)
+![C] ![#C] ![bD] ![D] ![#D] ![bE] ![E] ![F] ![#F] ![bG] ![G] ![#G] ![bA] ![A] ![#A] ![bB] ![B] 
+!(小和弦)
+![Cm] ![#Cm] ![bDm] ![Dm] ![#Dm] ![bEm] ![Em] ![Fm] ![#Fm] ![bGm] ![Gm] ![#Gm] ![bAm] ![Am] ![#Am] ![bBm] ![Bm] 
+!(七和弦)
+![C7] ![D7] ![E7] ![F7] ![G7] ![A7] ![B7] 
+!(挂四和弦)
+![Csus4] ![Dsus4] ![Esus4] ![Fsus4] ![Gsus4] ![Asus4] ![Bsus4] 

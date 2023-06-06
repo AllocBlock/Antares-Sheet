@@ -1,6 +1,9 @@
 <template>
   <div id="main">
     <div id="title" class="flex_hv_center">项目列表</div>
+    <div class="flex_hv_center">
+      <div class="button" @click="exportProjectInfo">导出</div>
+    </div>
     <div id="project_list" class="flex">
       <ProjectCard v-for="(projectInfo, index) in projectInfos" :key="projectInfo.id" 
         :projectInfo="projectInfo" 
@@ -18,9 +21,8 @@
 
 <script>
 import ProjectCard from "@/components/projectCard.vue";
-import Storage from "@/utils/storage.js";
-import { generateRandomCode } from "@/utils/random.js"
-import { ProjectInfo } from '@/utils/project';
+import { Project, ProjectInfo } from '@/utils/project';
+import { createDownloadTextFile } from '@/utils/common'
 
 export default {
   name: "UserProject",
@@ -33,45 +35,27 @@ export default {
     };
   },
   mounted() {
-    let projectInfos = JSON.parse(Storage.load("project")) ?? []
-    this.projectInfos = projectInfos
-    console.log(this.projectInfos)
+    this.projectInfos = Project.getAll()
   },
   methods: {
     addProject() {
-      // generate project id
-      let pid = generateRandomCode(8)
-      do {
-        let existed = false
-        for (let projectInfo in this.projectInfos) {
-          if (projectInfo.pid == pid) {
-            existed = true;
-            break;
-          }
-        }
-        if (existed) pid = generateRandomCode(8);
-        else break;
-      } while (true);
-
-      // add new project
-      let projectInfo = new ProjectInfo(pid, "未命名项目")
-      this.projectInfos.push(projectInfo)
-
-      // save changes to storage
-      this.saveProjectInfo()
+      Project.create()
+      this.projectInfos = Project.getAll()
     },
     deleteProject(index) {
-      this.projectInfos.splice(index, 1)
-      this.saveProjectInfo()
+      Project.remove(this.projectInfos[index].pid)
+      this.projectInfos = Project.getAll()
     },
     openProject(index) {
       let info = this.projectInfos[index]
       let pid = info.pid
       window.location.href = `/editor?pid=${pid}`
     },
-    saveProjectInfo() {
-      Storage.save("project", JSON.stringify(this.projectInfos)) ?? []
-    },
+    exportProjectInfo() {
+      let data = JSON.stringify(this.projectInfos, null, 4)
+      let fileName = 'projects.json'
+      createDownloadTextFile(data, fileName)
+    }
   },
 };
 </script>
@@ -85,6 +69,24 @@ export default {
 #title {
   height: 50px;
   font-size: 30px;
+}
+
+
+.button {
+  background: rgb(184, 184, 184);
+  color: black;
+  padding: 10px 20px;
+  margin: 10px 20px;
+  border-radius: 20px;
+  align-self: center;
+  user-select: none;
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  white-space: nowrap;
 }
 
 #project_list {
