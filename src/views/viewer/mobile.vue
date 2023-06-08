@@ -1,8 +1,8 @@
 <template>
-  <div id="viewer" :style="globalCssVar">
+  <div id="main" :style="globalCssVar">
     <SheetViewerLoadCover :state="this.load.state" />
 
-    <div id="tools_sheet_control" class="tools_block" v-if="tools.sheetControl.enable">
+    <div id="tools_sheet_control" v-if="tools.sheetControl.enable">
       <div id="scale_block">
         <div class="tools_text">缩放</div>
         <input
@@ -34,12 +34,12 @@
     <!-- <Chord id="tip_chord" v-if="tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" /> -->
 
     <div id="sheet">
-      <div id="song_title" class="title">{{sheetInfo.title}}</div>
-      <div id="song_singer" class="title">{{sheetInfo.singer}}</div>
+      <div id="song_title" class="title">{{sheetInfo.meta.title}}</div>
+      <div id="song_singer" class="title">{{sheetInfo.meta.singer}}</div>
       <div id="sheet_key_block">
-        <div id="sheet_original_key" class="title">{{`原调 ${sheetInfo.originalKey}`}}</div>
+        <div id="sheet_original_key" class="title">{{`原调 ${sheetInfo.meta.originalKey}`}}</div>
         <div id="sheet_current_key" class="title">
-          {{`选调 ${sheetInfo.sheetKey}`}}
+          {{`选调 ${sheetInfo.meta.sheetKey}`}}
           <div id="sheet_key_shift">
             <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
             <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
@@ -49,8 +49,8 @@
           <div class="title">变调夹 {{ capoName }}</div>
         </div>
       </div>
-      <div id="sheet_by" class="title">{{sheetInfo.by}}</div>
-      <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.sheetTree" :events="sheetEvents"/>
+      <div id="sheet_by" class="title">{{sheetInfo.meta.by}}</div>
+      <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.root" :events="sheetEvents"/>
       <div id="sheet_padding"></div>
     </div>
     
@@ -58,14 +58,14 @@
 </template>
 
 <script type="module">
-import { getQueryVariable } from "@/utils/common.js";
 import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
 import { ELoadState } from "@/utils/common.js"
+import { SheetInfoRuntimeView } from "@/utils/sheetInfo";
+import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
-import { SheetInfo } from "./sheetInfo.ts"
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
@@ -95,7 +95,7 @@ export default {
       load: {
         state: ELoadState.Loading,
       },
-      sheetInfo: new SheetInfo(),
+      sheetInfo: new SheetInfoRuntimeView(),
       sheetEvents: {
         text: {
           click: (e, node) => {
@@ -153,19 +153,20 @@ export default {
     // setup
     this.changeScale()
 
-    let sheetName = getQueryVariable("sheet")
-    if (!sheetName) {
-      this.load.state = ELoadState.Empty
-      return
-    }
+    loadSheetFromUrlParam().then(res => {
+      let [sheetSource, sheetData, pid] = res
+      if (sheetSource == ESheetSource.UNKNOWN) {
+        this.load.state = ELoadState.Empty
+        return
+      }
 
-    Request.get(`sheets/${sheetName}.atrs`).then((res) => {
-      this.sheetInfo = parseSheet(res)
-      if (!this.sheetInfo) {
-        this.load.state = ELoadState.Failed
+      let [meta, root] = parseSheet(sheetData)
+      if (!root) {
         throw "曲谱解析失败！"
       }
+      this.sheetInfo = new SheetInfoRuntimeView(meta, root)
       this.load.state = ELoadState.Loaded
+      console.log(this.sheetInfo)
     }).catch((e) => {
       this.load.state = ELoadState.Failed
       console.error("曲谱获取失败：", e)
@@ -205,15 +206,15 @@ export default {
       }
     },
     shiftKey(offset) {
-      let curKey = this.sheetInfo.sheetKey;
+      let curKey = this.sheetInfo.meta.sheetKey;
       let newKey = ChordManager.shiftKey(curKey, offset);
-      this.sheetInfo.sheetKey = newKey
+      this.sheetInfo.meta.sheetKey = newKey
 
-      traverseNode(this.sheetInfo.sheetTree, (node) => {
+      traverseNode(this.sheetInfo.root, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
           node.chord = ChordManager.shiftKey(node.chord, offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
-          node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.sheetKey);
+          node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.meta.sheetKey);
         }
       })
     },
@@ -245,9 +246,17 @@ export default {
 <style src="./common.scss" scoped></style>
 
 <style scoped lang="scss">
-#viewer {
+#main {
+  width: 100vw;
+  overflow: hidden;
+
   #sheet {
     width: 90%;
+    padding: 0 5%;
+
+    #sheet_capo_block {
+      font-size: 80%;
+    }
   }
 
   .tools_text {
@@ -259,20 +268,25 @@ export default {
   }
 
   #tools_sheet_control {
+    position: fixed;
+    z-index: 10;
     bottom: 0;
     height: 10vh;
     left: 0;
     width: 100%;
     background-color: #000000aa;
-    flex-direction: column;
     color: white;
+
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
   #tools_sheet_control input {
     flex-shrink: 0;
     width: 60%;
   }
   #scale_block, #auto_scroll_block {
-    height: 100%;
     display: flex;
     overflow: hidden;
   }

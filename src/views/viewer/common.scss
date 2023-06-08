@@ -238,14 +238,14 @@ html, body {
   font-size: 20px;
   color: black;
   transform: translate(-50%, -50%);
-  top: 50%;
+  top: -106%;
   left: 50%;
   opacity: 0;
 }
 
 :deep(chord:hover chord-ruby::before),
 :deep(chord-pure:hover::before) {
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
 .trans_fade_out-enter-from, 

@@ -3,7 +3,7 @@
     <div style="font-size:40px; margin: 20px 0;">曲谱列表</div>
     <input type="text" placeholder="搜索曲谱..." v-model="searchText" @input="onSearch"/>
     <div id="sheet-table">
-      <div v-if="projectInfos.length == 0">
+      <div id="sheet-not-found" class="flex_hv_center" v-if="projectInfos.length == 0">
         未找到任何曲谱...
       </div>
       <template v-else>
@@ -79,6 +79,8 @@ export default {
 }
 </script>
 
+<style src="@/common.css" scoped></style>
+
 <style scoped>
 a,
 a:link,
@@ -109,9 +111,12 @@ a:focus {
   justify-content: flex-start;
   flex-wrap: wrap;
 }
+#sheet-not-found {
+  width: 100%;
+  padding: 10px 0;
+}
 
 .sheet_block {
-  height: 60px;
   padding: 10px 20px;
   margin: 10px 20px;
 
