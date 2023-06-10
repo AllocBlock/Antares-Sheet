@@ -8,25 +8,13 @@
       <router-link class="button" to="/user/project">曲谱编辑器</router-link>
 
       <a href="https://github.com/AllocBlock/AntaresSheet">
-        <img src="icons/github-mark-white.svg" id="github_mark"/>
+        <img src="/icons/github-mark-white.svg" id="github_mark"/>
       </a>
-      
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-}
-
-html, body {
-  width: 100%;
-  height: 100%;
-}
 
 #main {
   width: 100vw;
@@ -61,9 +49,7 @@ html, body {
   margin-top: 30px;
   justify-content: space-around;
   align-items: center;
-  * {
-    margin: 0 20px;
-  }
+  flex-wrap: wrap;
 }
 
 .button {
@@ -73,6 +59,7 @@ html, body {
   padding: 10px 20px;
   transition: background 0.2s ease-out;
   font-size: 28px;
+  margin: 10px;
 
   &:hover {
     background: #ff689d;

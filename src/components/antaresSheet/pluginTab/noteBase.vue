@@ -110,8 +110,7 @@ note-fret {
   width: fit-content;
   padding: 0 2px;
   height: 3px;
-  /* background-color: rgb(0, 6, 40); */
-  background-color: white;
+  background-color: var(--background-color);;
 }
 note-fret-empty {
   width: 12px;
@@ -128,8 +127,7 @@ note-fret-stem:after {
   left: calc(50% - 1px);
   height: 100%;
   width: 2px;
-  /* background-color: #fff; */
-  background-color: black;
+  background-color: var(--foreground-color);;
   border-radius: 2px;
 }
 note-fret-stem[type="end"]:after {
@@ -157,8 +155,7 @@ note-link-text {
 }
 note-stem {
   position: absolute;
-  /* background-color: #fff; */
-  background-color: black;
+  background-color: var(--foreground-color);;
   width: 2px;
   border-radius: 2px;
 }
@@ -187,8 +184,7 @@ note-flag {
 note-flag-connect {
   height: 4px;
   margin-top: 5px;
-  /* background-color: #fff; */
-  background-color: black;
+  background-color: var(--foreground-color);
 }
 note-flag-connect,
 note-flag-connect[type="none"] {
@@ -206,23 +202,4 @@ note-flag-connect[type="both"] {
   width: 100%;
   align-self: center;
 }
-/* .note_chord {
-  position: absolute;
-  bottom: calc(100% + 20px);
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.note_chord_name {
-  font-size: 24px;
-  color: white;
-  color: black;
-}
-.note_chord_graph {
-  margin-bottom: 5px;
-  height: calc(var(--row-height) * 1.5);
-  width: calc(var(--row-height) * 1.5 * 0.75);
-  color: black;
-} */
 </style>

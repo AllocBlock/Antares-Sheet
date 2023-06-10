@@ -129,8 +129,8 @@ export default {
   position: fixed;
   left: 0;
   top: 0;
-  outline: 2px solid black;
-  background: white;
+  outline: 2px solid var(--foreground-color);
+  background: var(--background-color);
   z-index: 10;
 
   transition: opacity 0.3s ease-out;
@@ -150,7 +150,7 @@ export default {
   width: 100%;
   height: 28px;
   user-select: none;
-  border-bottom: 2px solid black;
+  border-bottom: 2px solid var(--background-color);
   padding: 2px 5px;
   box-sizing: border-box;
   display: flex;

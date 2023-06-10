@@ -96,7 +96,6 @@ a:focus {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: var(--theme-color);
 }
 
 .button {
@@ -119,6 +118,7 @@ a:focus {
 .sheet_block {
   padding: 10px 20px;
   margin: 10px 20px;
+  color: var(--theme-color);
 
   border-radius: 20px;
   border: 2px var(--theme-color) solid;
@@ -126,7 +126,7 @@ a:focus {
 }
 
 .sheet_block:hover {
-  background-color: rgba(243, 110, 163, 0.2);
+  background-color: rgba(var(--theme-color-rgb), 0.2);
 }
 
 .sheet_block[type=digital] {

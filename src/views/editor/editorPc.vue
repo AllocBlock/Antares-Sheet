@@ -51,7 +51,7 @@
               <KeySelector class="select" :value="sheetInfo.meta.sheetKey" @change="onChangeSheetKey" />
               <div id="sheet_capo_block">
                 <div class="title">变调夹</div>
-                <CapoSelector id="capo_selector" v-model:value="player.capo"/>
+                <CapoSelector id="capo_selector" class="select" v-model:value="player.capo"/>
               </div>
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
@@ -203,8 +203,6 @@ import ChordManager from "@/utils/chordManager.js";
 import Storage from "@/utils/storage.js";
 import { Project } from "@/utils/project";
 
-let g_UkulelePlayer = new StringInstrument("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new StringInstrument("Ukulele", "Oscillator");
 const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, EditorModeProgression],  `【组合编辑模式】详细操作见其他模式的介绍`)
 
 export default {
@@ -287,7 +285,9 @@ export default {
         show: false,
         lyrics: "",
       },
-      isTyping: false
+      isTyping: false,
+      ukulelePlayer: new StringInstrument("Ukulele", "Ukulele"),
+      oscillatorPlayer: new StringInstrument("Ukulele", "Oscillator")
     };
   },
   computed: {
@@ -384,10 +384,10 @@ export default {
       let player = null;
       switch (this.player.instrument) {
         case "Oscillator":
-          player = g_OscillatorPlayer;
+          player = this.oscillatorPlayer;
           break;
         case "Ukulele":
-          player = g_UkulelePlayer;
+          player = this.ukulelePlayer;
           break;
         default:
           throw "未知错误";
@@ -631,6 +631,7 @@ export default {
   outline: none;
   border: none;
   background-color: transparent;
+  color: var(--foreground-color);
 
   &:focus {
     outline: 2% solid var(--theme-color);
@@ -644,6 +645,7 @@ export default {
   height: 100%;
   margin: 0 10px;
   background-color: transparent;
+  color: var(--foreground-color);
   font-size: var(--base-font-size);
   border: none;
   outline: 2px solid grey;

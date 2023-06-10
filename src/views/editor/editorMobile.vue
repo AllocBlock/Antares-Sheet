@@ -109,9 +109,6 @@ import PanelChordSelector from "./panelChordSelector.vue";
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 
-let g_UkulelePlayer = new StringInstrument("Ukulele", "Ukulele");
-let g_OscillatorPlayer = new StringInstrument("Ukulele", "Oscillator");
-
 export default {
   name: "SheetEditor",
   components: {
@@ -174,6 +171,8 @@ export default {
         enableRemoveUnderline: false,
         enableRecoverChord: false,
       },
+      ukulelePlayer: new StringInstrument("Ukulele", "Ukulele"),
+      oscillatorPlayer: new StringInstrument("Ukulele", "Oscillator")
     };
   },
   created() {
@@ -221,10 +220,10 @@ export default {
       let player = null;
       switch (this.player.instrument) {
         case "Oscillator":
-          player = g_OscillatorPlayer;
+          player = this.oscillatorPlayer;
           break;
         case "Ukulele":
-          player = g_UkulelePlayer;
+          player = this.ukulelePlayer;
           break;
         default:
           throw "未知错误";

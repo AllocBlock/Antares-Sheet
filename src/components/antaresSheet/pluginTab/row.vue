@@ -116,8 +116,7 @@ row-split {
   flex-shrink: 0;
   width: var(--row-split-width);
   height: 100%;
-  /* background-color: #fff; */
-  background-color: black;
+  background-color: var(--foreground-color);;
 }
 row-split[type="start"] {
   margin-right: var(--row-split-width);

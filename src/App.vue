@@ -1,10 +1,48 @@
 <template>
-  <router-view />
+  <div id="app_top">
+    <router-view />
+  </div>
 </template>
+
+<script>
+import { DefaultBrightTheme, DefaultDarkTheme } from "@/utils/theme"
+import { setEnv } from "@/utils/common"
+
+export default {
+  name: "App",
+  mounted() {
+    // 检查平台，切换PC/移动端模式
+    if (document.body.clientWidth / document.body.clientHeight < 0.8) {
+      // 竖屏
+      setEnv("mobile");
+    } else {
+      setEnv("pc");
+    }
+  },
+  data() {
+    return {
+      // theme: DefaultDarkTheme,
+      theme: DefaultBrightTheme,
+    }
+  },
+}
+</script>
 
 <style src="./common.css"></style>
 
 <style>
+/* top wrapper */
+#app_top {
+  min-height: 100vh;
+  min-width: 100vw;
+  background: v-bind('theme.backgroundColor');
+  color: v-bind('theme.foregroundColor');
+  --background-color: v-bind('theme.backgroundColor');
+  --foreground-color: v-bind('theme.foregroundColor');
+  --theme-color: v-bind('theme.themeColor');
+  --theme-color-rgb: v-bind('theme.themeColorRgb');
+}
+
 html,
 body {
   width: 100%;
@@ -12,35 +50,8 @@ body {
   padding: 0;
 }
 
-#app {
-  width: 100%;
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-}
-
 ::selection {
   background: var(--theme-color);
-}
-
-body {
-  width: 100%;
-  margin: 0;
-  overflow-x: hidden;
-  position: relative;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-body[env="pc"] {
-  font-size: var(--base-font-size);
-}
-
-body[env="mobile"] {
-  --base-font-size: 5vw;
 }
 
 a,

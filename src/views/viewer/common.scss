@@ -99,7 +99,7 @@ html, body {
   height: calc(var(--title-base-font-size) * 2);
   line-height: calc(var(--title-base-font-size) * 2);
   font-size: calc(var(--title-base-font-size) * 1.5);
-  color: black;
+  color: var(--foreground-color);
   width: 100%;
 }
 
@@ -114,7 +114,7 @@ html, body {
   margin-top: 10px;
   line-height: var(--title-base-font-size);
   font-size: calc(var(--title-base-font-size) * 0.9);
-  color: black;
+  color: var(--foreground-color);
 
   display: flex;
   align-items: center;

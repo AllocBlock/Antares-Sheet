@@ -92,8 +92,7 @@ bar-split {
   width: var(--bar-split-width);
   height: 100%;
   margin: 5px;
-  /* background-color: #fff; */
-  background-color: black;
+  background-color: var(--foreground-color);
 }
 bar-split[type="start"] {
   margin-right: 10px;

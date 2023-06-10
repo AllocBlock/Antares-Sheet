@@ -80,8 +80,8 @@ export default {
       default: function() {
         return {
           titleRatio: 0.16,
-          colorMain: "black",
-          colorMarkText: "white",
+          colorMain: "var(--foreground-color)",
+          colorMarkText: "var(--background-color)",
           colorRootString: "red"
         }
       }

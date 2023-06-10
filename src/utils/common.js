@@ -78,16 +78,6 @@ export function getQueryVariable(key) {
 }
 
 let g_Env = "pc"
-function autoSetEnv() {
-  // 检查环境
-  if (document.body.clientWidth / document.body.clientHeight < 0.8) {
-    // 竖屏
-    g_Env = "mobile";
-  } else {
-    g_Env = "pc";
-  }
-}
-autoSetEnv()
 
 export function getEnv() {
   return g_Env

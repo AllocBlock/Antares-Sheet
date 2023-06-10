@@ -118,7 +118,7 @@ class PitchedAudioSource {
   readAudioFiles(fileList, basicTone, callbacks = {}) { // TODO: 要不把文件名里也加上音符信息吧，basicTone这样不直观
     if (callbacks.onLoadStart) callbacks.onLoadStart()
     if (!fileList) {
-      errMsg = "音频文件列表为空";
+      let errMsg = "音频文件列表为空";
       if (callbacks.onFailed) callbacks.onFailed(errMsg);
       throw errMsg;
     }
@@ -144,7 +144,7 @@ class PitchedAudioSource {
               if (callbacks.onLoaded) callbacks.onLoaded();
             }
           }, (error) => {
-            errMsg = "解码音频失败：" + error;
+            let errMsg = "解码音频失败：" + error;
             if (callbacks.onFailed) callbacks.onFailed(errMsg);
             throw errMsg;
           })

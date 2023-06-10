@@ -135,8 +135,7 @@ tab-box {
   flex-direction: column;
   width: 100%;
   min-width: 300px;
-  /* color: white; */
-  color: black;
+  color: var(--foreground-color);
   user-select: none;
 }
 
@@ -163,7 +162,7 @@ tab-box[state="invalid"]:after {
   right: 0;
   top: 0;
   bottom: 0;
-  color: rgb(243, 53, 132);
+  color: var(--theme-color);
   font-size: 60px;
 
   display: flex;
@@ -172,5 +171,9 @@ tab-box[state="invalid"]:after {
   overflow: hidden;
   z-index: 3;
   text-align: center;
+}
+
+:deep(svg) {
+  fill: var(--foreground-color);
 }
 </style>

@@ -274,8 +274,8 @@ export default {
     height: 10vh;
     left: 0;
     width: 100%;
-    background-color: #000000aa;
-    color: white;
+    background-color: rgba(var(--foreground-color), 0.7);
+    color: var(--background-color);
 
     padding: 4px;
     display: flex;

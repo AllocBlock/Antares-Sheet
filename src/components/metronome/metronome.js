@@ -52,7 +52,7 @@ export default class Metronome {
             }
           })
           .catch((error) => {
-            errMsg =  "解码音频失败：" + error;
+            let errMsg =  "解码音频失败：" + error;
             if (callbacks.onFailed) callbacks.onFailed(errMsg);
             reject(error);
           })

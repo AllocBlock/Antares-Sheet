@@ -416,7 +416,7 @@ export default {
     top: 25%;
     left: 10px;
     width: 160px;
-    color: black;
+    color: var(--foreground-color);
   }
 
   #scale_block, #auto_scroll_block {

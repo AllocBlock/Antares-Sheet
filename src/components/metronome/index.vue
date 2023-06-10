@@ -113,7 +113,7 @@ export default {
   flex-direction: column;
   align-items: center;
   user-select: none;
-  border: 2px black solid;
+  border: 2px var(--foreground-color) solid;
   font-size: 20px;
 
   z-index: 10;
@@ -124,7 +124,7 @@ export default {
   width: 30px;
   margin: 5px 0;
   border-radius: 50%;
-  border: 4px black solid;
+  border: 4px var(--foreground-color) solid;
 
   display: flex;
   justify-content: center;

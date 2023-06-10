@@ -71,7 +71,6 @@ export default {
   font-size: 30px;
 }
 
-
 .button {
   background: rgb(184, 184, 184);
   color: black;
