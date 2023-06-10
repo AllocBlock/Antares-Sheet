@@ -4,6 +4,8 @@ import SheetViewer from '@/views/viewer/index.vue'
 import SheetEditor from '@/views/editor/index.vue'
 import UserProject from '@/views/user/project.vue'
 import UserSpace from '@/views/user/space.vue'
+import ImgSheetList from '@/views/imgSheet/index.vue'
+import ImgSheetViewer from '@/views/imgSheet/viewer.vue'
 
 const routes = [
   {
@@ -30,6 +32,16 @@ const routes = [
     path: '/user/space',
     name: 'Space',
     component: UserSpace
+  },
+  {
+    path: '/imgSheetList',
+    name: 'ImgSheetList',
+    component: ImgSheetList
+  },
+  {
+    path: '/imgSheet',
+    name: 'ImgSheet',
+    component: ImgSheetViewer
   },
   {
     path: "/:catchAll(.*)w",

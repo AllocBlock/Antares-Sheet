@@ -6,15 +6,26 @@
       <router-link class="button" to="/sheet?sheet=诺亚方舟">查看曲谱Demo</router-link>
       <router-link class="button" to="/user/space">曲谱列表</router-link>
       <router-link class="button" to="/user/project">曲谱编辑器</router-link>
+      <router-link class="button" to="/imgSheetList">图片谱</router-link>
 
       <a href="https://github.com/AllocBlock/AntaresSheet">
         <img src="/icons/github-mark-white.svg" id="github_mark"/>
       </a>
+      
+    </div>
+    <div style="position:absolute; width:100%;text-align: center; bottom:0; left:0;">
+        <p style="color:white; cursor: pointer;" onclick="window.open('https://beian.miit.gov.cn')">蜀ICP备2021000515号-2</p>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+}
 
 #main {
   width: 100vw;
