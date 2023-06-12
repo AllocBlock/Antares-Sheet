@@ -57,7 +57,7 @@
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
               <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
-              <div class="button" @click="saveSheet">保存</div>
+              <div class="button" @click="onSaveClicked">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
             <AntaresSheet
@@ -549,13 +549,21 @@ export default {
       input.click();
       input.remove()
     },
+    onSaveClicked() {
+      if (this.saveSheet())
+        this.$toast("曲谱已保存~")
+      else
+        this.$toast("曲谱保存失败...本曲谱并非你的项目，或保存过程中遇到其他错误")
+    },
     saveSheet() {
       if (this.sheetSource == ESheetSource.PROJECT) {
         Project.update(this.pid, this.sheetInfo, this.toolChord.attachedChords.map(n => n.name))
         console.log("曲谱已保存")
+        return true
       }
       else {
         console.log("警告：并非项目，无法保存")
+        return false
       }
     },
     insertNode(type, isOnLeft) {
@@ -1100,6 +1108,15 @@ export default {
 :deep(text:hover::after) {
   border: 2px solid var(--sheet-theme-color);
   box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
+}
+
+:deep(newline) {
+  transition: color 0.1s ease-out;
+}
+
+:deep(newline:hover) {
+  color: var(--sheet-theme-color);
+  font-weight: bold;
 }
 </style>
 

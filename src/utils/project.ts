@@ -30,7 +30,15 @@ export class ProjectInfo {
 const PROJECT_STORAGE_KEY = "project"
 
 function loadProjectInfos() : ProjectInfo[] {
-    return JSON.parse(Storage.load(PROJECT_STORAGE_KEY)) ?? []
+    let jsonInfos =  JSON.parse(Storage.load(PROJECT_STORAGE_KEY)) ?? []
+    // json to class
+    let infos = []
+    for (let jsonInfo of jsonInfos) {
+        let info = new ProjectInfo(null, null)
+        Object.assign(info, jsonInfo)
+        infos.push(info)
+    }
+    return infos
 }
 
 function saveProjectInfos(projectInfos : ProjectInfo[]) {
