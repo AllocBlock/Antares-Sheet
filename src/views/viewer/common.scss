@@ -238,9 +238,11 @@ html, body {
   font-size: 20px;
   color: black;
   transform: translate(-50%, -50%);
-  top: -106%;
+  top: -104%;
   left: 50%;
   opacity: 0;
+  pointer-events: none;
+  color: var(--theme-color);
 }
 
 :deep(chord:hover chord-ruby::before),

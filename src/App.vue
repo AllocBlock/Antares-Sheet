@@ -38,7 +38,9 @@ export default {
   background: v-bind('theme.backgroundColor');
   color: v-bind('theme.foregroundColor');
   --background-color: v-bind('theme.backgroundColor');
+  --background-color-rgb: v-bind('theme.backgroundColorRgb');
   --foreground-color: v-bind('theme.foregroundColor');
+  --foreground-color-rgb: v-bind('theme.foregroundColorRgb');
   --theme-color: v-bind('theme.themeColor');
   --theme-color-rgb: v-bind('theme.themeColorRgb');
 }
