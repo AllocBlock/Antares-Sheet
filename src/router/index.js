@@ -11,22 +11,12 @@ const routes = [
   {
     path: '/',
     name: 'Index',
-    component: Index
+    component: UserSpace
   },
   {
     path: '/sheet',
     name: 'SheetViewer',
     component: SheetViewer
-  },
-  {
-    path: '/editor',
-    name: 'SheetEditor',
-    component: SheetEditor
-  },
-  {
-    path: '/user/project',
-    name: 'Project',
-    component: UserProject
   },
   {
     path: '/user/space',

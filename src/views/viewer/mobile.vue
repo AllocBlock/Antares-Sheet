@@ -8,8 +8,8 @@
         <input
           id="scale_slider"
           type="range"
-          step="0.01"
-          min="0.2"
+          step="0.1"
+          min="0.8"
           max="2.0"
           v-model="tools.sheetControl.scale"
           @input="changeScale()"
@@ -62,7 +62,7 @@ import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
-import { ELoadState } from "@/utils/common.js"
+import { ELoadState, getQueryVariable } from "@/utils/common.js"
 import { SheetInfoRuntimeView } from "@/utils/sheetInfo";
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
@@ -153,14 +153,22 @@ export default {
     // setup
     this.changeScale()
 
-    loadSheetFromUrlParam().then(res => {
-      let [sheetSource, sheetData, pid] = res
-      if (sheetSource == ESheetSource.UNKNOWN) {
-        this.load.state = ELoadState.Empty
-        return
+    Request.get("global.json").then(projectInfos => {
+      let pid = getQueryVariable("pid");
+      let targetProjectInfo = null
+      for (let projectInfo of projectInfos) {
+        if (projectInfo.pid == pid) {
+          targetProjectInfo = projectInfo
+          break
+        }
       }
 
-      let [meta, root] = parseSheet(sheetData)
+      if (!targetProjectInfo) {
+        console.error(`未找到pid为${pid}的项目`)
+        throw `未找到pid为${pid}的项目`
+      }
+
+      let [meta, root] = parseSheet(targetProjectInfo.sheetData)
       if (!root) {
         throw "曲谱解析失败！"
       }
@@ -274,7 +282,7 @@ export default {
     height: 10vh;
     left: 0;
     width: 100%;
-    background-color: rgba(var(--foreground-color), 0.7);
+    background: rgba(var(--foreground-color-rgb), 0.7);
     color: var(--background-color);
 
     padding: 4px;

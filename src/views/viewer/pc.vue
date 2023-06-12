@@ -102,7 +102,7 @@ import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode.js"
 import { parseSheet } from "@/utils/sheetParser.js"
-import { ELoadState } from "@/utils/common.js"
+import { ELoadState, getQueryVariable } from "@/utils/common.js"
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
 
@@ -226,14 +226,22 @@ export default {
     // setup
     this.changeScale()
 
-    loadSheetFromUrlParam().then(res => {
-      let [sheetSource, sheetData, pid] = res
-      if (sheetSource == ESheetSource.UNKNOWN) {
-        this.load.state = ELoadState.Empty
-        return
+    Request.get("global.json").then(projectInfos => {
+      let pid = getQueryVariable("pid");
+      let targetProjectInfo = null
+      for (let projectInfo of projectInfos) {
+        if (projectInfo.pid == pid) {
+          targetProjectInfo = projectInfo
+          break
+        }
       }
 
-      let [meta, root] = parseSheet(sheetData)
+      if (!targetProjectInfo) {
+        console.error(`未找到pid为${pid}的项目`)
+        throw `未找到pid为${pid}的项目`
+      }
+
+      let [meta, root] = parseSheet(targetProjectInfo.sheetData)
       if (!root) {
         throw "曲谱解析失败！"
       }

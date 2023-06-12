@@ -1,0 +1,190 @@
+[
+    {
+        "pid": "k7xZa9Nb",
+        "createTime": "2023-06-05T15:53:55.679Z",
+        "updateTime": "2023-06-05T16:01:29.464Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "诺亚方舟",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "D",
+            "sheetKey": "D",
+            "chords": [
+                "D",
+                "E",
+                "Gm"
+            ],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"诺亚方舟\"\n$singer 五月天\n$by 锦瑟\n$originalKey D\n$sheetKey D\n$chords D E Gm\n$rhythms \n$createTime 2023/6/6 00:01:29\n\n!(前奏)\r\n*[tab]{\r\n$\r\n[stringNum:4]\r\n[showBarNumber:true]\r\n[showStumFret:false]\r\n$\r\n[ts:4/4] [repeat:start] (0222)[chordGraph:D][a:d]4 (××--)4 (xx--)4 {(-x--)16 (-3--)16 (-4--)8} |\r\n(2544)[chordGraph:Esus4][a:d]4 (xx--)4 (xx--)[chordGraph:E]4 {(xx--)16 (-2--)16 (-0--)8} |\r\n(1320)[chordGraph:Gm][a:d]4 (××--)4 (××--)4 (××--)4 |\r\n(0222)[chordGraph:D][a:d]4 (××--)4 (××--)4 (××--)4 [repeat:end]|\r\n}\r\n\r\n再[D]见 草莓甜[E]甜圈 街角咖[Gm]啡店 落下雨[D]_点\r\n再[D]见 黑白老[E]照片 回忆电[Gm]影院 埋进地[D]_面\r\n再[D]见 我们初识[E]的那个公园 那天[Gm]是谁先吻了谁 被谁遗忘[D]的秋千\r\n再[D]见 那么多名[E]车名表名鞋 最后[Gm]我们只能带走 名为回忆[D]的花园\r\n\r\n如果要告[D]别 如果今夜[E]就要和一切告别\r\n如果你只[Gm]能打一通电话 你会[D]拨给谁\r\n\r\n!(间奏) ![D] !{![Esus4] ![E]} ![Gm] ![D]\r\n\r\n晚[D]安 鹦鹉和[E]孔雀 花豹和[Gm]人类 望着海[D]_面\r\n晚[D]安 底片和[E]唱片 沉浮在[Gm]浪间 就像诗[D]_篇\r\n晚[D]安 自由女神[E]漂到华尔街 我们[Gm]在甲板上摸到 杜拜塔顶[D]的塔尖\r\n晚[D]安 海豚跃出[E]西藏的屋檐 原来[Gm]幻想中的这天 会比幻想[D]更唯美\r\n\r\n还是要告[D]别 还是放弃[E]海拔以下的世界\r\n你会装进[Gm]什么回忆纪念 在行[D]李里面\r\n终于要告[D]别 终于没有[E]更多的明天要追\r\n你有什么[Gm]遗憾依然残缺 还没[D]有完美\r\n\r\n{[Gm]_当彗星燃[bB]_}烧天边 陨[D]石像雨点 {[Gm]_当辐射比[bB]阳}光还要炽[D]烈\r\n{[Gm]_让爱变得[bB]_}浓烈 当每段{{[D]命运 [A]_更加壮[Bm]烈   [#Fm]_}}\r\n当永远[G]变成一种遥远 当句点[A]变成一种观点 让人类[A]终于变成同类\r\n\r\n勇敢的告[D]别 勇敢地向[E]过去和未来告别\r\n告别每段[Gm]血缘身分地位 聪明[D]或愚昧\r\n最后的告[D]别 最后一个[E]心愿是学会高飞\r\n飞在不存在[Gm]的高山草原 星空[D]和蓝天\r\n[D]让 诺亚[E]方舟 航向[Gm]了 海平[D]线  [D]让 诺亚[E]方舟 航向[Gm]了 换日[D]线\r\n[D]让 诺亚[E]方舟 航向[Gm]了 天际[D]线  [D]让 诺亚[E]方舟 航向[Gm]了 无[D]限\r\n\r\n!(尾奏) ![D] !{![Esus4] ![E]} ![Gm] ![D]"
+    },
+    {
+        "pid": "ZPvxeEUd",
+        "createTime": "2023-06-05T16:07:36.185Z",
+        "updateTime": "2023-06-10T06:58:29.870Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "我好想你",
+            "singer": "苏打绿",
+            "by": "锦瑟",
+            "originalKey": "D",
+            "sheetKey": "C",
+            "chords": [
+                "C",
+                "D",
+                "Fm",
+                "Dsus4"
+            ],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"我好想你\"\n$singer 苏打绿\n$by 锦瑟\n$originalKey D\n$sheetKey C\n$chords C D Fm Dsus4\n$rhythms \n$createTime 2023/6/10 14:58:29\n\n[Am]_开了灯 眼前的[Em]_模样  偌大的房[G]_寂寞的{[Am]床  [Em]_}\r\n[Am]_关了灯 全都一[Em]_个样  心里的伤[G]_无法分[A]享\r\n生命 [Am]随年月流去 [G]_随白发老去\r\n随[Em]_着你离去 快乐[Am]渺无音讯\r\n[Am]随往事淡去 [G]_随梦境睡去\r\n随[Em]_麻痹的心逐渐远[A]去\r\n\r\n我好想你[Am]_ 好想你{[F]_ 却[G]不}露痕[C]_迹[C]_\r\n我还踮{[Am]_着脚[Em]_}思念[F]_ 我还任{[Am]_记忆[Em]_}盘旋[Dsus4]_\r\n我还闭{[Am]_着眼[Em]_}流泪[F]_ 我还装{[Am]_作无[Em]_}所谓[F]_\r\n我好想你[Am]_ 好想你{[F]_ 却[G]欺}骗自己[C]_\r\n\r\n[Am]_开了灯 眼前的[Em]_模样  偌大的房[G]_寂寞的{[Am]床  [Em]_}\r\n[Am]_关了灯 全都一[Em]_个样  心里的伤[G]_无法分[A]享\r\n生命 [Am]随年月流去 [G]_随白发老去\r\n随[Em]_着你离去 快乐[Am]渺无音讯\r\n[Am]随往事淡去 [G]_随梦境睡去\r\n随[Em]_麻痹的心逐渐远[A]去\r\n\r\n我好想你[Am]_ 好想你{[F]_ 却[G]不}露痕[C]_迹[C]_\r\n我还踮{[Am]_着脚[Em]_}思念[F]_ 我还任{[Am]_记忆[Em]_}盘旋[Dsus4]_\r\n我还闭{[Am]_着眼[Em]_}流泪[F]_ 我还装{[Am]_作无[Em]_}所谓[F]_\r\n我好想你[Am]_ 好想你{[F]_ 却[G]欺}骗自己[C]_\r\n\r\n我好想你 好想你  就当作秘密\r\n我好想你 好想你  就深藏在 心\r\n"
+    },
+    {
+        "pid": "yhFnVnIW",
+        "createTime": "2023-06-06T14:37:01.111Z",
+        "updateTime": "2023-06-06T14:42:13.397Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "夜夜夜夜",
+            "singer": "齐秦",
+            "by": "锦瑟",
+            "originalKey": "D",
+            "sheetKey": "C",
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"夜夜夜夜\"\n$singer 齐秦\n$by 锦瑟\n$originalKey D\n$sheetKey C\n$chords \n$rhythms \n$createTime 2023/6/6 22:42:13\n\n[F]想问天你[G]在哪里\r\n[Em]我想问问[Am]我自己\r\n一开始我聪明 结束我聪明\r\n聪明的几乎的毁掉了我自己\r\n[C]想问天[G]问大地\r\n[Am]或者是迷信[Em]问问宿命\r\n放弃所有 抛下所有\r\n让我飘流在安静的夜夜空里\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n想问天问大地\r\n或者是迷信问问宿命\r\n放弃所有 抛下所有\r\n让我飘流在安静的夜夜空里\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n我不愿再放纵\r\n我不愿每天每夜每秒飘流\r\n也不愿再多问再多说再多求我的梦\r\n我不愿再放纵\r\n我不愿每天每夜每秒飘流\r\n也不愿 再多问再多说再多求\r\n我的梦\r\n"
+    },
+    {
+        "pid": "thsLwzk8",
+        "createTime": "2023-06-06T15:05:01.404Z",
+        "updateTime": "2023-06-06T15:05:40.686Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "First Day",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "G",
+            "sheetKey": "G",
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"First Day\"\n$singer 五月天\n$by 锦瑟\n$originalKey G\n$sheetKey G\n$chords \n$rhythms \n$createTime 2023/6/6 23:05:40\n\n!(前奏) ![C] ![C] ![C] ![C] ![C] ![C] ![C] ![C] ![G] ![G] ![D] ![D] \n[G]下过雨的夏[D]天傍晚 [Em]我都会期[Bm]待\n唱歌的[C]蝉 嘿 [G]把星星都吵醒 [A]月光晒了[D]很凉快\n[G]就是这样[D]回忆起来 [Em]第一次告[Bm]白\n尴尬的[C]我看 [G]爱装得很哲学[A]的你 其实[D]很可爱\n你说[Am]活在明天[B]活在期待 {[G]不如活得[D]今}天很自[A]在\n我说[C]我懂了会不[G]会太快 未[bE]来第一天要展[D]开 [D]_\n\n第一天[bB]_我存在[F]_ 第一次[Gm]_呼吸畅快[Dm]_\n站在[bE]地上的脚踝[bB]_ 因为你[Cm]而有真实感[F]_\n第一天[bB]_我存在[Cm]_ 第一次[Dm]_能飞起来[bE]_\n爱是[bE]腾空的魔幻[bB]_ 第一天[Cm]的纯真色[F]彩 它总是[bA]永远那么灿烂[bB]_\n\n!(间奏) ![bB] ![bB] ![bB] ![bB] ![G] ![G] ![D] ![D]\n嘿 [G]你很搞笑[D]你很奇怪 [Em]你头发很[Bm]乱\n有的时[C]候 你[G]又突然为我的[A]事情 变得[D]很勇敢\n[G]这么说来[D]很不单纯 [Em]你陪我看[Bm]海\n海那么[C]蓝 我[G]又好像 不应该[A]把你想得[D]有点坏\n坏的[Am]是我发现[B]不知不觉 {[G]不见到你[D]不}是很习[A]惯\n你的[C]眼神里好像[G]也期待 期[bE]待不一样的未[D]来 [D]_\n\n第一天[bB]_我存在[F]_ 第一次[Gm]_呼吸畅快[Dm]_\n站在[bE]地上的脚踝[bB]_ 因为你[Cm]而有真实感[F]_\n第一天[bB]_我存在[Cm]_ 第一次[Dm]_能飞起来[bE]_\n爱是[bE]腾空的魔幻[bB]_ 第一天[Cm]的纯真色[F]彩 它总是[bA]永远那么灿烂\n\n蓝色的[bA]海 [bA]_ 海上的[bE]_云[bE]_ 云的那[Cm]端  [Cm]_\n不转弯[bA]_ [bA]_ 到未来[F]_ [F]_ [F]_ [F]_\n\n!(间奏) ![G] ![D] ![Em] ![Bm] ![C] ![G] ![A] ![D]\n你说[Am]活在明天[B]活在期待 {[G]不如活得[D]今}天很自[A]在\n我说[C]我懂了会不[G]会太快 未[bE]来第一天要展[D]开 [D]_\n\n第一天[bB]_我存在[F]_ 第一次[Gm]_呼吸畅快[Dm]_\n站在[bE]地上的脚踝[bB]_ 因为你[Cm]而有真实感[F]_\n第一天[bB]_我存在[Cm]_ 第一次[Dm]_能飞起来[bE]_\n爱是[bE]腾空的魔幻[bB]_ 第一天[Cm]的纯真色[F]彩 它总是[bA]永远那么灿烂[bB]_\n[bA]永远那么灿烂[bB]_ [bA]永远那么灿烂[bB]_ [bB]_ \nFirst [bB]day  First [bB]day  First [bB]day  First [bB]day\nFirst [bB]day  To[bB]day      First [bB]day  First [bB]day\nFirst [bB]day  First [bB]day  First [bB]day  First [bB]day\nFirst [bB]day  To[bB]day      Every[bB]day   First [bB]day\n"
+    },
+    {
+        "pid": "QL66CcEk",
+        "createTime": "2023-06-06T15:05:46.053Z",
+        "updateTime": "2023-06-06T15:06:07.056Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "爱情的模样",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "F",
+            "sheetKey": "F",
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"爱情的模样\"\n$singer 五月天\n$by 锦瑟\n$originalKey F\n$sheetKey F\n$chords \n$rhythms \n$createTime 2023/6/6 23:06:07\n\n!(前奏) (按住一弦三品) ![F] ![C] ![Cm] ![D] ![bB] ![F] ![G] ![C] \n\n[F]_你是巨大[C]_的海洋 [Cm]_我是雨下[D]_在你身上\n我[bB]失去了自己的形[F]_状 我看到远方[G]_ 爱情的模样[C]_\n[F]_曾经孤单[C]_的彷徨 [Cm]_曾经相信[D]_曾经失望\n你[bB]穿过了重重的迷[F]_惘 那爱的慌张[G]_ 终于要解放[C]_ \n\n你是[F]谁 叫我狂恋[C]_ 叫我勇[Dm]敢地挑战全世界[Am]_\n在[bB]一样的身体里面[F]_ 一样有[Gm]爱与被爱的感觉[C]_\n我爱[F]谁 已无所谓[C]_ 没有谁[Dm]能将爱情划界限[Am]_\n在[bB]一样的身体里面[F]_ 迷样的{[Gm]魔力却是[C]更}强烈[F]_\n\n!(间奏) ![F] ![C] ![bE] ![D] ![Fm] ![C] ![Gm] ![C] \n\n[F]_星星在夜[C]_空中闪亮 [Cm]_星空下我[D]_不停流浪\n此[bB]生我无知的奔[F]_忙 因为你眼光[G]_ 都化成了光[C]_亮\n[F]_这世界全[C]_部的漂亮 [Cm]_不过你的[D]_可爱模样\n你[bB]让我举双手投[F]_降 跨出了城墙[G]_ 长出了翅膀[C]_\n\n你是[F]谁 叫我狂恋[C]_ 叫我勇[Dm]敢地挑战全世界[Am]_\n在[bB]一样的身体里面[F]_ 一样有[Gm]爱与被爱的感觉[C]_\n我爱[F]谁 已无所谓[C]_ 没有谁[Dm]能将爱情划界限[Am]_\n在[bB]一样的身体里面[F]_ 迷样的{[Gm]魔力却是[C]更}强烈[F]_ {[F]_ {[C]_ [bE]_}} [D]_\n\n[G]_你是巨大[D]_的海洋 [Dm]_我是雨下在你身上[E]_\n我[C]失去了自己的形[G]_状 我看到远方[A]_ [D]_\n爱情的[G]模样 [D]_ [Dm]_ [E]_ [bE]_ [G]_ [A]_ [D]_\n哦[G]噢…… [D]_ [Dm]_ [E]_ [bE]_ [G]_ [A]_ [D]_ [G]_\n"
+    },
+    {
+        "pid": "2x9IVm4b",
+        "createTime": "2023-06-06T15:06:13.231Z",
+        "updateTime": "2023-06-06T15:09:57.213Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "年轻就要对味",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "F",
+            "sheetKey": "F",
+            "chords": [
+                "F",
+                "Gm",
+                "Am",
+                "#A",
+                "C",
+                "Dm",
+                "bE"
+            ],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"年轻就要对味\"\n$singer 五月天\n$by 锦瑟\n$originalKey F\n$sheetKey F\n$chords F Gm Am #A C Dm bE\n$rhythms \n$createTime 2023/6/6 23:09:57\n\n[F]_ [F]_ [F]_ {[bE]_ [C]_} [F]_ [F]_ [F]_ {[bE]_ [C]_}\n[F]你就像麻辣锅 [C]有了你很快活\n[Dm]一天不吃就难[Am]过\n[#A]你就像黄金甲 [F]穿着你很暖和\n不[Gm]怕有人欺[C]负我\n[F]眼神可以交流 [C]心跳可以沟通\n[Dm]有钱可以借你[Am]用\n[#A]一点点的倔强 [F]一点点的幽默\n对[Gm]味就是有[C]你有我\n\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的[F]幸福更浓\n不[Gm]说你也能够[C]_懂\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的{[Am]快乐更[F]_}多\n对[Gm]味 [C]_是我的朋[F]友[F]_ [F]_ {[bE]_ [C]_}\n\n[F]你就像方便面 [C]只要热水一冲\n[Dm]友情马上香又[Am]浓\n[#A]水煮麻辣笑话 [F]红烧热情感动\n我[Gm]说年轻就[C]要对味 不[C]要理由\n\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的[F]幸福更浓\n不[Gm]说你也能够[C]_懂\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都[F]感[F]_动\n对味的[#A]人 对味的{[Am]快乐更[F]_}多\n对[Gm]味 [C]_是我的朋[#A]友  [Am]_  [bE]_ [C]_ [C]_\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的[F]幸福更浓\n不[Gm]说你也能够[C]_懂\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的{[Am]快乐更[F]_}多\n对[Gm]味 [C]_是我的朋[F]友 [F]_\n[F]哦 {[bE]_ [C]_}  [F]哦 [F]_ [F]_ {[bE]_ [C]_} [F]_\n"
+    },
+    {
+        "pid": "LCGKTf6p",
+        "createTime": "2023-06-06T15:10:02.979Z",
+        "updateTime": "2023-06-10T14:46:09.114Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "如烟",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "A",
+            "sheetKey": "G",
+            "chords": [],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"如烟\"\n$singer 五月天\n$by 锦瑟\n$originalKey A\n$sheetKey G\n$chords \n$rhythms \n$createTime 2023/6/10 22:46:09\n\n!(前奏) ![G]\n我[Am]坐在床前 望[C]着窗外回[G]忆满天[G]_\n生命是[Am]华丽错觉 时[C]间是贼偷[G]走一切[G]_\n七岁的[Am]那一年 抓住[C]那只蝉 以[G]为能抓住夏[Bm]_天\n十七岁[Am]的那年 吻过[C]他的脸 就[D]以为和他能永远[D]_\n\n有没有[G]那么一种永远 永[D]_远不改变\n[Bm]拥抱过的美丽 都再[Em]_也不破碎\n[Am]让险峻岁月不能 在[C]_脸上撒野\n[D]让生离和死别都遥远[D]_ 有谁[C]能听见 [C]_ [G]_  [G]\n\n我[Am]坐在床前 转[C]过头看谁[G]在沉睡[G]_\n那一张[Am]苍老的脸 好[C]像是我紧[G]闭双眼[G]_\n曾经是[Am]爱我的 和我[C]深爱的 都[G]围绕在我身[Bm]_边\n带不走[Am]的那些 遗憾[C]和眷恋 就[D]化成最后一滴泪[D]_\n\n有没有[G]那么一滴眼泪 能[D]_洗掉后悔\n[Bm]化成大雨降落在 回[Em]_不去的街\n[Am]再给我一次机会 将[C]_故事改写\n还[D]欠了他一生的 一[D]句抱歉\n有没有[G]那么一个世界 永[D]_远不天黑\n[Bm]星星太阳万物都 听[Em]_我的指挥\n[Am]月亮不忙着圆缺 春[C]_天不走远\n[D]树梢紧紧拥抱着树[D]_叶 有谁[G]能听见[G]\n\n\n耳[bE]际眼前此[bE]生重演 是我[Gm]来自漆黑 而又[Gm]回归漆黑\n人[bE]间瞬间天[bE]地之间 下次[C]我又是谁[D]\n\n\n有没有[G]那么一朵玫瑰 永[D]_远不凋谢\n[Bm]永远骄傲和完美 永[Em]_远不妥协\n[Am]为何人生最后会像[C]_ 一张纸屑\n还[D]不如一片花瓣 曾[D]经鲜艳\n有没有[G]那么一张书签 停[D]_止那一天\n[Bm]最单纯的笑脸和 最[Em]_美那一年\n[Am]书包里面装满了 蛋[C]_糕和汽水\n[D]双眼只有无猜和无[D]_邪 让我们[C]无法无[D]天\n有没有[G]那么一首诗篇 找[D]_不到句点\n[Bm]青春永远定居在 我[Em]_们的岁月\n[Am]男孩和女孩都有 吉[C]_他和舞鞋\n笑[D]忘人间的苦痛 只[D]有甜美\n有没有[G]那么一个明天 重[D]_头活一遍\n[Bm]让我再次感受 曾挥[Em]_霍的昨天\n[Am]无论生存或生活 我[C]_都不浪费\n[D]不让故事这么的后[D]_悔 有谁[C]能听见[C]_ 我不[C]要告别[C]_\n\n我[Am]坐在床前 看[C]着指尖已[G]经如烟"
+    },
+    {
+        "pid": "DqLmd8EZ",
+        "createTime": "2023-06-06T15:12:44.108Z",
+        "updateTime": "2023-06-06T15:13:16.995Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "听不到",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "A",
+            "sheetKey": "F",
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"听不到\"\n$singer 五月天\n$by 锦瑟\n$originalKey A\n$sheetKey F\n$chords \n$rhythms \n$createTime 2023/6/6 23:13:16\n\n!(前奏) ![F] ![C] ![bB] ![C] ![bB] ![F] ![bB] ![C] \n\n[F]夜 黑夜 寂[C]寞的夜里 [Dm]气 生气 对[Am]自己生气\n[bB]软弱的[F]电话 [Gm]又打 [C]_给你\n[F]想 听你 那[C]边的空气 [Dm]有 什么 精[Am]采的话题\n[bB]你还是[F]温柔 [Gm]给我 婉转 [C]的距离\n\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么大 为何[Gm]我要忘你[C]无处逃\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么小 为何[Gm]我的真心 [C]_ 你听不到\n\n!(前奏) ![F] ![C] ![bB] ![C] ![bB] ![F] ![bB] ![C] \n\n[F]会 很会 伪[C]装我自己 [Dm]你 不该 背[Am]我的秘密\n[bB]沉重都[F]给我 [Gm]微笑 [C]_给你\n[F]奔 狂奔 空[C]旷的感情 [Dm]走 暴走 暴[Am]走的伤心\n[bB]透明的[F]叹息 [Gm]最后 还是 我[C]的秘密\n\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么大 为何[Gm]我要忘你[C]无处逃\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么小 为何[Gm]我的真心 [C]_ 你听不到\n[F]_ [C]_你听不到 [Dm]_  [Am]_ 你听不到 [bB]_ [F]_ {[Gm]_  [bB]_} [C]_\n\n[F]_ [F]_ [F]_ [F]_\n[C]_ 听不到听不[C]到我的执着 [bB]_扑通扑[bB]_通一直在跳\n[C]_ 直到你有一[C]天能够明了 我[bB]做得到 我[C]做得到 [C]_ [C]_\n\n我的[G]声音在笑 [D]泪在飙 [Em]电话那头的你{[Bm]可知道  {[Bm]_   [bBm]_}} \n[C]世界若是 那[G]_么大 为何{[Am]我要忘{[Em]_你[C]_}} [D]无处逃\n我的[G]声音在笑 [D]泪在飙 [Em]电话那头的你{[Bm]可知道  {[Bm]_   [bBm]_}} \n[C]世界若是 那[G]_么小 为何{[Am]我的真{[Em]_心[C]_}} [D]_ 你听不到\n\n[G]_ [D]_你听不到 [Em]_ [Bm]_ 你听不到 [C]_ [G]_ {[Am]_  {[Em]_  [C]_}} [D]_\n[G]啦啦啦啦啦…… [D]_ [Em]_  {[Bm]_  {[Bm]_   [bBm]_}}  [C]_ [G]_ {[Am]_  {[Em]_  [C]_}} [D]_ \n\n[G]_ [D]_ [Em]_  [Bm]_ [C]_ [G]_ [Am]_ [D]_ [G]_\n\n"
+    },
+    {
+        "pid": "ig6CMmxx",
+        "createTime": "2023-06-06T15:13:20.861Z",
+        "updateTime": "2023-06-06T15:14:21.785Z",
+        "title": "未命名项目",
+        "description": "",
+        "tags": [],
+        "sheetMeta": {
+            "title": "顽固",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "G",
+            "sheetKey": "G",
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"顽固\"\n$singer 五月天\n$by 锦瑟\n$originalKey G\n$sheetKey G\n$chords \n$rhythms \n$createTime 2023/6/6 23:14:21\n\n我身[G]在 当时你 幻想[Bm]的 未来里\r\n这个[C]狂热和冲动 早已[D]冷却的如今\r\n你顽{[C]固 的神[Am]情} 消失{[Bm]在 镜子[Em]里}\r\n只留[Am]下 时光消逝的痕[D]迹\r\n每颗[G]心 的相信 每个[Bm]人 的际遇\r\n每个[C]故事的自己 反覆[D]地问着自己\r\n这些{[C]年 让步[Am]的} 你是{[Bm]否 会叹[Em]息}\r\n有什[C]么 是你永远不放[D]弃\r\n\n一次[C]一次你 吞下[Bm]了泪滴\r\n[Am]_一次一次 拼回[D]破碎自己\r\n一天[C]一天你 是否{[Bm]还相[Em]_}信\r\n[Am]_活在你心深处 [D]那顽固自己\r\n\r\n你追[C]逐 你呼[Am]吸 你嚣[Bm]张 的任[Em]_性\r\n鼻青脸肿的哭过 若无其事的忘记\r\n如果你 能预知 这条路 的陷阱\r\n我想你 依然错得很过瘾\r\n走过的 叫足迹 走不到 叫憧憬\r\n学会收拾起叛逆 学会隐藏了表情\r\n卸下了 这面具 我想说 谢谢你\r\n谢谢你 一路陪我到这里\r\n一次[C]一次你 吞下[Bm]了泪滴\r\n[Am]_一次一次 拼回[D]破碎自己\r\n一天[C]一天你 是否[Bm]还相[Em]_信\r\n[Am]_活在你心深处 [D]那顽固的自己\r\n一次一次你 吞下了泪滴\r\n一次一次 拼回破碎自己\r\n一天一天你 是否还相信\r\n活在你心深处 那顽固的\r\n你当时相信 的那些事情\r\n会在如今 变成美丽风景\r\n每当我迟疑 从不曾忘记\r\n活在我心深处 那顽固的自己\r\n"
+    }
+]

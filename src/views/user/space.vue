@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { Project, ProjectInfo } from '@/utils/project';
+import Request from "@/utils/request.js"
 
 export default {
   name: "UserSpace",
@@ -30,9 +30,15 @@ export default {
     }
   },
   mounted() {
-    this.allProjectInfos = Project.getAll()
-    this.projectInfos = this.allProjectInfos
-    console.log(this.allProjectInfos)
+    Request.get("global.json").then(projectInfos => {
+      this.allProjectInfos = projectInfos
+      this.projectInfos = this.allProjectInfos
+      console.log(this.allProjectInfos)
+    }).catch((e) => {
+      this.load.state = ELoadState.Failed
+      console.error("曲谱列表获取失败：", e)
+    })
+    
   },
   methods: {
     openProject(project) {
