@@ -7,6 +7,7 @@ function toRgbString(color) {
 
 export class Theme {
     backgroundColor: string
+    backgroundColorRgb: string
     foregroundColor: string
     foregroundColorRgb: string
     themeColor: string
@@ -14,6 +15,7 @@ export class Theme {
 
     constructor(backgroundColor, foregroundColor, themeColor) {
         this.backgroundColor = backgroundColor
+        this.backgroundColorRgb = toRgbString(backgroundColor)
         this.foregroundColor = foregroundColor
         this.foregroundColorRgb = toRgbString(foregroundColor)
         this.themeColor = themeColor
