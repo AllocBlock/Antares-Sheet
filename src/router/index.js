@@ -11,7 +11,7 @@ const routes = [
   {
     path: '/',
     name: 'Index',
-    component: UserSpace
+    component: Index
   },
   {
     path: '/sheet',

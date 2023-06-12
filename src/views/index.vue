@@ -4,6 +4,7 @@
     <div id="sub_title">- 和弦谱查看与编辑 -</div>
     <div id="button_list" class="flex">
       <router-link class="button" to="/user/space">曲谱列表</router-link>
+      <router-link class="button" to="/imgSheetList">图片谱</router-link>
 
       <a href="https://github.com/AllocBlock/AntaresSheet">
         <img src="/icons/github-mark-white.svg" id="github_mark"/>
