@@ -20,7 +20,6 @@ export class Theme {
         this.foregroundColorRgb = toRgbString(foregroundColor)
         this.themeColor = themeColor
         this.themeColorRgb = toRgbString(themeColor)
-        console.log(themeColor, this.themeColorRgb)
     }
 }
 

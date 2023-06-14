@@ -4,12 +4,45 @@ import { assert } from "./assert";
 import { parseSheet } from "./sheetParser";
 import { SheetInfo, SheetMeta } from "./sheetInfo";
 
+const NEW_PROJECT_TEMPLATE = `$sheet "*SHEET_TITLE*"
+
+!(欢迎使用星河曲谱！)
+你可以双击来编辑文字
+在左侧的和弦工具栏里添加和弦，然后拖拽到文字上来添加和弦：[C]一  [G]二  [Am]三  [Em]四
+右键菜单里可以进行更多操作，比如添加下划线：{[F]五 [C]六} {[F]七 [G]八}
+点击和弦可以播放和弦
+还能添加标记：!(前奏) !(间奏) !(尾奏)
+
+还有更多快捷操作，比如：
+· Shift+鼠标左键：移动和弦
+· Ctrl+鼠标左键：移动和弦
+· 在和弦上双击：添加下划线
+· Tab/Shift+Tab：添加空格
+· Enter/Shift+Enter：添加换行
+· Delete：删除
+· z键：切换“标注和弦”和“纯和弦”
+
+!(音乐播放器)
+界面左下角有“音乐播放器”按钮，点击可以打开音乐播放器
+播放器可以加载音频并播放，并且能够调节「音调」、「播放速度」等
+此外播放器提供了「标记」和「跳转」的功能，打上标记，然后快速跳转，方便扒谱
+播放器也提供了快捷键：
+
+· w：添加标记
+· q：跳转到上一个标记
+· e：跳转到下一个标记
+
+!(钢琴键盘)
+钢琴键盘可以用来验证和弦是否正确
+键盘设置了快捷键，仿照了真实钢琴键盘的排布：
+· z键为C、s为#C/bD、x键为D、d为#d/be、c键为E……以此类推
+`
+
 export class ProjectInfo {
     pid : string
     createTime : Date
     updateTime : Date
 
-    title : string
     description : string
     tags : string[]
     sheetMeta : SheetMeta
@@ -19,11 +52,16 @@ export class ProjectInfo {
         this.pid = pid
         this.createTime = new Date()
         this.updateTime = this.createTime
-        this.title = title
         this.description = description
         this.tags = []
         this.sheetMeta = new SheetMeta()
-        this.sheetData = ''
+        this.sheetMeta.title = title
+        let data = NEW_PROJECT_TEMPLATE
+        if (title) {
+            data = data.replace("*SHEET_TITLE*", title)
+        }
+        
+        this.sheetData = data
     }
 }
 

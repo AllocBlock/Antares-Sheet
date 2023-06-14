@@ -95,7 +95,7 @@ export default {
   flex-wrap: wrap;
 
   .project_card {
-    width: 100px;
+    width: 150px;
     margin: 10px;
   }
 }

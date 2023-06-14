@@ -57,7 +57,7 @@
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
               <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
-              <div class="button" @click="onSaveClicked">保存</div>
+              <div class="button" @click="saveSheet">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
             <AntaresSheet
@@ -187,7 +187,7 @@ import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
 
 import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode.js";
-import { parseSheet } from "@/utils/sheetParser.js";
+import { parseSheet } from "@/utils/sheetParser";
 import { SheetInfo, SheetMeta } from "@/utils/sheetInfo";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
 import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
@@ -202,6 +202,7 @@ import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import Storage from "@/utils/storage.js";
 import { Project } from "@/utils/project";
+import HotKey from "@/utils/hotKey";
 
 const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, EditorModeProgression],  `【组合编辑模式】详细操作见其他模式的介绍`)
 
@@ -316,10 +317,14 @@ export default {
 
     let that = this
     startRepeatTimeout(()=>{
-      that.saveSheet()
+      that._saveSheet()
     }, 5000)
 
     document.addEventListener("click", () => this.closeContext());
+    HotKey.addKeyDownListener("KeyS", (e) => {
+      this.saveSheet()
+      e.preventDefault()
+    }, true, false, false)
   },
   methods: {
     clearSheet() {
@@ -549,13 +554,13 @@ export default {
       input.click();
       input.remove()
     },
-    onSaveClicked() {
-      if (this.saveSheet())
+    saveSheet() {
+      if (this._saveSheet())
         this.$toast("曲谱已保存~")
       else
         this.$toast("曲谱保存失败...本曲谱并非你的项目，或保存过程中遇到其他错误")
     },
-    saveSheet() {
+    _saveSheet() {
       if (this.sheetSource == ESheetSource.PROJECT) {
         Project.update(this.pid, this.sheetInfo, this.toolChord.attachedChords.map(n => n.name))
         console.log("曲谱已保存")

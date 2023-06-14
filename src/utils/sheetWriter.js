@@ -1,5 +1,5 @@
 import { ENodeType, toPluginTypeString } from "@/utils/sheetNode.js"
-import { parseSheet } from "@/utils/sheetParser.js";
+import { parseSheet } from "@/utils/sheetParser";
 
 function _toSheetFileString(node) {
   switch (node.type) {

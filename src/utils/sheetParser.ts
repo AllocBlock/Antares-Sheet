@@ -1,5 +1,6 @@
 import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode.js"
 import { SheetInfo, SheetMeta } from "@/utils/sheetInfo"
+import { LineReader } from "@/utils/io"
 
 const ReChord = /\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // [X] | [X]{word}
 const ReChordPure = /!\[([^\]]*)\]/ // ![X]
@@ -119,14 +120,6 @@ const splitMethods = [
   }
 ]
 
-function getLine(str, offset) {
-  if (offset > str) return [null, offset]
-  let start = offset;
-  let end = offset;
-  while (end < str.length && str[end] != "\n") end++;
-  return [str.substr(start, end), end + 1];
-}
-
 function matchSplit(content, matcher, createNode) {
   const match = (typeof matcher == "function") ? matcher(content) : content.match(matcher)
   if (!match) return false
@@ -181,15 +174,15 @@ export function parseSheet(sheetData) {
   // 解析标签信息，标签信息具有通用性，可以自定义标签
   // 标签可以是一个值或是数组，数组中的每个值用空格隔开
   // 如果值中有空格则使用""将值括起来，如果值中有"则在前面加一个反斜杠变成\"
-  let lines = sheetData.split("\n")
-  let lineIndex = 0;
-  while (lineIndex < lines.length) {
-    let line = lines[lineIndex]
-    lineIndex++;
-    if (line === null)
+  let reader = new LineReader(sheetData)
+  while (!reader.isEnd()) {
+    let line = reader.pop()
+    if (line === null) {
       break
-    if (line.match(/^\s*$/)) // 空行
+    }
+    else if (line.match(/^\s*$/)) { // 空行
       continue
+    }
     else if (line[0] == "$") {
       let splitResult = line.match(/\$([^\s]*)\s(.*)/);
       if (!splitResult) throw "解析标签失败";
@@ -207,18 +200,22 @@ export function parseSheet(sheetData) {
             return raw;
           }
         });
-      } else {
+      }
+      else {
         value = "";
       }
 
       if (value.length == 1) value = value[0];
       
       meta.update(key, value)
-    } else break;
+    }
+    else {
+      reader.reverse();
+      break;
+    };
   }
-  lineIndex--;
 
-  let sheetBody = lines.slice(lineIndex).join("\n");
+  let sheetBody = reader.pop_all_remaining()
   parseNodes(rootNode, sheetBody)
 
   if (!validateTree(rootNode)) {

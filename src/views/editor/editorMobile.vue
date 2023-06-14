@@ -98,7 +98,7 @@ import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
 
-import { parseSheet } from "@/utils/sheetParser.js";
+import { parseSheet } from "@/utils/sheetParser";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
 import Chord from "@/components/chord/index.vue";

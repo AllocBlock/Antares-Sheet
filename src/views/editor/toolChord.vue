@@ -2,7 +2,7 @@
   <div class="tool_chord" :env="getEnv()">
     <div class="title">和弦工具</div>
     <div class="list">
-      <div v-if="chords.length == 0">暂未添加任何和弦</div>
+      <div id="no_chord" class="flex_h_center" v-if="chords.length == 0">暂未添加任何和弦</div>
       <Chord
         v-else
         v-for="chord in chords"
@@ -99,6 +99,10 @@ export default {
   color: white;
 }
 
+#no_chord {
+  width: 100%;
+  color: rgba(var(--foreground-color-rgb), 0.5)
+}
 </style>
 
 <style scoped lang="scss">

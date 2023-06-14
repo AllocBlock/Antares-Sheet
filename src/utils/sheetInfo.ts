@@ -30,7 +30,7 @@ export class SheetMeta {
 
     reset() {
       this.title = "未命名"
-      this.singer = "请输入歌手"
+      this.singer = ""
       this.by = "锦瑟"
       this.originalKey = "C"
       this.sheetKey = "C"

@@ -34,7 +34,6 @@ export default {
 /* top wrapper */
 #app_top {
   min-height: 100vh;
-  min-width: 100vw;
   background: v-bind('theme.backgroundColor');
   color: v-bind('theme.foregroundColor');
   --background-color: v-bind('theme.backgroundColor');
