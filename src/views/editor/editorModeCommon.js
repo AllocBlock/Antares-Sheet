@@ -80,7 +80,7 @@ function mergeCallbacks(first, second) {
 
 export function mergeEditorModes(mode1, mode2, tip = null) {
   let editorMode = {}
-  editorMode.tip = tip ?? mode2.tip;
+  editorMode.tip = tip ?? mode1.tip + "\n" + mode2.tip;
   editorMode.componentEvents = mergeCallbacks(mode1.componentEvents, mode2.componentEvents);
   editorMode.documentEvents = mergeCallbacks(mode1.documentEvents, mode2.documentEvents);
   editorMode.toolChordEvents = mergeCallbacks(mode1.toolChordEvents, mode2.toolChordEvents);

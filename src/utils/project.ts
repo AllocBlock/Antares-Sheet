@@ -16,6 +16,7 @@ const NEW_PROJECT_TEMPLATE = `$sheet "*SHEET_TITLE*"
 还有更多快捷操作，比如：
 · Shift+鼠标左键：移动和弦
 · Ctrl+鼠标左键：移动和弦
+· Alt+鼠标左键（左右拖拽）：左右微调偏移和弦
 · 在和弦上双击：添加下划线
 · Tab/Shift+Tab：添加空格
 · Enter/Shift+Enter：添加换行
@@ -35,7 +36,7 @@ const NEW_PROJECT_TEMPLATE = `$sheet "*SHEET_TITLE*"
 !(钢琴键盘)
 钢琴键盘可以用来验证和弦是否正确
 键盘设置了快捷键，仿照了真实钢琴键盘的排布：
-· z键为C、s为#C/bD、x键为D、d为#d/be、c键为E……以此类推
+· z键为C、s为#C/bD、x键为D、d为#D/bE、c键为E……以此类推
 `
 
 export class ProjectInfo {

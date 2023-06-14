@@ -2,7 +2,7 @@
   <div class="editor" :style="globalCssVar">
     <div class="flex_center fill" style="flex-direction: column;">
       <div class="flex_center fill" :style="`height: ${layout.showAudioPlayer ? ('calc(100% - ' + layout.audioPlayerHeight + 'px)') : '100%'}; position: relative;`">
-        <div id="help_button">?</div>
+        <div id="help_button" @click="helpPanel.show = true">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
           <div id="tools_title" class="flex_center">
@@ -139,7 +139,6 @@
     </div>
 
     <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">{{dragChord.text}}</div>
-    <div id="temp_tip" @click="$toast('wow', 3)">{{editorMode.tip}}</div>
     <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
       <div id="raw_lyric_container">
         <div id="raw_lyric_title">在下方输入歌词</div>
@@ -159,6 +158,12 @@
     />
     <div id="drop_hint_panel">
       <div id="drop_hint_text">拖拽文件加载</div>
+    </div>
+
+    <div id="help_panel" class="panel" v-if="helpPanel.show">
+      曲谱编辑教程：<br />
+      {{ editorMode.tip }}
+      <div class="button" @click="helpPanel.show = false">确认</div>
     </div>
 
     <DraggablePanel title="键盘"
@@ -204,7 +209,7 @@ import Storage from "@/utils/storage.js";
 import { Project } from "@/utils/project";
 import HotKey from "@/utils/hotKey";
 
-const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, EditorModeProgression],  `【组合编辑模式】详细操作见其他模式的介绍`)
+const g_EditorMode = mergeEditorModeArray([EditorModeBasic, EditorModeDrag, EditorModeProgression])
 
 export default {
   name: "SheetEditorPc",
@@ -285,6 +290,9 @@ export default {
       rawLyricPanel: {
         show: false,
         lyrics: "",
+      },
+      helpPanel: {
+        show: false,
       },
       isTyping: false,
       ukulelePlayer: new StringInstrument("Ukulele", "Ukulele"),
@@ -936,27 +944,6 @@ export default {
   z-index: 20;
 }
 
-#temp_tip {
-  position: absolute;
-  z-index: 10;
-  max-width: 30%;
-  min-height: 40px;
-  top: 20px;
-  right: 20px;
-  padding: 10px 20px;
-
-  background-color: rgba(37, 160, 143, 0.5);
-  border-radius: 20px;
-  overflow: hidden;
-  white-space: pre-wrap;
-
-  opacity: 0.6;
-  transition: opacity 0.2s ease-out;
-  &:hover {
-    opacity: 1.0;
-  }
-}
-
 #drop_hint_panel {
   position: fixed;
   left: 0;
@@ -1000,6 +987,18 @@ export default {
   &:hover {
     opacity: 1;
   }
+}
+
+#help_panel {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  white-space: pre;
 }
 
 #playerOpenTag {

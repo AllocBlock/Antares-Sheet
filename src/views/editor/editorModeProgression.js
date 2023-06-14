@@ -11,7 +11,7 @@ function _setCurNode(node) {
 }
 
 export default {
-  tip: `【和弦级数模式】\n鼠标移动到文字上，按下1-7键修改和弦\n重复按同一个键可切换大小调\n按下~键可移除和弦\ntab键可在前方快速添加一个空格\nshift+tab在后方添加空格`,
+  tip: `【和弦级数模式】\n鼠标移动到文字上，按下1-7键修改和弦\n重复按同一个键可切换大小调`,
   componentEvents: {
     text: {
       mouseenter: (e, node) => {
@@ -49,10 +49,10 @@ export default {
 
     // 按下1-7应用对应级数的和弦
     progressionList.forEach(function([shift, isMajor], i) {
-      const keyName = (i + 1).toString()
+      const keyName = "Digit" + (i + 1).toString()
       gHookIds.push(HotKey.addListener(keyName, (e, [shift, isMajor]) => {
         if (!gCurNode) return
-        let chordName = ChordManager.shiftKey(gThis.sheetInfo.sheetKey, shift)
+        let chordName = ChordManager.shiftKey(gThis.sheetInfo.meta.sheetKey, shift)
         if (NodeUtils.isChord(gCurNode)) {
           if (ChordManager.getDistance(gCurNode.chord, chordName) == 0) { // 同级的和弦，再次按下则切换大小和弦
             let isCurMajor = ChordManager.isMajor(gCurNode.chord)
@@ -62,7 +62,7 @@ export default {
 
         if (!isMajor) chordName += "m"
         gCurNode = EditAction.convertToChord(gCurNode, chordName)
-      }, [shift, isMajor]))
+      }, false, false, false, [shift, isMajor]))
     })
   },
   release: function() {

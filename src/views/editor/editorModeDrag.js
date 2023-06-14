@@ -213,7 +213,7 @@ function _shiftChord(offset) {
 }
 
 export default {
-  tip: `【拖拽和弦模式】按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n按住Alt拖拽可微调偏移和弦\n拖入保存的文件可以直接加载`,
+  tip: `【拖拽和弦】\n从左侧和弦工具栏拖拽来添加和弦\nShift+鼠标左键：移动和弦\nCtrl+鼠标左键：复制和弦\n按住Shift可以移动和弦\nAlt+鼠标左键（左右拖拽）：微调偏移和弦`,
   componentEvents: {
     text: {
       mouseenter: (e, node) => {

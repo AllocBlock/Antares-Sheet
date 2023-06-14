@@ -1,6 +1,8 @@
 // 使用js标准的keyCode
 // KeyboardEvent.code，https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code 
 
+import { assert } from "./assert"
+
 class KeyListener {
   constructor(eventName, allowRepeat = true) {
     this.hookId = 1

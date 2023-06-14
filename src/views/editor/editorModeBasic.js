@@ -94,7 +94,7 @@ function _switchChordType(e) {
 }
 
 export default {
-  tip: `【基础编辑模式】双击可以编辑文字/添加下划线\n右键可以打开菜单`,
+  tip: `【基础编辑】\n右键可以打开菜单来添加/修改内容\n双击可以编辑文字/添加下划线\nTab/Shift+Tab键可在前方/后方添加空格\n按下~键可移除和弦`,
   componentEvents: {
     text: {
       dblclick: (e, node) => EditAction.editTextWithNeighbor(node),
