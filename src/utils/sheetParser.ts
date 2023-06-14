@@ -166,7 +166,7 @@ function parseNodes(parentNode, str) {
   parentNode.children = nodes
 }
 
-export function parseSheet(sheetData) {
+export function parseSheet(sheetData) : [SheetMeta, SheetNode] {
   let meta = new SheetMeta()
   let rootNode = new SheetNode(ENodeType.Root)
 

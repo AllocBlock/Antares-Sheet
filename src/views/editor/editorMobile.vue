@@ -23,7 +23,7 @@
       </div>
       <div id="sheet_by" class="title">制谱 锦瑟</div>
       <div class="flex_center">
-        <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
+        <div id="edit_raw_lyric_button" class="button" @click="openRawSheetPanel">编辑原始曲谱</div>
         <!-- <div class="button" @click="saveSheetToFile">保存</div> -->
         <!-- <div class="button" @click="loadSheetFromFile">载入</div> -->
       </div>
@@ -51,13 +51,13 @@
       <div id="drag_mark_arrow"></div>
     </div>
 
-    <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
+    <div id="raw_lyric_panel" class="panel" v-if="rawSheetPanel.show">
       <div id="raw_lyric_container">
         <div id="raw_lyric_title">在下方输入歌词</div>
-        <textarea id="raw_lyric_textarea" v-model="rawLyricPanel.lyrics"></textarea>
+        <textarea id="raw_lyric_textarea" v-model="rawSheetPanel.data"></textarea>
         <div style="display: flex">
           <div id="raw_lyric_button_confirm" class="button" @click="confirmLyric">确认歌词</div>
-          <div id="raw_lyric_button_cancel" class="button" @click="rawLyricPanel.show = false">取消</div>
+          <div id="raw_lyric_button_cancel" class="button" @click="rawSheetPanel.show = false">取消</div>
         </div>
       </div>
     </div>
@@ -160,9 +160,9 @@ export default {
         isDragging: false,
         text: "",
       },
-      rawLyricPanel: {
+      rawSheetPanel: {
         show: false,
-        lyrics: "",
+        data: "",
       },
       contextMenu: {
         show: false,
@@ -255,17 +255,17 @@ export default {
     disableOverscroll(e) {
       e.preventDefault()
     },
-    openRawLyricPanel() {
-      this.rawLyricPanel.lyrics = NodeUtils.toString(this.sheetInfo.sheetTree, true)
-      this.rawLyricPanel.show = true
+    openRawSheetPanel() {
+      this.rawSheetPanel.data = NodeUtils.toString(this.sheetInfo.sheetTree, true)
+      this.rawSheetPanel.show = true
     },
     confirmLyric() {
       if (!confirm("是否确认覆盖歌词？此前制作的和弦将全部被删除！！")) return;
 
       let root = NodeUtils.createRootNode()
-      NodeUtils.append(root, NodeUtils.createTextNodes(this.rawLyricPanel.lyrics))
+      NodeUtils.append(root, NodeUtils.createTextNodes(this.rawSheetPanel.data))
       this.sheetInfo.sheetTree = root
-      this.rawLyricPanel.show = false
+      this.rawSheetPanel.show = false
     },
     openContext(e, node) {
       e.preventDefault();

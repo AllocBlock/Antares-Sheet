@@ -32,23 +32,26 @@ function _toSheetFileString(node) {
   }
 }
 
-export function toSheetFileString(root, title, singer, by, originalKey, sheetKey, attachedChords = null) {
+export function toSheetFileString(root, title, singer, by, originalKey, sheetKey, attachedChords = null, ignoreMeta = false) {
 
   // restriction
   title = title.replace(/"/g, "")
 
   // generate
   let data = ""
-  data += "$title \"" + title + "\"\n"
-  data += "$singer " + singer + "\n"
-  data += "$by " + by + "\n"
-  data += "$originalKey " + originalKey + "\n"
-  data += "$sheetKey " + sheetKey + "\n"
-  if (attachedChords !== null)
-    data += "$chords " + attachedChords.join(" ") + "\n"
-  data += "$rhythms \n"
-  data += "$createTime " + new Date().toLocaleString() + "\n"
-  data += "\n"
+
+  if (!ignoreMeta) {
+    data += "$title \"" + title + "\"\n"
+    data += "$singer " + singer + "\n"
+    data += "$by " + by + "\n"
+    data += "$originalKey " + originalKey + "\n"
+    data += "$sheetKey " + sheetKey + "\n"
+    if (attachedChords !== null)
+      data += "$chords " + attachedChords.join(" ") + "\n"
+    data += "$rhythms \n"
+    data += "$createTime " + new Date().toLocaleString() + "\n"
+    data += "\n"
+  }
 
   data += _toSheetFileString(root)
 

@@ -56,7 +56,7 @@
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_center">
-              <div id="edit_raw_lyric_button" class="button" @click="openRawLyricPanel">编辑歌词</div>
+              <div id="edit_raw_sheet_button" class="button" @click="openRawSheetPanel">编辑原始曲谱</div>
               <div class="button" @click="saveSheet">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
@@ -139,13 +139,16 @@
     </div>
 
     <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">{{dragChord.text}}</div>
-    <div id="raw_lyric_panel" class="panel" v-if="rawLyricPanel.show">
-      <div id="raw_lyric_container">
-        <div id="raw_lyric_title">在下方输入歌词</div>
-        <textarea id="raw_lyric_textarea" v-model="rawLyricPanel.lyrics"></textarea>
-        <div style="display: flex">
-          <div id="raw_lyric_button_confirm" class="button" @click="confirmLyric">确认歌词</div>
-          <div id="raw_lyric_button_cancel" class="button" @click="rawLyricPanel.show = false">取消</div>
+    <div id="raw_sheet_panel" class="panel" v-if="rawSheetPanel.show">
+      <div id="raw_sheet_container">
+        <div id="raw_sheet_title">在下方编辑原始曲谱，可以直接粘贴歌词~</div>
+        <textarea id="raw_sheet_textarea" v-model="rawSheetPanel.data"></textarea>
+        <div v-if="!rawSheetPanel.isValid" class="flex" style="color: red">
+          曲谱格式格式有误，请检查
+        </div>
+        <div class="flex">
+          <div v-if="rawSheetPanel.isValid" id="raw_sheet_button_confirm" class="button" @click="confirmRawSheet">确认</div>
+          <div id="raw_sheet_button_cancel" class="button" @click="rawSheetPanel.show = false">取消</div>
         </div>
       </div>
     </div>
@@ -287,9 +290,9 @@ export default {
         isDragging: false,
         text: '',
       },
-      rawLyricPanel: {
+      rawSheetPanel: {
         show: false,
-        lyrics: "",
+        data: "",
       },
       helpPanel: {
         show: false,
@@ -301,13 +304,13 @@ export default {
   },
   computed: {
     mutePlayerHotkey() {
-      return !this.layout.showAudioPlayer || this.rawLyricPanel.show || this.isTyping;
+      return !this.layout.showAudioPlayer || this.rawSheetPanel.show || this.isTyping;
     },
     muteEditorModeHotkey() {
-      return this.rawLyricPanel.show || this.isTyping;
+      return this.rawSheetPanel.show || this.isTyping;
     },
     muteKeyboardHotKey() {
-      return this.rawLyricPanel.show || this.isTyping || !this.keyboard.isFocused || this.keyboard.isFolded;
+      return this.rawSheetPanel.show || this.isTyping || !this.keyboard.isFocused || this.keyboard.isFolded;
     }
   },
   created() {
@@ -520,17 +523,18 @@ export default {
       if (!confirmed) return
       this.shiftKey(oldKey, newKey)
     },
-    openRawLyricPanel() {
-      this.rawLyricPanel.lyrics = NodeUtils.toString(this.sheetInfo.root, true)
-      this.rawLyricPanel.show = true
+    openRawSheetPanel() {
+      this.rawSheetPanel.data = this.sheetInfo.toText([], true)
+      this.rawSheetPanel.show = true
     },
-    confirmLyric() {
-      if (!confirm("是否确认覆盖歌词？此前制作的和弦将全部被删除！！")) return;
+    confirmRawSheet() {
+      if (!confirm("是否确认修改？将会覆盖原本的曲谱")) return;
 
-      let root = NodeUtils.createRootNode()
-      NodeUtils.append(root, NodeUtils.createTextNodes(this.rawLyricPanel.lyrics))
+      let [meta, root] = parseSheet(this.rawSheetPanel.data)
+      NodeUtils.normalizeSheetTree(root);
+      validateTree(root);
       this.sheetInfo.root = root
-      this.rawLyricPanel.show = false
+      this.rawSheetPanel.show = false
     },
     saveSheetToFile() {
       // TODO: remove un used chord?
@@ -632,6 +636,19 @@ export default {
     },
     "toolChord.attachedChords": function() {
       this.sheetInfo.meta.chords = this.toolChord.attachedChords.map(chord => chord.name)
+    },
+    "rawSheetPanel.data": function() {
+      console.log("changed", this.rawSheetPanel.data)
+      if (!this.rawSheetPanel.show) return;
+      this.rawSheetPanel.isValid = false
+      try {
+        let [meta, root] = parseSheet(this.rawSheetPanel.data)
+        NodeUtils.normalizeSheetTree(root);
+        validateTree(root);
+        this.rawSheetPanel.isValid = true
+      }
+      catch {}
+
     }
   },
 };
@@ -805,7 +822,7 @@ export default {
     color: rgb(156, 156, 156);
   }
 
-  #edit_raw_lyric_button {
+  #edit_raw_sheet_button {
     background: var(--sheet-theme-color);
     color: white;
   }
@@ -899,8 +916,8 @@ export default {
   top: 0;
 }
 
-#raw_lyric_panel {
-  #raw_lyric_container {
+#raw_sheet_panel {
+  #raw_sheet_container {
     height: 100%;
     width: 100%;
     display: flex;
@@ -909,23 +926,23 @@ export default {
     align-items: center;
     background: rgba(0, 0, 0, 0.8);
   }
-  #raw_lyric_title {
+  #raw_sheet_title {
     font-size: 20px;
     padding: 20px 0;
     color: white;
   }
-  #raw_lyric_textarea {
+  #raw_sheet_textarea {
     font-family: inherit;
     color: black;
     font-size: var(--base-font-size);
     height: 60%;
     width: 60%;
   }
-  #raw_lyric_button_confirm {
+  #raw_sheet_button_confirm {
     background: var(--sheet-theme-color);
     color: white;
   }
-  #raw_lyric_button_cancel {
+  #raw_sheet_button_cancel {
     background: grey;
     color: white;
   }

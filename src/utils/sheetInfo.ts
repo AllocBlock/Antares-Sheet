@@ -49,7 +49,7 @@ export class SheetInfo {
         this.root = root ?? new SheetNode(ENodeType.Root);
     }
 
-    toText(attachedChords : string[] = []) {
+    toText(attachedChords : string[] = [], ignoreMeta = false) {
         return toSheetFileString(
           this.root,
           this.meta.title,
@@ -58,6 +58,7 @@ export class SheetInfo {
           this.meta.originalKey,
           this.meta.sheetKey,
           attachedChords,
+          ignoreMeta
         )
     }
 }
