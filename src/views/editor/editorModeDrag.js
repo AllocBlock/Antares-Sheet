@@ -129,7 +129,7 @@ function _onCursorUp(e) {
       }
       // TODO: 检查是否能够替换，有没有不能直接替换的情况？
       EditAction.unhighlightNode(gDragChord.toUpdateNode)
-      gThis.editor.replaceNode(gDragChord.toUpdateNode, gDragChord.toInsertNode)
+      gThis.editor.replace(gDragChord.toUpdateNode, gDragChord.toInsertNode)
     }
     gDragChord.clear()
     gUI.hideDragMark()

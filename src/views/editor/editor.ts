@@ -1,23 +1,7 @@
-import { SheetNode } from "@/utils/sheetNode"
-import { SheetEditCommand, SheetCommandPool } from "./editCommand"
-import {
-    SheetEditCommandInsertAfter,
-    SheetEditCommandInsertBefore,
-    SheetEditCommandRemove,
-    SheetEditCommandUpdateContent,
-    SheetEditCommandAddUnderline,
-    SheetEditCommandExtendUnderline,
-    SheetEditCommandMergeUnderline,
-    SheetEditCommandRemoveUnderline,
-    SheetEditCommandShrinkUnderline,
-    SheetEditCommandSplitUnderline,
-    SheetEditCommandReplaceNode
-} from "./editCommandImplement"
+import { ENodeType, SheetNode } from "@/utils/sheetNode"
 import { assert } from "@/utils/assert"
 import { NodeUtils } from "@/utils/sheetEdit"
 import History from "@/utils/history"
-import { reactive } from "vue"
-import { clone } from "@/utils/common"
 
 const MAX_UNDO_TIMES = 100
 
@@ -66,7 +50,6 @@ export default class SheetEditor {
     addHistory() {
         if (this.isHistoryPaused) return;
         let clonedRoot = this.root.clone()
-        console.log("cloned root", clonedRoot)
         this.history.add(clonedRoot)
     }
 
@@ -89,29 +72,89 @@ export default class SheetEditor {
 
     /** 在目标后方插入节点，可以是数组 */
     insertAfter(node: SheetNode, data) {
-        let cmdInsert = new SheetEditCommandInsertAfter(node, data)
-        cmdInsert.execute()
+        // constrain: underline node should have chord node at both begin and end
+        // to void this, these inserted node will be inserted after the underline
+        let targetNode = node
+        while (targetNode.nextSibling() == null && NodeUtils.isUnderline(targetNode.parent)) { 
+            targetNode = targetNode.parent
+        }
+
+        let toInsertNodes = Array.isArray(data) ? data : [data];
+
+        for (let n of toInsertNodes)
+            n.parent = targetNode.parent;
+        let index = targetNode.getSelfIndex() + 1
+        targetNode.parent.children.splice(index, 0, ...toInsertNodes);
+
         this.addHistory()
     }
 
     /** 在目标前方插入节点，可以是数组 */
     insertBefore(node: SheetNode, data) {
-        let cmdInsert = new SheetEditCommandInsertBefore(node, data)
-        cmdInsert.execute()
+        // constrain: underline node should have chord node at both begin and end
+        // to void this, these inserted node will be inserted before the underline
+        let targetNode = node
+        while (targetNode.prevSibling() == null && NodeUtils.isUnderline(targetNode.parent)) { 
+            targetNode = targetNode.parent
+        }
+
+        let toInsertNodes = Array.isArray(data) ? data : [data];
+
+        for (let n of toInsertNodes)
+            n.parent = targetNode.parent;
+        let index = targetNode.getSelfIndex()
+        targetNode.parent.children.splice(index, 0, ...toInsertNodes);
         this.addHistory()
     }
 
     /** 更新节点的内容 */
     updateContent(node: SheetNode, content: string) {
-        let cmd = new SheetEditCommandUpdateContent(node, content)
-        cmd.execute()
+        assert([ENodeType.Text, ENodeType.Chord, ENodeType.Mark].includes(node.type), `不能编辑${node.type}节点的内容`)
+
+        assert(content.length > 0, "新内容不能为空")
+        if (node.type == ENodeType.Text || node.type == ENodeType.Chord)
+            assert(node.content.length == 1, "文本/和弦节点的原始内容应该为单个字符")
+
+        switch (node.type) {
+            case ENodeType.Text:
+            case ENodeType.Chord: { // text node and chord node's content can only be one char
+                node.content = content[0]
+                let remaining = content.slice(1)
+                if (remaining.length > 0) {
+                    let textNodes = NodeUtils.createTextNodes(remaining)
+                    this.pauseHistory()
+                    this.insertAfter(node, textNodes)
+                    this.resumeHistory(false)
+                }
+                break;
+            }
+            case ENodeType.Mark: {
+                node.content = content
+                break;
+            }
+            default: {
+                console.warn("无法编辑该节点的内容", node);
+                break;
+            }
+        }
+
+        this.addHistory()
+    }
+    
+
+    replace(node : SheetNode, newNode : SheetNode) {
+        // TODO: make this safe
+        NodeUtils.replace(node, newNode)
         this.addHistory()
     }
 
+    // TODO: removing chord maybe cause very complex tree structure changes, rely on other commands
+    // constrain: underline node should have chord node at both begin and end
+    // to void this, when remove this kind of chord node, its underline will be removed, too
     /** 删除一个节点（不安全） */
     remove(node: SheetNode) {
-        let cmd = new SheetEditCommandRemove(node)
-        cmd.execute()
+        // TODO: make this safe
+        NodeUtils.removeFromParent(node)
         this.addHistory()
     }
 
@@ -130,34 +173,97 @@ export default class SheetEditor {
         let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
         assert(nextChordNode, "无法添加下划线：未找到下一个和弦")
 
-        let cmd = null
-        if (chordNode.parent == nextChordNode.parent) {
+        const startChordNode = chordNode
+        const endChordNode = nextChordNode
+
+        if (startChordNode.parent == endChordNode.parent) {
             // 同一层，那么将起始到结束之间的所有元素都放入一个下划线
             // console.log("s e");
-            cmd = new SheetEditCommandAddUnderline(chordNode, nextChordNode)
-        } else if (NodeUtils.parentsOf(chordNode).includes(nextChordNode.parent)) {
+            assert(startChordNode.parent === endChordNode.parent, "要添加下划线的节点需要位于同一层级")
+            let betweenNodes = NodeUtils.getSiblingBetween(startChordNode, endChordNode, true, true);
+            assert(betweenNodes.length >= 2, `未知错误：中间节点的数量有误，应大于2，但现在是${betweenNodes.length}`)
+
+            this.__assertBeginAndEnd(betweenNodes);
+
+            // constrain: chord and pure chord should not be in same underline
+            let hasChord = false;
+            let hasPureChord = false;
+            NodeUtils.traverseForward(startChordNode, false, function(n) {
+                hasChord = hasChord || (n.type == ENodeType.Chord)
+                hasPureChord = hasPureChord ||(n.type == ENodeType.ChordPure)
+
+                if (n === endChordNode) return true;
+            })
+
+            assert(!(hasChord && hasPureChord), "下划线内不能同时包含标注和弦和纯和弦")
+            let underlineNode = NodeUtils.createUnderlineNode(hasPureChord)
+
+            NodeUtils.insertBefore(betweenNodes[0], underlineNode)
+            NodeUtils.removeFromParent(betweenNodes)
+            NodeUtils.append(underlineNode, betweenNodes)
+
+        } else if (NodeUtils.parentsOf(startChordNode).includes(endChordNode.parent)) {
             // 起始在内层，结束在外层，则把起始元素的同级下划线（和结束同层）向后扩展到包围结束和弦
             // console.log("[s] e");
-            let startUnderlineNode = NodeUtils.parentUntil(chordNode, nextChordNode.parent);
+            let startUnderlineNode = NodeUtils.parentUntil(startChordNode, endChordNode.parent);
 
-            cmd = new SheetEditCommandExtendUnderline(startUnderlineNode, nextChordNode)
-        } else if (NodeUtils.parentsOf(nextChordNode).includes(chordNode.parent)) {
+            assert(startUnderlineNode !== endChordNode, "边界节点不能是下划线自己")
+            assert(startUnderlineNode.parent === endChordNode.parent, "要扩展到下划线的节点需要位于同一层级")
+            // constrain: underline must has chord at both begin and end
+            assert(endChordNode.isChord(), "扩展下划线时，首/尾部的元素必须是和弦")
+
+            let isAfterUnderline = startUnderlineNode.getSelfIndex() < endChordNode.getSelfIndex()
+            
+            let betweenNodes = NodeUtils.getSiblingBetween(startUnderlineNode, endChordNode, false, true);
+
+            NodeUtils.removeFromParent(betweenNodes)
+            NodeUtils.append(startUnderlineNode, betweenNodes)
+
+        } else if (NodeUtils.parentsOf(endChordNode).includes(startChordNode.parent)) {
             // 起始在外层，结束在内层，则把结束元素的同级下划线（和起始同层）向前扩展到包围起始和弦
             // console.log("s [e]");
-            let endUnderlineNode = NodeUtils.parentUntil(nextChordNode, chordNode.parent);
-            cmd = new SheetEditCommandExtendUnderline(endUnderlineNode, chordNode)
+            let endUnderlineNode = NodeUtils.parentUntil(endChordNode, startChordNode.parent);
+
+            assert(endUnderlineNode !== startChordNode, "边界节点不能是下划线自己")
+            assert(endUnderlineNode.parent === startChordNode.parent, "要扩展到下划线的节点需要位于同一层级")
+            // constrain: underline must has chord at both begin and end
+            assert(startChordNode.isChord(), "扩展下划线时，首/尾部的元素必须是和弦")
+
+            let betweenNodes = NodeUtils.getSiblingBetween(startChordNode, endUnderlineNode, true, false);
+
+            NodeUtils.removeFromParent(betweenNodes)
+            NodeUtils.prepend(endUnderlineNode, betweenNodes)
         } else {
             // 起始结束都在内层（且不是同一个下划线），则把他们的同级下划线以及中间的元素合并到一个下划线
             // console.log("[s] [e]");
-            let commonAncestorNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
-            let startUnderlineNode = NodeUtils.parentUntil(chordNode, commonAncestorNode);
-            let endUnderlineNode = NodeUtils.parentUntil(nextChordNode, commonAncestorNode);
+            let commonAncestorNode = NodeUtils.commonAncestor(startChordNode, endChordNode);
+            let startUnderlineNode = NodeUtils.parentUntil(startChordNode, commonAncestorNode);
+            let endUnderlineNode = NodeUtils.parentUntil(endChordNode, commonAncestorNode);
 
-            cmd = new SheetEditCommandMergeUnderline(startUnderlineNode, endUnderlineNode)
+            assert(startUnderlineNode.isUnderline() && endUnderlineNode.isUnderline(), "要合并的节点必须是下划线")
+            assert(startUnderlineNode !== endUnderlineNode, "不能与自己合并")
+            assert(startUnderlineNode.parent === endUnderlineNode.parent, "要合并的两个下划线需要位于同一层级")
+            assert(startUnderlineNode.type == endUnderlineNode.type, "要合并的下划线的类型应相同")
+
+            if (startUnderlineNode.getSelfIndex() > endUnderlineNode.getSelfIndex()) {
+                let temp = startUnderlineNode
+                startUnderlineNode = endUnderlineNode
+                endUnderlineNode = temp
+            }
+
+            let betweenNodes = NodeUtils.getSiblingBetween(startUnderlineNode, endUnderlineNode, false, false);
+            let mergedNode = NodeUtils.createUnderlineNode(startUnderlineNode.type == ENodeType.UnderlinePure)
+
+            NodeUtils.removeFromParent(betweenNodes)
+
+            NodeUtils.append(mergedNode, startUnderlineNode.children)
+            NodeUtils.append(mergedNode, betweenNodes)
+            NodeUtils.append(mergedNode, endUnderlineNode.children)
+
+            NodeUtils.removeFromParent(endUnderlineNode)
+            NodeUtils.replace(startUnderlineNode, mergedNode)
         }
 
-        assert(cmd, "未知错误，未找到合适的命令")
-        cmd.execute()
         this.addHistory()
     }
     
@@ -172,63 +278,105 @@ export default class SheetEditor {
         let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
         if (!nextChordNode) throw "未找到下一个和弦";
 
-        let commonAncestorNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
-        assert(commonAncestorNode && commonAncestorNode.isUnderline(), "当前和弦和下一个和弦之间没有下划线连接，无需删除")
+        let commonUnderlineNode = NodeUtils.commonAncestor(chordNode, nextChordNode);
+        assert(commonUnderlineNode && commonUnderlineNode.isUnderline(), "当前和弦和下一个和弦之间没有下划线连接，无需删除")
 
         // 起始节点是起始和弦，或包含起始和弦的下划线，终止节点同理
         // 且起始节点和终止节点一定是相邻的兄弟节点
-        let startNode = NodeUtils.parentUntil(chordNode, commonAncestorNode);
-        let endNode = NodeUtils.parentUntil(nextChordNode, commonAncestorNode);
+        let startNode = NodeUtils.parentUntil(chordNode, commonUnderlineNode);
+        let endNode = NodeUtils.parentUntil(nextChordNode, commonUnderlineNode);
+
+        assert(commonUnderlineNode.isUnderline(), "common ancestor is suppose to be underline")
 
         // constrain: underline must has chord at both begin and end
         // so if chord node is the first child, it must be beginning of underline
         let isBegin = chordNode.prevSibling() == null;
         let isEnd = nextChordNode.nextSibling() == null;
 
-        let cmd = null
         if (isBegin && isEnd) {
             // 下划线只有这两个节点，则删除整个下划线，内容放到外面
             // console.log("[s e] -> s e");
-            cmd = new SheetEditCommandRemoveUnderline(commonAncestorNode)
+            NodeUtils.replace(commonUnderlineNode, commonUnderlineNode.children)
         } else if (!isBegin && isEnd) {
             // 起始节点前面还有元素，但结束节点后面没有，需要把起始节点之后的所有元素移出
             // console.log("[xxx s e] -> [xxx s] e");
-            cmd = new SheetEditCommandShrinkUnderline(commonAncestorNode, startNode, true)
+            assert(commonUnderlineNode.parent === startNode, "缩小的基准节点必须在下划线内")
+            // constrain: underline must has chord at both begin and end
+            assert(commonUnderlineNode.isChord() || commonUnderlineNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
+    
+            let anchorNodes = startNode.children.filter(n => n.isChord() || n.isUnderline())
+            let baseNodeIndex = anchorNodes.indexOf(commonUnderlineNode)
+            assert(commonUnderlineNode.isUnderline() || baseNodeIndex < anchorNodes.length - 1, "尾部缩小时，基准节点不应该是最后一个和弦节点")
+            let slicedNodes = startNode.children.slice(commonUnderlineNode.getSelfIndex() + 1)
+
+            NodeUtils.removeFromParent(slicedNodes)
+            NodeUtils.insertAfter(commonUnderlineNode, slicedNodes)
+
         } else if (isBegin && !isEnd) {
             // 起始节点前面没有，但结束节点后面有元素，需要把结束节点之前的所有元素移出
             // console.log("[s e xxx] -> s [e xxx]");
-            cmd = new SheetEditCommandShrinkUnderline(commonAncestorNode, endNode, false)
+            assert(commonUnderlineNode.parent === startNode, "缩小的基准节点必须在下划线内")
+            // constrain: underline must has chord at both begin and end
+            assert(commonUnderlineNode.isChord() || commonUnderlineNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
+    
+            let anchorNodes = startNode.children.filter(n => n.isChord() || n.isUnderline())
+            let baseNodeIndex = anchorNodes.indexOf(commonUnderlineNode)
+
+            assert(commonUnderlineNode.isUnderline() || baseNodeIndex > 0, "头部缩小时，基准节点不应该是第一个和弦节点")
+            let slicedNodes = startNode.children.slice(0, commonUnderlineNode.getSelfIndex())
+
+            NodeUtils.removeFromParent(slicedNodes)
+            NodeUtils.insertBefore(commonUnderlineNode, slicedNodes)
         } else {
             // 前后都有元素，需要从中间断开
             // console.log("[xxx s e yyy] -> [xxx s] [e yyy]");
-            cmd = new SheetEditCommandSplitUnderline(commonAncestorNode, startNode, endNode)
+            assert(commonUnderlineNode.isUnderline(), "要分裂的节点必须是下划线")
+            assert(startNode.parent == commonUnderlineNode && endNode.parent == commonUnderlineNode, "起止节点都应该是下划线节点的子节点")
+    
+            if (startNode.getSelfIndex() > endNode.getSelfIndex()) {
+                let temp = startNode
+                startNode = endNode
+                endNode = temp
+            }
+    
+            let anchorNodes = commonUnderlineNode.children.filter(n => n.isChord() || n.isUnderline())
+            let startNodeIndex = anchorNodes.indexOf(startNode)
+            let endNodeIndex = anchorNodes.indexOf(endNode)
+            assert(startNode.isUnderline() || startNodeIndex > 0, "分裂下划线时，起始节点不应该是第一个和弦节点，否则应该使用收缩下划线命令")
+            assert(endNode.isUnderline() || endNodeIndex < anchorNodes.length - 1, "分裂下划线时，终止节点不应该是最后一个和弦节点，否则应该使用收缩下划线命令")
+    
+            let betweenNodes = NodeUtils.getSiblingBetween(startNode, endNode, false, false);
+
+            let isPure = commonUnderlineNode.type == ENodeType.UnderlinePure
+            let leftUnderline = NodeUtils.createUnderlineNode(isPure)
+            let rightUnderline = NodeUtils.createUnderlineNode(isPure)
+    
+            NodeUtils.insertBefore(commonUnderlineNode, leftUnderline)
+            NodeUtils.insertBefore(commonUnderlineNode, betweenNodes)
+            NodeUtils.insertBefore(commonUnderlineNode, rightUnderline)
+            NodeUtils.removeFromParent(commonUnderlineNode)
+    
+            NodeUtils.append(leftUnderline, commonUnderlineNode.children.slice(0, startNode.getSelfIndex() + 1))
+            NodeUtils.append(rightUnderline, commonUnderlineNode.children.slice(endNode.getSelfIndex()))
         }
 
-        assert(cmd, "未知错误，未找到合适的命令")
-        cmd.execute()
         this.addHistory()
     }
 
-    replaceNode(node : SheetNode, newNode : SheetNode) {
-        let cmd = new SheetEditCommandReplaceNode(node, newNode)
-        cmd.execute()
-        this.addHistory()
-    }
-
-    // FIXME: 不是单个命令，不能统一撤销
     removeAllUnderlineOfChord(node : SheetNode) {
         assert(node.isChord(), "输入应该是和弦节点")
+        this.pauseHistory()
         while(node.parent.isUnderline()) {
-            let cmd = new SheetEditCommandRemoveUnderline(node.parent)
-            cmd.execute()
+            this.removeUnderlineOnChord(node.parent)
         }
-        this.addHistory()
+        this.resumeHistory(true)
     }
 
-    // FIXME: 不是单个命令，不能统一撤销
     // 返回转换后的文本节点
     convertToText(node : SheetNode, removeEmptyNode : boolean) : SheetNode {
         assert(node.isChord(), "仅和弦可以转换为文本")
+        this.pauseHistory()
+
         this.removeAllUnderlineOfChord(node) // 删除和弦下划线
 
         let content = node.content
@@ -243,7 +391,26 @@ export default class SheetEditor {
         }
 
         let textNode = NodeUtils.createTextNode(content)
-        this.replaceNode(node, textNode);
+        this.replace(node, textNode);
+
+        this.resumeHistory(true)
         return textNode
+    }
+
+    private __assertBeginAndEnd(nodes) {
+        // constrain: underline must has chord at both begin and end
+        let beginNode = nodes[0]
+        while(true) {
+            if (beginNode.isChord()) break;
+            else if (beginNode.isUnderline()) beginNode = beginNode.children[0]
+            else throw "添加下划线时，首部的元素必须是和弦"
+        }
+
+        let endNode = nodes[nodes.length - 1]
+        while(true) {
+            if (endNode.isChord()) break;
+            else if (endNode.isUnderline()) endNode = endNode.children[endNode.children.length - 1]
+            else throw "添加下划线时，尾部的元素必须是和弦"
+        }
     }
 }
