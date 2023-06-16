@@ -300,14 +300,15 @@ export default class SheetEditor {
         } else if (!isBegin && isEnd) {
             // 起始节点前面还有元素，但结束节点后面没有，需要把起始节点之后的所有元素移出
             // console.log("[xxx s e] -> [xxx s] e");
-            assert(commonUnderlineNode.parent === startNode, "缩小的基准节点必须在下划线内")
+            assert(startNode.parent === commonUnderlineNode, "缩小的基准节点必须在下划线内")
             // constrain: underline must has chord at both begin and end
-            assert(commonUnderlineNode.isChord() || commonUnderlineNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
+            assert(startNode.isChord() || commonUnderlineNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
     
-            let anchorNodes = startNode.children.filter(n => n.isChord() || n.isUnderline())
-            let baseNodeIndex = anchorNodes.indexOf(commonUnderlineNode)
-            assert(commonUnderlineNode.isUnderline() || baseNodeIndex < anchorNodes.length - 1, "尾部缩小时，基准节点不应该是最后一个和弦节点")
-            let slicedNodes = startNode.children.slice(commonUnderlineNode.getSelfIndex() + 1)
+            let anchorNodes = commonUnderlineNode.children.filter(n => n.isChord() || n.isUnderline())
+            let baseNodeIndex = anchorNodes.indexOf(startNode)
+
+            assert(startNode.isUnderline() || baseNodeIndex < anchorNodes.length - 1, "尾部缩小时，基准节点不应该是最后一个和弦节点")
+            let slicedNodes = commonUnderlineNode.children.slice(startNode.getSelfIndex() + 1)
 
             NodeUtils.removeFromParent(slicedNodes)
             NodeUtils.insertAfter(commonUnderlineNode, slicedNodes)
@@ -315,15 +316,15 @@ export default class SheetEditor {
         } else if (isBegin && !isEnd) {
             // 起始节点前面没有，但结束节点后面有元素，需要把结束节点之前的所有元素移出
             // console.log("[s e xxx] -> s [e xxx]");
-            assert(commonUnderlineNode.parent === startNode, "缩小的基准节点必须在下划线内")
+            assert(endNode.parent === commonUnderlineNode, "缩小的基准节点必须在下划线内")
             // constrain: underline must has chord at both begin and end
-            assert(commonUnderlineNode.isChord() || commonUnderlineNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
+            assert(endNode.isChord() || endNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
     
-            let anchorNodes = startNode.children.filter(n => n.isChord() || n.isUnderline())
-            let baseNodeIndex = anchorNodes.indexOf(commonUnderlineNode)
+            let anchorNodes = commonUnderlineNode.children.filter(n => n.isChord() || n.isUnderline())
+            let baseNodeIndex = anchorNodes.indexOf(endNode)
 
-            assert(commonUnderlineNode.isUnderline() || baseNodeIndex > 0, "头部缩小时，基准节点不应该是第一个和弦节点")
-            let slicedNodes = startNode.children.slice(0, commonUnderlineNode.getSelfIndex())
+            assert(endNode.isUnderline() || baseNodeIndex > 0, "头部缩小时，基准节点不应该是第一个和弦节点")
+            let slicedNodes = commonUnderlineNode.children.slice(0, endNode.getSelfIndex())
 
             NodeUtils.removeFromParent(slicedNodes)
             NodeUtils.insertBefore(commonUnderlineNode, slicedNodes)
