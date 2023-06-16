@@ -1,4 +1,4 @@
-import { SheetNode, ENodeType } from "@/utils/sheetNode.js";
+import { SheetNode, ENodeType } from "@/utils/sheetNode";
 import { reactive } from "vue";
 import { assert } from "./assert";
 

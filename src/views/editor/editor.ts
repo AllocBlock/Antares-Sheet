@@ -15,37 +15,104 @@ import {
 } from "./editCommandImplement"
 import { assert } from "@/utils/assert"
 import { NodeUtils } from "@/utils/sheetEdit"
+import History from "@/utils/history"
+import { reactive } from "vue"
+import { clone } from "@/utils/common"
+
+const MAX_UNDO_TIMES = 100
 
 export default class SheetEditor {
-    commandPool: SheetCommandPool = new SheetCommandPool()
+    history: History<SheetNode>
+    root: SheetNode
+    isHistoryPaused: boolean
 
-    canUndo(): boolean { return this.commandPool.canUndo() }
-    canRedo(): boolean { return this.commandPool.canRedo() }
-    undo(): void { this.commandPool.undo() }
-    redo(): void { this.commandPool.redo() }
+    constructor(root : SheetNode) {
+        this.root = root
+        this.history = new History<SheetNode>(MAX_UNDO_TIMES, this.root.clone())
+        this.isHistoryPaused = false
+    }
+
+    private __replaceSheet(root : SheetNode) {
+        this.root.children = []
+        NodeUtils.append(this.root, root.children)
+    }
+
+    canUndo(): boolean { return this.history.hasPrev() }
+    canRedo(): boolean { return this.history.hasNext() }
+    undo(): void { 
+        assert(this.canUndo(), "no more histroy for undo")
+        let historyRoot = this.history.goPrev()
+        this.__replaceSheet(historyRoot)
+        console.log("undo", this.root)
+    }
+    redo(): void { 
+        assert(this.canRedo(), "no more histroy for redo")
+        let historyRoot = this.history.goNext()
+        this.__replaceSheet(historyRoot)
+        console.log("redo", this.root)
+    }
+
+    pauseHistory() {
+        this.isHistoryPaused = true
+    }
+
+    resumeHistory(addCurrentToHistory = false) {
+        this.isHistoryPaused = false
+        if (addCurrentToHistory) {
+            this.addHistory()
+        }
+    }
+
+    addHistory() {
+        if (this.isHistoryPaused) return;
+        let clonedRoot = this.root.clone()
+        console.log("cloned root", clonedRoot)
+        this.history.add(clonedRoot)
+    }
+
+    clearHistory() {
+        this.history.clear(this.root.clone())
+    }
+
+    replaceSheet(root : SheetNode, clearHistory : boolean = false) {
+        this.__replaceSheet(root)
+        if (clearHistory)
+            this.clearHistory()
+        else
+            this.addHistory()
+    }
+
+    clearSheet() {
+        this.root.children = []
+        this.addHistory()
+    }
 
     /** 在目标后方插入节点，可以是数组 */
     insertAfter(node: SheetNode, data) {
         let cmdInsert = new SheetEditCommandInsertAfter(node, data)
-        this.commandPool.execute(cmdInsert)
+        cmdInsert.execute()
+        this.addHistory()
     }
 
     /** 在目标前方插入节点，可以是数组 */
     insertBefore(node: SheetNode, data) {
         let cmdInsert = new SheetEditCommandInsertBefore(node, data)
-        this.commandPool.execute(cmdInsert)
+        cmdInsert.execute()
+        this.addHistory()
     }
 
     /** 更新节点的内容 */
     updateContent(node: SheetNode, content: string) {
         let cmd = new SheetEditCommandUpdateContent(node, content)
-        this.commandPool.execute(cmd)
+        cmd.execute()
+        this.addHistory()
     }
 
     /** 删除一个节点（不安全） */
     remove(node: SheetNode) {
         let cmd = new SheetEditCommandRemove(node)
-        this.commandPool.execute(cmd)
+        cmd.execute()
+        this.addHistory()
     }
 
     /** 给和弦添加一层下划线
@@ -90,7 +157,8 @@ export default class SheetEditor {
         }
 
         assert(cmd, "未知错误，未找到合适的命令")
-        this.commandPool.execute(cmd)
+        cmd.execute()
+        this.addHistory()
     }
     
     /** 删除和弦的一层下划线
@@ -137,12 +205,14 @@ export default class SheetEditor {
         }
 
         assert(cmd, "未知错误，未找到合适的命令")
-        this.commandPool.execute(cmd)
+        cmd.execute()
+        this.addHistory()
     }
 
     replaceNode(node : SheetNode, newNode : SheetNode) {
         let cmd = new SheetEditCommandReplaceNode(node, newNode)
-        this.commandPool.execute(cmd)
+        cmd.execute()
+        this.addHistory()
     }
 
     // FIXME: 不是单个命令，不能统一撤销
@@ -150,8 +220,9 @@ export default class SheetEditor {
         assert(node.isChord(), "输入应该是和弦节点")
         while(node.parent.isUnderline()) {
             let cmd = new SheetEditCommandRemoveUnderline(node.parent)
-            this.commandPool.execute(cmd)
+            cmd.execute()
         }
+        this.addHistory()
     }
 
     // FIXME: 不是单个命令，不能统一撤销

@@ -6,10 +6,10 @@
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div id="tools_title" class="title flex_center">工具栏</div>
           <div id="tools_title" class="flex_center">
-            <div class="button" v-if="this.editor.canUndo()" @click="this.editor.undo()" >
+            <div class="button" v-if="this.editor.canUndo()" @click="undo" >
               撤销
             </div>
-            <div class="button" v-if="this.editor.canRedo()" @click="this.editor.redo()">
+            <div class="button" v-if="this.editor.canRedo()" @click="redo">
               重做
             </div>
           </div>
@@ -194,7 +194,7 @@ import Focusable from "@/components/focusable.vue";
 import { reactive, defineAsyncComponent } from "vue";
 import { getQueryVariable, startRepeatTimeout } from "@/utils/common.js";
 
-import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode.js";
+import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
 import { SheetInfo, SheetMeta } from "@/utils/sheetInfo";
 import { toSheetFileString } from "@/utils/sheetWriter.js";
@@ -244,9 +244,9 @@ export default {
         audioPlayerHeight: 180,
         showAudioPlayer: false
       },
-      editor: new SheetEditor(),
+      editor: null,
       pid: null,
-      sheetInfo: new SheetInfo(),
+      sheetInfo: reactive(new SheetInfo()),
       toolChord: {
         showPanel: false,
         attachedChords: [],
@@ -317,6 +317,8 @@ export default {
     this.editorMode.init(this)
     if (this.editorMode.toolChordEvents)
       this.toolChord.events = this.editorMode.toolChordEvents
+    this.editor = new SheetEditor(this.sheetInfo.root)
+    console.log(this.sheetInfo)
   },
   mounted() {
     loadSheetFromUrlParam().then(res => {
@@ -338,18 +340,29 @@ export default {
     }, true, false, false)
   },
   methods: {
+    undo() {
+      if (this.editor.canUndo())
+        this.editor.undo();
+    },
+    redo() {
+      if (this.editor.canRedo())
+        this.editor.redo();
+    },
     clearSheet() {
-      if (!confirm("是否清空曲谱？（无法撤销！）"))
+      if (!confirm("是否清空曲谱？"))
         return
 
       this.sheetInfo.meta.reset()
-      this.sheetInfo.root = NodeUtils.createRootNode()
-
-      this.toolChord.attachedChords = []
+      
+      this.editor.pauseHistory()
+      this.editor.clearSheet()
 
       // 初始文本
       NodeUtils.append(this.sheetInfo.root, NodeUtils.createTextNodes("歌词"))
       NodeUtils.append(this.sheetInfo.root, NodeUtils.createNewLineNode())
+      this.editor.resumeHistory(true)
+
+      this.toolChord.attachedChords = []
     },
     loadSheet(sheetText) {
       let [meta, root] = parseSheet(sheetText)
@@ -359,7 +372,7 @@ export default {
         throw "曲谱解析失败！";
       }
       this.sheetInfo.meta = meta
-      this.sheetInfo.root = root;
+      this.editor.replaceSheet(root, true)
 
       this.toolChord.attachedChords = this.sheetInfo.meta.chords ? this.sheetInfo.meta.chords.map((chordName) =>
         ChordManager.getChord(chordName)
@@ -533,7 +546,7 @@ export default {
       let [meta, root] = parseSheet(this.rawSheetPanel.data)
       NodeUtils.normalizeSheetTree(root);
       validateTree(root);
-      this.sheetInfo.root = root
+      this.editor.replaceSheet(root)
       this.rawSheetPanel.show = false
     },
     saveSheetToFile() {
@@ -648,7 +661,9 @@ export default {
         this.rawSheetPanel.isValid = true
       }
       catch {}
-
+    },
+    "sheetInfo.root": function() {
+      console.log("------------------------------------------ sheet info changed")
     }
   },
 };

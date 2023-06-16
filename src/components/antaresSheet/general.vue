@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 import SheetNodeError from './error.vue';
 import SheetNodeChord from './chord.vue';
 import SheetNodeMark from './mark.vue';

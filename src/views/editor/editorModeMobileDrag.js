@@ -2,7 +2,7 @@ import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
 import ChordManager from "@/utils/chordManager.js";
 import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
-import { ENodeType } from "@/utils/sheetNode.js";
+import { ENodeType } from "@/utils/sheetNode";
 
 let gThis = null
 

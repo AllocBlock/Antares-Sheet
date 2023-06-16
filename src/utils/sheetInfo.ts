@@ -1,4 +1,4 @@
-import { SheetNode, ENodeType } from "@/utils/sheetNode.js";
+import { SheetNode, ENodeType } from "@/utils/sheetNode";
 import { toSheetFileString } from "@/utils/sheetWriter";
 
 export class SheetMeta {

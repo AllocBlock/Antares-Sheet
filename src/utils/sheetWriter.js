@@ -1,4 +1,4 @@
-import { ENodeType, toPluginTypeString } from "@/utils/sheetNode.js"
+import { ENodeType, toPluginTypeString } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser";
 
 function _toSheetFileString(node) {

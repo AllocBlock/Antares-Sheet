@@ -10,7 +10,7 @@
 <script>
 import Chord from "@/components/chord/index.vue"
 import SheetNodeRoot from "./root.vue"
-import { SheetNode } from "@/utils/sheetNode.js"
+import { SheetNode } from "@/utils/sheetNode"
 
 export default {
   name: "AntaresSheet",

@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 import ChordName from './chordName.vue';
 import Placeholder from './placeholder.vue';
 

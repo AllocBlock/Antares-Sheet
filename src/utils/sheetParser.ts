@@ -1,4 +1,4 @@
-import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode.js"
+import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode"
 import { SheetInfo, SheetMeta } from "@/utils/sheetInfo"
 import { LineReader } from "@/utils/io"
 

@@ -19,7 +19,6 @@ export class LineReader {
         assert(!this.isEnd(), "already at end of file");
         let line = this.lines[this.index]
         this.index++
-        console.log(line)
         return line
     }
 

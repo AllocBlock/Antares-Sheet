@@ -96,7 +96,7 @@ import { reactive } from "vue";
 import { getQueryVariable } from "@/utils/common.js";
 import { StringInstrument } from "@/utils/instrument.js";
 import ChordManager from "@/utils/chordManager.js";
-import { ENodeType, traverseNode } from "@/utils/sheetNode.js";
+import { ENodeType, traverseNode } from "@/utils/sheetNode";
 
 import { parseSheet } from "@/utils/sheetParser";
 import AntaresSheet from "@/components/antaresSheet/index.vue";

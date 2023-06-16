@@ -162,14 +162,10 @@ export default {
 
     // Ctrl+Z 撤销， Ctrl+Y 重做
     gHookIds.push(HotKey.addListener("KeyZ", function (){
-      if (gThis.editor.canUndo()) {
-        gThis.editor.undo()
-      }
+      gThis.undo()
     }, true))
     gHookIds.push(HotKey.addListener("KeyY", function (){
-      if (gThis.editor.canRedo()) {
-        gThis.editor.redo()
-      }
+      gThis.redo()
     }, true))
   },
   release: function() {

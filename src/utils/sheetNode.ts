@@ -2,22 +2,22 @@ import { assert } from "@/utils/assert"
 
 let gNextId = 1
 
-export const ENodeType = {
-  Unknown: "未知",
-  Root: "根",
-  Text: "文本",
-  Chord: "和弦标注",
-  ChordPure: "纯和弦",
-  Mark: "标记",
-  Underline: "下划线",
-  UnderlinePure: "纯下划线",
-  NewLine: "换行",
-  Plugin: "插件"
+export enum ENodeType {
+  Unknown = "未知",
+  Root = "根",
+  Text = "文本",
+  Chord = "和弦标注",
+  ChordPure = "纯和弦",
+  Mark = "标记",
+  Underline = "下划线",
+  UnderlinePure = "纯下划线",
+  NewLine = "换行",
+  Plugin = "插件"
 }
 
-export const EPluginType = {
-  Unknown: 0,
-  Tab: 1,
+export enum EPluginType {
+  Unknown = "未知",
+  Tab = "指法谱"
 }
 
 export function toPluginTypeEnum(str) {
@@ -36,14 +36,22 @@ export function toPluginTypeString(pluginTypeEnum) {
 }
 
 export class SheetNode {
+  id: number
+  type : ENodeType
+  parent : SheetNode
+  children : SheetNode[]
+  content : string
+  chord? : string
+  style : object // css style
+
   constructor(type, parent = null) {
     this.id = gNextId++
     this.type = type
     this.parent = parent
     this.children = []
-    this.style = {}
-    this.index = 0
     this.content = ''
+
+    this.style = {}
   }
 
   getSelfIndex() {
@@ -78,6 +86,20 @@ export class SheetNode {
     return this.type == ENodeType.Chord || this.type == ENodeType.ChordPure
   }
   isNewLine() { return this.type == ENodeType.NewLine; }
+
+  clone() : SheetNode{
+    let newRoot = new SheetNode(this.type, this.parent)
+    newRoot.content = this.content
+    if (this.chord)
+      newRoot.chord = this.chord
+
+    for (let child of this.children) {
+      let newChild = child.clone()
+      newChild.parent = newRoot
+      newRoot.children.push(newChild)
+    }
+    return newRoot
+  }
 }
 
 export var createUnknownNode = function(content, parent = null) {
