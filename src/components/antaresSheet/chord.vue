@@ -1,5 +1,11 @@
 <template>
-  <component :is="getTag()" ref="main" v-on="localEvents" :style="node.style ?? {}">
+  <component :is="getTag()" ref="main" :style="node.style ?? {}"
+    @mouseenter="events.chord.triggerMouseEnter($event, node)"
+    @mouseleave="events.chord.triggerMouseLeave($event, node)"
+    @mousedown="events.chord.triggerMouseDown($event, node)"
+    @dblclick="events.chord.triggerDoubleClick($event, node)"
+    @contextmenu="events.chord.triggerContextMenu($event, node)"
+  >
     <template v-if="isMarkChord">
       <chord-body>
         <Placeholder v-if="isPlaceholder()"/>
@@ -17,10 +23,11 @@
   </component>
 </template>
 
-<script>
+<script lang="ts">
 import { SheetNode, ENodeType } from '@/utils/sheetNode';
 import ChordName from './chordName.vue';
 import Placeholder from './placeholder.vue';
+import { NodeEventList } from '@/utils/elementEvent';
 
 export default {
   name: "SheetNodeChord",
@@ -41,9 +48,9 @@ export default {
       }
     },
     events: {
-      type: Object,
+      type: NodeEventList,
       default: function() {
-        return {}
+        return new NodeEventList()
       }
     }
   },

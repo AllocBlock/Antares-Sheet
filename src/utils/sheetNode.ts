@@ -85,6 +85,7 @@ export class SheetNode {
   isChord() {
     return this.type == ENodeType.Chord || this.type == ENodeType.ChordPure
   }
+  isText() { return this.type == ENodeType.Text }
   isNewLine() { return this.type == ENodeType.NewLine; }
 
   clone() : SheetNode{

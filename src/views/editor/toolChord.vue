@@ -37,6 +37,7 @@ export default {
   methods: {
     getEnv,
     dragStart(e, chord) {
+      console.log("dragstarttttttttttt")
       this.$emit("dragStart", e, chord)
     }
   }

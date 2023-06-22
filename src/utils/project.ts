@@ -2,7 +2,9 @@ import Storage from "@/utils/storage.js";
 import { generateRandomCode } from "@/utils/random.js"
 import { assert } from "./assert";
 import { parseSheet } from "./sheetParser";
-import { SheetInfo, SheetMeta } from "./sheetInfo";
+import SheetMeta from "./sheetMeta";
+import { SheetNode } from "./sheetNode";
+import { toSheetFileString } from "./sheetWriter"
 
 const NEW_PROJECT_TEMPLATE = `$sheet "*SHEET_TITLE*"
 
@@ -118,16 +120,15 @@ export const Project = {
     getAll() : ProjectInfo[] {
         return loadProjectInfos()
     },
-    // TODO: update parameter passing
-    update(pid : string, sheetInfo : SheetInfo, attachedChords : string[] = []) : void {
+    update(pid : string, sheetMeta : SheetMeta, sheetRoot : SheetNode, attachedChords : string[] = []) : void {
         assert(pid)
         let projectInfos = loadProjectInfos()
         for (let i in projectInfos) {
             if (projectInfos[i].pid == pid) {
                 let projectInfo = projectInfos[i]
                 projectInfo.updateTime = new Date()
-                projectInfo.sheetMeta = sheetInfo.meta
-                projectInfo.sheetData = sheetInfo.toText(attachedChords)
+                projectInfo.sheetMeta = sheetMeta
+                projectInfo.sheetData = toSheetFileString(sheetRoot, sheetMeta, attachedChords)
                 saveProjectInfos(projectInfos)
                 return
             }

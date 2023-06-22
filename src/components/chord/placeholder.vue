@@ -1,5 +1,5 @@
 <template>
-  <div class="placeholder" ref="placeholder" :style="`font-size: ${fontSize}px`">
+  <div class="placeholder flex_hv_center" ref="placeholder" :style="`font-size: ${fontSize}px`">
     <ChordName v-if="isChordName" :chord-name="text" />
     <div v-else>{{text}}</div>
   </div>
@@ -41,6 +41,8 @@ export default {
 }
 </script>
 
+<style scoped src="@/common.css"></style>
+
 <style scoped>
 .placeholder{
   width: 100%;
@@ -50,6 +52,6 @@ export default {
   justify-content: center;
   align-items: center;
   word-break: break-all;
-	color: rgba(255, 255, 255, 0.5);
+	color: rgba(var(--theme-color-rgb), 0.5);
 }
 </style>

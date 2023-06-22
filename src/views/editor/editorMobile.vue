@@ -31,7 +31,7 @@
         id="sheet"
         class="sheet_box"
         :sheet-tree="sheetInfo.sheetTree"
-        :events="editorMode.componentEvents"
+        :events="editorMode.nodeEventList.getCallbacks()"
       />
       <div id="sheet_padding"></div>
     </div>
@@ -107,7 +107,7 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
-import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit.js";
 
 export default {
   name: "SheetEditor",

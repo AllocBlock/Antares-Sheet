@@ -1,5 +1,6 @@
-import { ENodeType, toPluginTypeString } from "@/utils/sheetNode"
+import { ENodeType, SheetNode, toPluginTypeString } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser";
+import SheetMeta from "@/utils/sheetMeta";
 
 function _toSheetFileString(node) {
   switch (node.type) {
@@ -32,21 +33,18 @@ function _toSheetFileString(node) {
   }
 }
 
-export function toSheetFileString(root, title, singer, by, originalKey, sheetKey, attachedChords = null, ignoreMeta = false) {
-
-  // restriction
-  title = title.replace(/"/g, "")
-
+export function toSheetFileString(root : SheetNode, meta : SheetMeta = null, attachedChords : string[] = []) {
   // generate
   let data = ""
 
-  if (!ignoreMeta) {
+  if (meta) {
+    let title = meta.title.replace(/"/g, "") // restriction
     data += "$title \"" + title + "\"\n"
-    data += "$singer " + singer + "\n"
-    data += "$by " + by + "\n"
-    data += "$originalKey " + originalKey + "\n"
-    data += "$sheetKey " + sheetKey + "\n"
-    if (attachedChords !== null)
+    data += "$singer " + meta.singer + "\n"
+    data += "$by " + meta.by + "\n"
+    data += "$originalKey " + meta.originalKey + "\n"
+    data += "$sheetKey " + meta.sheetKey + "\n"
+    if (attachedChords.length > 0)
       data += "$chords " + attachedChords.join(" ") + "\n"
     data += "$rhythms \n"
     data += "$createTime " + new Date().toLocaleString() + "\n"

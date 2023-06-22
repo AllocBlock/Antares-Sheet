@@ -2,34 +2,39 @@ import { ENodeType, SheetNode } from "@/utils/sheetNode"
 import { assert } from "@/utils/assert"
 import { NodeUtils } from "@/utils/sheetEdit"
 import History from "@/utils/history"
+import SheetMeta from "@/utils/sheetMeta"
+import ChordManager from "@/utils/chordManager"
+import { reactive } from "vue"
 
 const MAX_UNDO_TIMES = 100
 
 export default class SheetEditor {
     history: History<SheetNode>
+    meta: SheetMeta
     root: SheetNode
-    isHistoryPaused: boolean
+    historyPauseCount: number
 
-    constructor(root : SheetNode) {
-        this.root = root
+    constructor() {
+        this.meta = new SheetMeta()
+        this.root = reactive(NodeUtils.createRootNode())
         this.history = new History<SheetNode>(MAX_UNDO_TIMES, this.root.clone())
-        this.isHistoryPaused = false
+        this.historyPauseCount = 0
     }
 
-    private __replaceSheet(root : SheetNode) {
+    private __replaceSheet(root: SheetNode) {
         this.root.children = []
         NodeUtils.append(this.root, root.children)
     }
 
     canUndo(): boolean { return this.history.hasPrev() }
     canRedo(): boolean { return this.history.hasNext() }
-    undo(): void { 
+    undo(): void {
         assert(this.canUndo(), "no more histroy for undo")
         let historyRoot = this.history.goPrev()
         this.__replaceSheet(historyRoot)
         console.log("undo", this.root)
     }
-    redo(): void { 
+    redo(): void {
         assert(this.canRedo(), "no more histroy for redo")
         let historyRoot = this.history.goNext()
         this.__replaceSheet(historyRoot)
@@ -37,18 +42,19 @@ export default class SheetEditor {
     }
 
     pauseHistory() {
-        this.isHistoryPaused = true
+        this.historyPauseCount++
     }
 
     resumeHistory(addCurrentToHistory = false) {
-        this.isHistoryPaused = false
-        if (addCurrentToHistory) {
+        this.historyPauseCount--
+        if (this.historyPauseCount == 0 && addCurrentToHistory) {
             this.addHistory()
         }
     }
 
     addHistory() {
-        if (this.isHistoryPaused) return;
+        if (this.historyPauseCount > 0) return;
+        console.log("Add history")
         let clonedRoot = this.root.clone()
         this.history.add(clonedRoot)
     }
@@ -57,7 +63,11 @@ export default class SheetEditor {
         this.history.clear(this.root.clone())
     }
 
-    replaceSheet(root : SheetNode, clearHistory : boolean = false) {
+    setMeta(meta: SheetMeta) {
+        this.meta = meta
+    }
+
+    replaceSheet(root: SheetNode, clearHistory: boolean = false) {
         this.__replaceSheet(root)
         if (clearHistory)
             this.clearHistory()
@@ -75,7 +85,7 @@ export default class SheetEditor {
         // constrain: underline node should have chord node at both begin and end
         // to void this, these inserted node will be inserted after the underline
         let targetNode = node
-        while (targetNode.nextSibling() == null && NodeUtils.isUnderline(targetNode.parent)) { 
+        while (targetNode.nextSibling() == null && NodeUtils.isUnderline(targetNode.parent)) {
             targetNode = targetNode.parent
         }
 
@@ -94,7 +104,7 @@ export default class SheetEditor {
         // constrain: underline node should have chord node at both begin and end
         // to void this, these inserted node will be inserted before the underline
         let targetNode = node
-        while (targetNode.prevSibling() == null && NodeUtils.isUnderline(targetNode.parent)) { 
+        while (targetNode.prevSibling() == null && NodeUtils.isUnderline(targetNode.parent)) {
             targetNode = targetNode.parent
         }
 
@@ -140,28 +150,30 @@ export default class SheetEditor {
 
         this.addHistory()
     }
-    
 
-    replace(node : SheetNode, newNode : SheetNode) {
+    replace(node: SheetNode, newNode: SheetNode) {
         // TODO: make this safe
         NodeUtils.replace(node, newNode)
         this.addHistory()
     }
 
-    // TODO: removing chord maybe cause very complex tree structure changes, rely on other commands
-    // constrain: underline node should have chord node at both begin and end
-    // to void this, when remove this kind of chord node, its underline will be removed, too
-    /** 删除一个节点（不安全） */
     remove(node: SheetNode) {
-        // TODO: make this safe
-        NodeUtils.removeFromParent(node)
-        this.addHistory()
+        this.pauseHistory()
+        try {
+            if (NodeUtils.isChord(node)) {
+                this.removeAllUnderlineOfChord(node)
+            }
+            NodeUtils.removeFromParent(node)
+        }
+        finally {
+            this.resumeHistory(true)
+        }
     }
 
     /** 给和弦添加一层下划线
      * 具体来说，输入是和弦节点，功能是在输入节点到下一个和弦节点之间，增加一条下划线
      */
-    addUnderlineForChord(chordNode : SheetNode) {
+    addUnderlineForChord(chordNode: SheetNode) {
         /** 算法分为两个步骤：
          * 首先找到下一个和弦节点
          * 然后是连接的方法，共有四种情况，三种处理方法：添加、扩展和合并
@@ -188,9 +200,9 @@ export default class SheetEditor {
             // constrain: chord and pure chord should not be in same underline
             let hasChord = false;
             let hasPureChord = false;
-            NodeUtils.traverseForward(startChordNode, false, function(n) {
+            NodeUtils.traverseForward(startChordNode, false, function (n) {
                 hasChord = hasChord || (n.type == ENodeType.Chord)
-                hasPureChord = hasPureChord ||(n.type == ENodeType.ChordPure)
+                hasPureChord = hasPureChord || (n.type == ENodeType.ChordPure)
 
                 if (n === endChordNode) return true;
             })
@@ -213,7 +225,7 @@ export default class SheetEditor {
             assert(endChordNode.isChord(), "扩展下划线时，首/尾部的元素必须是和弦")
 
             let isAfterUnderline = startUnderlineNode.getSelfIndex() < endChordNode.getSelfIndex()
-            
+
             let betweenNodes = NodeUtils.getSiblingBetween(startUnderlineNode, endChordNode, false, true);
 
             NodeUtils.removeFromParent(betweenNodes)
@@ -266,11 +278,11 @@ export default class SheetEditor {
 
         this.addHistory()
     }
-    
+
     /** 删除和弦的一层下划线
      * 具体来说，输入是和弦节点，功能是在输入节点到下一个和弦节点之间，删除已有的一条下划线
      */
-    removeUnderlineOnChord(chordNode : SheetNode) {
+    removeUnderlineOnChord(chordNode: SheetNode) {
         assert(chordNode.isChord(), "要移除下划线的必须是和弦节点")
         assert(chordNode.parent.isUnderline(), "和弦不在下划线下，无需删除")
 
@@ -303,7 +315,7 @@ export default class SheetEditor {
             assert(startNode.parent === commonUnderlineNode, "缩小的基准节点必须在下划线内")
             // constrain: underline must has chord at both begin and end
             assert(startNode.isChord() || commonUnderlineNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
-    
+
             let anchorNodes = commonUnderlineNode.children.filter(n => n.isChord() || n.isUnderline())
             let baseNodeIndex = anchorNodes.indexOf(startNode)
 
@@ -319,7 +331,7 @@ export default class SheetEditor {
             assert(endNode.parent === commonUnderlineNode, "缩小的基准节点必须在下划线内")
             // constrain: underline must has chord at both begin and end
             assert(endNode.isChord() || endNode.isUnderline(), "缩小的基准节点应该是和弦或下划线（以保证下划线首尾都是和弦）")
-    
+
             let anchorNodes = commonUnderlineNode.children.filter(n => n.isChord() || n.isUnderline())
             let baseNodeIndex = anchorNodes.indexOf(endNode)
 
@@ -333,30 +345,30 @@ export default class SheetEditor {
             // console.log("[xxx s e yyy] -> [xxx s] [e yyy]");
             assert(commonUnderlineNode.isUnderline(), "要分裂的节点必须是下划线")
             assert(startNode.parent == commonUnderlineNode && endNode.parent == commonUnderlineNode, "起止节点都应该是下划线节点的子节点")
-    
+
             if (startNode.getSelfIndex() > endNode.getSelfIndex()) {
                 let temp = startNode
                 startNode = endNode
                 endNode = temp
             }
-    
+
             let anchorNodes = commonUnderlineNode.children.filter(n => n.isChord() || n.isUnderline())
             let startNodeIndex = anchorNodes.indexOf(startNode)
             let endNodeIndex = anchorNodes.indexOf(endNode)
             assert(startNode.isUnderline() || startNodeIndex > 0, "分裂下划线时，起始节点不应该是第一个和弦节点，否则应该使用收缩下划线命令")
             assert(endNode.isUnderline() || endNodeIndex < anchorNodes.length - 1, "分裂下划线时，终止节点不应该是最后一个和弦节点，否则应该使用收缩下划线命令")
-    
+
             let betweenNodes = NodeUtils.getSiblingBetween(startNode, endNode, false, false);
 
             let isPure = commonUnderlineNode.type == ENodeType.UnderlinePure
             let leftUnderline = NodeUtils.createUnderlineNode(isPure)
             let rightUnderline = NodeUtils.createUnderlineNode(isPure)
-    
+
             NodeUtils.insertBefore(commonUnderlineNode, leftUnderline)
             NodeUtils.insertBefore(commonUnderlineNode, betweenNodes)
             NodeUtils.insertBefore(commonUnderlineNode, rightUnderline)
             NodeUtils.removeFromParent(commonUnderlineNode)
-    
+
             NodeUtils.append(leftUnderline, commonUnderlineNode.children.slice(0, startNode.getSelfIndex() + 1))
             NodeUtils.append(rightUnderline, commonUnderlineNode.children.slice(endNode.getSelfIndex()))
         }
@@ -364,54 +376,269 @@ export default class SheetEditor {
         this.addHistory()
     }
 
-    removeAllUnderlineOfChord(node : SheetNode) {
+    removeAllUnderlineOfChord(node: SheetNode) {
         assert(node.isChord(), "输入应该是和弦节点")
         this.pauseHistory()
-        while(node.parent.isUnderline()) {
-            this.removeUnderlineOnChord(node.parent)
+        try {
+            while (node.parent.isUnderline()) {
+                this.removeUnderlineOnChord(node)
+            }
         }
-        this.resumeHistory(true)
+        finally {
+            this.resumeHistory(true)
+        }
     }
 
     // 返回转换后的文本节点
-    convertToText(node : SheetNode, removeEmptyNode : boolean) : SheetNode {
+    convertToText(node: SheetNode, removeEmptyNode: boolean): SheetNode {
         assert(node.isChord(), "仅和弦可以转换为文本")
         this.pauseHistory()
 
-        this.removeAllUnderlineOfChord(node) // 删除和弦下划线
+        try {
+            this.removeAllUnderlineOfChord(node) // 删除和弦下划线
 
-        let content = node.content
-        if (NodeUtils.isPlaceholder(content)) { // 空和弦
-            if (removeEmptyNode) { // 删除
-                this.remove(node)
-                return null
+            let content = node.content
+            if (NodeUtils.isPlaceholder(content)) { // 空和弦
+                if (removeEmptyNode) { // 删除
+                    this.remove(node)
+                    return null
+                }
+                else { // 全部标记为空格
+                    content = " "
+                }
             }
-            else { // 全部标记为空格
-                content = " "
+
+            let textNode = NodeUtils.createTextNode(content)
+            this.replace(node, textNode);
+            return textNode
+        }
+        finally {
+            this.resumeHistory(true)
+        }
+    }
+
+    updateChord(node, chordName) {
+        node.chord = chordName
+        this.addHistory()
+    }
+
+    convertToChord(node, chordName) {
+        this.pauseHistory()
+        try {
+            if (NodeUtils.isChord(node)) {
+                this.updateChord(node, chordName);
+                return node
+            }
+            else if (node.type == ENodeType.Text) {
+                if (node.content.length > 1)
+                    console.warn(`文本内容 ${node.content} 超出一个字符，不符合规范`);
+                let chordNode = NodeUtils.createChordNode(node.content, chordName)
+                NodeUtils.replace(node, chordNode)
+                return chordNode
+            }
+            else {
+                throw "类型错误，无法转换该节点为和弦节点"
             }
         }
+        finally {
+            this.resumeHistory(true)
+        }
 
-        let textNode = NodeUtils.createTextNode(content)
-        this.replace(node, textNode);
-
-        this.resumeHistory(true)
-        return textNode
     }
 
     private __assertBeginAndEnd(nodes) {
         // constrain: underline must has chord at both begin and end
         let beginNode = nodes[0]
-        while(true) {
+        while (true) {
             if (beginNode.isChord()) break;
             else if (beginNode.isUnderline()) beginNode = beginNode.children[0]
             else throw "添加下划线时，首部的元素必须是和弦"
         }
 
         let endNode = nodes[nodes.length - 1]
-        while(true) {
+        while (true) {
             if (endNode.isChord()) break;
             else if (endNode.isUnderline()) endNode = endNode.children[endNode.children.length - 1]
             else throw "添加下划线时，尾部的元素必须是和弦"
         }
+    }
+
+    switchChordType(node) {
+        this.pauseHistory()
+        try {
+            if (node.type == ENodeType.Chord) { // 标注和弦转纯和弦
+                // 如果没有下划线，直接转换
+                if (!NodeUtils.isInUnderline(node)) node.type = ENodeType.ChordPure
+                else {
+                    // 获取最顶层的下划线
+                    let cur = node
+                    let topUnderline = null
+                    while (cur) {
+                        if (NodeUtils.isUnderline(cur)) topUnderline = cur;
+                        cur = cur.parent
+                    }
+
+                    // 检查是否有非空文本存在
+                    let hasNonEmptyTextNode = false
+                    NodeUtils.traverseDFS(topUnderline, (n) => {
+                        if (n.type == ENodeType.Text && n.content != " ")
+                            hasNonEmptyTextNode = true;
+                    })
+
+                    // 如果有非空文本，则不能整体转为纯和弦，断开所有下划线并独立转为纯和弦
+                    // TODO: 是否加一个选项让用户选择？
+                    if (hasNonEmptyTextNode) {
+                        this.removeAllUnderlineOfChord(node)
+                        node.type = ENodeType.ChordPure
+                    }
+                    else { // 否则，underline转underlinepure，chord转chordpure
+                        NodeUtils.traverseDFS(topUnderline, (n) => {
+                            if (n.type == ENodeType.Chord)
+                                n.type = ENodeType.ChordPure;
+                            if (n.type == ENodeType.Underline)
+                                n.type = ENodeType.UnderlinePure;
+                        })
+                    }
+                }
+
+            }
+            else if (node.type == ENodeType.ChordPure) {
+                // 如果没有下划线，直接转换
+                if (!NodeUtils.isInUnderline(node)) node.type = ENodeType.Chord
+                else { // 否则整体转换
+                    // 获取最顶层的下划线
+                    let cur = node
+                    let topUnderline = null
+                    while (cur) {
+                        if (NodeUtils.isUnderline(cur)) topUnderline = cur;
+                        cur = cur.parent
+                    }
+
+                    NodeUtils.traverseDFS(topUnderline, (n) => {
+                        if (n.type == ENodeType.ChordPure)
+                            n.type = ENodeType.Chord;
+                        if (n.type == ENodeType.UnderlinePure)
+                            n.type = ENodeType.Underline;
+                    })
+                }
+
+            }
+            else throw "节点类型错误"
+        }
+        finally {
+            this.resumeHistory(true)
+        }
+
+    }
+
+    shiftKey(newKey) {
+        let oldKey = this.meta.sheetKey
+        if (newKey == oldKey) return;
+        this.meta.sheetKey = newKey
+
+        NodeUtils.traverseNode(this.root, (node) => {
+            if (NodeUtils.isChord(node)) {
+                node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
+            }
+        });
+    }
+
+    insert(node, type, insertBefore) {
+        let newNodes = null
+        switch (type) {
+            case "text": {
+                let text = prompt("插入文本", "请输入文本")
+                if (!text) return;
+                newNodes = NodeUtils.createTextNodes(text)
+                break
+            }
+            case "space": {
+                newNodes = NodeUtils.createTextNodes(" ")
+                break
+            }
+            case "mark": {
+                let text = prompt("插入标记", "请输入标记内容")
+                if (!text) return;
+                newNodes = NodeUtils.createMarkNode(text)
+                break
+            }
+            case "newline": {
+                newNodes = NodeUtils.createNewLineNode()
+                break
+            }
+            default: {
+                throw "插入节点类型有误：" + type
+            }
+        }
+
+        // insert
+        if (insertBefore)
+            this.insertBefore(node, newNodes)
+        else
+            this.insertAfter(node, newNodes)
+    }
+
+    convertChordToText(node, removeEmptyNode = true): SheetNode[] {
+        assert(node.isChord(), "node should be chord to convert to text")
+        this.pauseHistory()
+        try {
+            this.removeAllUnderlineOfChord(node) // 删除和弦下划线
+
+            let content = node.content
+            if (NodeUtils.isPlaceholder(content)) { // 空和弦
+                if (removeEmptyNode) { // 删除
+                    NodeUtils.removeFromParent(node)
+                    return null
+                }
+                else { // 全部标记为空格
+                    content = " "
+                }
+            }
+
+            let textNodes = NodeUtils.createTextNodes(content)
+            NodeUtils.replace(node, textNodes);
+            return textNodes
+        }
+        finally {
+            this.resumeHistory(true)
+        }
+    }
+
+    editContent(node) {
+        if (!node) throw "节点为空"
+
+        let newContent = prompt("编辑内容", node.content);
+        if (!newContent) return;
+        this.updateContent(node, newContent)
+    }
+
+    /** 对连接的文本节点统一编辑输入 */
+    editTextWithNeighbor(node) {
+        if (!node) throw "节点为空"
+
+        let text = node.content
+        let textNodes = [node]
+        // 向前
+        let cur = NodeUtils.prevSibling(node)
+        while (cur) {
+            if (cur.type != ENodeType.Text) break;
+            textNodes.splice(0, 0, cur)
+            text = cur.content + text
+            cur = NodeUtils.prevSibling(cur)
+        }
+
+        // 向后
+        cur = NodeUtils.nextSibling(node)
+        while (cur) {
+            if (cur.type != ENodeType.Text) break;
+            textNodes.push(cur)
+            text += cur.content
+            cur = NodeUtils.nextSibling(cur)
+        }
+
+        let newText = prompt("编辑文本", text);
+
+        NodeUtils.insertAfter(node, NodeUtils.createTextNodes(newText))
+        NodeUtils.removeFromParent(textNodes)
     }
 }

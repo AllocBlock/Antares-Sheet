@@ -9,7 +9,7 @@
           id="scale_slider"
           type="range"
           step="0.01"
-          min="0.2"
+          min="0.8"
           max="2.0"
           v-model="tools.sheetControl.scale"
           @input="changeScale()"
@@ -34,12 +34,12 @@
     <!-- <Chord id="tip_chord" v-if="tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" /> -->
 
     <div id="sheet">
-      <div id="song_title" class="title">{{sheetInfo.meta.title}}</div>
-      <div id="song_singer" class="title">{{sheetInfo.meta.singer}}</div>
+      <div id="song_title" class="title">{{sheet.meta.title}}</div>
+      <div id="song_singer" class="title">{{sheet.meta.singer}}</div>
       <div id="sheet_key_block">
-        <div id="sheet_original_key" class="title">{{`原调 ${sheetInfo.meta.originalKey}`}}</div>
+        <div id="sheet_original_key" class="title">{{`原调 ${sheet.meta.originalKey}`}}</div>
         <div id="sheet_current_key" class="title">
-          {{`选调 ${sheetInfo.meta.sheetKey}`}}
+          {{`选调 ${sheet.meta.sheetKey}`}}
           <div id="sheet_key_shift">
             <div id="sheet_key_shift_up" @click="shiftKey(1)">▲</div>
             <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
@@ -49,8 +49,8 @@
           <div class="title">变调夹 {{ capoName }}</div>
         </div>
       </div>
-      <div id="sheet_by" class="title">{{sheetInfo.meta.by}}</div>
-      <AntaresSheet id="sheet_body_block" :sheet-tree="sheetInfo.root" :events="sheetEvents"/>
+      <div id="sheet_by" class="title">{{sheet.meta.by}}</div>
+      <AntaresSheet id="sheet_body_block" :sheet-tree="sheet.root" :events="nodeEvents"/>
       <div id="sheet_padding"></div>
     </div>
     
@@ -63,7 +63,6 @@ import ChordManager from "@/utils/chordManager.js";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser"
 import { ELoadState } from "@/utils/common.js"
-import { SheetInfoRuntimeView } from "@/utils/sheetInfo";
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
 
@@ -71,6 +70,8 @@ import AntaresSheet from "@/components/antaresSheet/index.vue"
 import Chord from "@/components/chord/index.vue"
 import Request from "@/utils/request.js"
 import SheetViewerLoadCover from "./loadCover.vue";
+import SheetViewContext from "./sheetViewContext";
+import { NodeEventList } from "@/utils/elementEvent";
 
 let gPlayer = null
 
@@ -95,24 +96,8 @@ export default {
       load: {
         state: ELoadState.Loading,
       },
-      sheetInfo: new SheetInfoRuntimeView(),
-      sheetEvents: {
-        text: {
-          click: (e, node) => {
-            console.log("text", node)
-          }
-        },
-        chord: {
-          click: (e, node) => {
-            this.playChord(ChordManager.getChord(node.chord))
-          },
-        },
-        mark: {
-          click: (e, node) => {
-            console.log("mark", node)
-          },
-        }
-      },
+      sheet: new SheetViewContext(),
+      nodeEvents: null,
       tools: {
         player: {
           enable: true,
@@ -146,6 +131,13 @@ export default {
       else return `${capo}品`
     }
   },
+  created() {
+    let nodeEventList = new NodeEventList()
+    nodeEventList.chord.mouseDowns.push((e, node) => {
+      this.playChord(ChordManager.getChord(node.chord))
+    })
+    this.nodeEvents = nodeEventList
+  },
   mounted() {
     // init global var
     this.loadPlayer()
@@ -164,9 +156,8 @@ export default {
       if (!root) {
         throw "曲谱解析失败！"
       }
-      this.sheetInfo = new SheetInfoRuntimeView(meta, root)
+      this.sheet.set(meta, root)
       this.load.state = ELoadState.Loaded
-      console.log(this.sheetInfo)
     }).catch((e) => {
       this.load.state = ELoadState.Failed
       console.error("曲谱获取失败：", e)
@@ -206,15 +197,15 @@ export default {
       }
     },
     shiftKey(offset) {
-      let curKey = this.sheetInfo.meta.sheetKey;
+      let curKey = this.sheet.meta.sheetKey;
       let newKey = ChordManager.shiftKey(curKey, offset);
-      this.sheetInfo.meta.sheetKey = newKey
+      this.sheet.meta.sheetKey = newKey
 
-      traverseNode(this.sheetInfo.root, (node) => {
+      traverseNode(this.sheet.root, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
           node.chord = ChordManager.shiftKey(node.chord, offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
-          node.valid = (this.sheetInfo.originalSheetKey == this.sheetInfo.meta.sheetKey);
+          node.valid = (this.sheet.originalSheetKey == this.sheet.meta.sheetKey);
         }
       })
     },
@@ -274,7 +265,7 @@ export default {
     height: 10vh;
     left: 0;
     width: 100%;
-    background-color: rgba(var(--foreground-color), 0.7);
+    background-color: rgba(var(--foreground-color-rgb), 0.7);
     color: var(--background-color);
 
     padding: 4px;

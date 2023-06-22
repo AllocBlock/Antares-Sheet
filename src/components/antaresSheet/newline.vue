@@ -1,9 +1,16 @@
 <template>
-  <newline v-on="localEvents">⇲</newline>
+  <newline 
+    @mouseenter="events.newline.triggerMouseEnter($event, node)"
+    @mouseleave="events.newline.triggerMouseLeave($event, node)"
+    @mousedown="events.newline.triggerMouseDown($event, node)"
+    @dblclick="events.newline.triggerDoubleClick($event, node)"
+    @contextmenu="events.newline.triggerContextMenu($event, node)"
+  >⇲</newline>
 </template>
 
 <script>
 import { SheetNode } from '@/utils/sheetNode';
+import { NodeEventList } from '@/utils/elementEvent';
 
 export default {
   name: "SheetNodeNewLine",
@@ -18,9 +25,9 @@ export default {
       required: true,
     },
     events: {
-      type: Object,
+      type: NodeEventList,
       default: function() {
-        return {}
+        return new NodeEventList()
       }
     }
   },

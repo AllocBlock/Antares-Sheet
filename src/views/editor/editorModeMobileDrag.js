@@ -1,4 +1,4 @@
-import { NodeUtils, EditAction } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit.js";
 import ChordManager from "@/utils/chordManager.js";
 import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
@@ -76,7 +76,7 @@ function _setToRemoveNode(node) {
 
 export default {
   tip: `【拖拽和弦模式】双击可以编辑文字/添加下划线\n按住Ctrl可以复制和弦\n按住Shift可以移动和弦\n拖入保存的文件可以直接加载`,
-  componentEvents: {
+  nodeEventList: {
     text: {
       click: (e, node) => {
       },
@@ -118,8 +118,6 @@ export default {
     newline: {
       contextmenu: (e, node) => gThis.openContext(e, node),
     },
-  },
-  documentEvents: {
   },
   toolChordEvents: {
     dragStart: (e, chord) => {

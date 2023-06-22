@@ -1,5 +1,5 @@
 import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode"
-import { SheetInfo, SheetMeta } from "@/utils/sheetInfo"
+import SheetMeta from "@/utils/sheetMeta"
 import { LineReader } from "@/utils/io"
 
 const ReChord = /\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // [X] | [X]{word}
