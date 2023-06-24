@@ -79,8 +79,6 @@ export default {
 }
 </script>
 
-<style src="@/common.css" scoped></style>
-
 <style scoped>
 a,
 a:link,

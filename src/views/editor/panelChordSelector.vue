@@ -5,7 +5,7 @@
         <div class="title">已选择的和弦</div>
         <div
           v-if="localAttachedChords.length == 0"
-          class="chord_list_empty flex_center"
+          class="chord_list_empty flex_hv_center"
         >
           暂未添加任何和弦
         </div>
@@ -29,14 +29,14 @@
         </div>
         <div
           id="attached_chord_trashcan"
-          class="flex_center"
+          class="flex_hv_center"
           @click="clickTrashcan"
           @mouseup="dropTrashcan"
           @touchend="dropTrashcan"
         >
           🗑️
         </div>
-        <div class="flex_center">
+        <div class="flex_hv_center">
           <div class="button" @click="finish">完成</div>
           <div class="button" @click="cancel">取消</div>
         </div>
@@ -45,15 +45,15 @@
       <div id="library_block">
         <div class="title">推荐和弦</div>
         <div id="recommend_chord_list">
-          <div v-if="recommendChords.length == 0" class="flex_center">
+          <div v-if="recommendChords.length == 0" class="flex_hv_center">
             暂无推荐和弦
           </div>
           <div
             v-for="type in recommendChords"
             :key="type.title"
-            class="flex_center"
+            class="flex_hv_center"
           >
-            <div class="recommend_type flex_center">
+            <div class="recommend_type flex_hv_center">
               {{ type.title }}
             </div>
             <div class="recommend_sub_list">
@@ -71,7 +71,7 @@
             </div>
           </div>
         </div>
-        <div class="flex_center">
+        <div class="flex_hv_center">
           <div class="title">搜索和弦</div>
           <input
             type="text"
@@ -149,10 +149,9 @@ export default {
       _DraggingChord: null,
       _DraggingChordIndex: null,
       chordStyle: {
-        titleRatio: 0.16,
-        colorMain: "white",
-        colorMarkText: "black",
-        colorRootString: "red",
+        foregroundColor: "var(--background-color)",
+        backgroundColor: "var(--foreground-color)",
+        rootStringColor: "var(--theme-color)",
       },
     };
   },
@@ -329,7 +328,7 @@ export default {
 };
 </script>
 
-<style scoped src="./common.css"></style>
+<style scoped src="./editorCommon.css"></style>
 
 <style scoped>
 * {

@@ -1,6 +1,6 @@
 <template>
   <div id="metronome">
-    <div class="flex-center">节拍器</div>
+    <div class="flex_hv_center">节拍器</div>
     <div id="control" @click="togglePlay">{{ this.started ? "❚❚" : "▶" }}</div>
     <div id="bpm_block">
       <div

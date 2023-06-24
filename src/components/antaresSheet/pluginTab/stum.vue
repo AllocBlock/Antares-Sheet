@@ -1,9 +1,9 @@
 <template>
   <note-stum :direction="direction" :style="getStumStyle()">
-    <TabSymbol class="note_stum_arrow flex_center" :svg-name="svgArrowName" />
-    <TabSymbol class="note_stum_head flex_center" :svg-name="svgHeadName" />
-    <TabSymbol class="note_stum_body flex_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)" :key="i" />
-    <TabSymbol class="note_stum_tail flex_center" :svg-name="svgTailName" />
+    <TabSymbol class="note_stum_arrow flex_hv_center" :svg-name="svgArrowName" />
+    <TabSymbol class="note_stum_head flex_hv_center" :svg-name="svgHeadName" />
+    <TabSymbol class="note_stum_body flex_hv_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)" :key="i" />
+    <TabSymbol class="note_stum_tail flex_hv_center" :svg-name="svgTailName" />
   </note-stum>
 </template>
 

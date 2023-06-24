@@ -22,12 +22,6 @@
   white-space: nowrap;
 }
 
-.flex_center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .fill {
   width: 100%;
   height: 100vh;

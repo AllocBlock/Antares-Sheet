@@ -1,6 +1,6 @@
 <template>
   <div>
-    <select v-model="localValue" @change="changed">
+    <select title="选择调式" v-model="localValue" @change="onChange">
       <option disabled value="">请选择</option>
       <option value="C">C</option>
       <option value="#C">♯C</option>
@@ -43,7 +43,7 @@ export default {
     this.localValue = this.value.toString()
   },
   methods: {
-    changed() {
+    onChange() {
       let newKey = Key.createFromString(this.localValue)
       this.$emit("update:value", newKey)
     }
@@ -51,3 +51,11 @@ export default {
 };
 
 </script>
+
+<style scoped>
+select {
+  width: 100%;
+  height: 100%;
+  font-size: inherit;
+}
+</style>

@@ -1,12 +1,12 @@
 <template>
   <div class="editor" :style="globalCssVar">
-    <div class="flex_center fill" style="flex-direction: column;">
-      <div class="flex_center fill"
+    <div class="flex_hv_center fill" style="flex-direction: column;">
+      <div class="flex_hv_center fill"
         :style="`height: ${layout.showAudioPlayer ? ('calc(100% - ' + layout.audioPlayerHeight + 'px)') : '100%'}; position: relative;`">
         <div id="help_button" @click="helpPanel.show = true">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
-          <div id="tools_title" class="title flex_center">工具栏</div>
-          <div id="tools_title" class="flex_center">
+          <div id="tools_title" class="title flex_hv_center">工具栏</div>
+          <div id="tools_title" class="flex_hv_center">
             <div :class="`button ${editor.canUndo() ? '' : 'disabled_button'}`"
               @click="editor.canUndo() ? editor.undo : null">
               撤销
@@ -40,7 +40,7 @@
               </div>
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
-            <div class="flex_center">
+            <div class="flex_hv_center">
               <div id="edit_raw_sheet_button" class="button" @click="openRawSheetPanel">编辑原始曲谱</div>
               <div class="button" @click="saveSheet">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
@@ -50,9 +50,9 @@
           </div>
         </div>
       </div>
-      <div class="flex_center fill"
+      <div class="flex_hv_center fill"
         :style="`height: ${layout.showAudioPlayer ? layout.audioPlayerHeight : '0'}px; position: relative;`">
-        <div class="flex_center" v-show="!layout.showAudioPlayer" id="playerOpenTag"
+        <div class="flex_hv_center" v-show="!layout.showAudioPlayer" id="playerOpenTag"
           @click="layout.showAudioPlayer = true">打开音乐播放器</div>
         <AudioPlayer v-show="layout.showAudioPlayer" @close="layout.showAudioPlayer = false"
           :mute-hotkey="mutePlayerHotkey" />
@@ -543,7 +543,7 @@ export default {
 };
 </script>
 
-<style scoped src="./common.css"></style>
+<style scoped src="./editorCommon.css" />
 
 <style scoped lang="scss">
 .title {
@@ -572,19 +572,8 @@ export default {
 .select {
   height: 100%;
   margin: 0 10px;
-  background-color: transparent;
   color: var(--foreground-color);
   font-size: var(--base-font-size);
-  border: none;
-  outline: 2px solid grey;
-
-  option {
-    background-color: black;
-  }
-
-  option:checked {
-    background-color: grey;
-  }
 }
 
 .toggle {
@@ -643,6 +632,7 @@ export default {
 
   appearance: none;
   background-color: transparent;
+  pointer-events: none;
 
   z-index: 2;
 
@@ -653,6 +643,7 @@ export default {
     border-radius: 50%;
     border: none;
     background: var(--theme-color);
+    pointer-events: all;
   }
 }
 
@@ -701,10 +692,7 @@ export default {
 
   #capo_selector {
     margin: 0 10px;
-    background-color: transparent;
-    font-size: calc(var(--title-base-font-size) * 0.8);
-    border: none;
-    outline: 2px solid grey;
+    font-size: calc(var(--title-base-font-size) * 0.6);
   }
 
   #sheet_by {

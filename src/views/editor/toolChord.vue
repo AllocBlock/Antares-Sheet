@@ -7,7 +7,7 @@
         v-else
         v-for="chord in chords"
         :key="chord.toString()"
-        class="prefab_chord drag attached_chord"
+        class="prefab_chord drag"
         :fretChordOrChord="tryFindFretChord(chord)"
         @mousedown="dragStart($event, chord)"
         @touchstart="dragStart($event, chord)"
@@ -51,7 +51,7 @@ export default {
 };
 </script>
 
-<style scoped src="./common.css"></style>
+<style scoped src="./editorCommon.css"></style>
 
 <style scoped>
 .tool_chord {

@@ -22,11 +22,14 @@ export default class SheetMeta {
             case "originalKey": { this.originalKey = Key.createFromString(value); break; }
             case "sheetKey": { this.sheetKey = Key.createFromString(value); break; }
             case "chords": {
-                let chordNames = value
-                if (!Array.isArray(chordNames)) {
-                    chordNames = [chordNames]
+                if (!value) this.chords = []
+                else {
+                    let chordNames = value
+                    if (!Array.isArray(chordNames)) {
+                        chordNames = [chordNames]
+                    }
+                    this.chords = chordNames.map(chordName => Chord.createFromString((chordName))); 
                 }
-                this.chords = chordNames.map(chordName => Chord.createFromString((chordName))); 
                 break; 
             }
             case "rhythms": { this.rhythms = value; break; }

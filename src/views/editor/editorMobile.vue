@@ -22,7 +22,7 @@
         <KeySelector class="select" v-model:value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
       </div>
       <div id="sheet_by" class="title">制谱 锦瑟</div>
-      <div class="flex_center">
+      <div class="flex_hv_center">
         <div id="edit_raw_lyric_button" class="button" @click="openRawSheetPanel">编辑原始曲谱</div>
         <!-- <div class="button" @click="saveSheetToFile">保存</div> -->
         <!-- <div class="button" @click="loadSheetFromFile">载入</div> -->
@@ -37,7 +37,7 @@
     </div>
 
     <div id="tools_block" @touchstart="disableOverscroll">
-      <!-- <div id="tools_title" class="title flex_center">工具栏</div> -->
+      <!-- <div id="tools_title" class="title flex_hv_center">工具栏</div> -->
       <div class="padding" />
       <ToolChord id="chord_tool" :styles="toolChordStyles" v-model:chords="toolChord.attachedChords" v-on="toolChord.events" />
       <div class="padding" />
@@ -90,6 +90,8 @@
     <div id="help_button" v-if="false">?</div>
   </div>
 </template>
+
+<style scoped src="./editorCommon.css" />
 
 <script>
 import { reactive } from "vue";
@@ -284,8 +286,6 @@ export default {
 };
 </script>
 
-<style scoped src="./common.css"></style>
-
 <style scoped lang="scss">
 .title {
   overflow: hidden;
@@ -310,10 +310,7 @@ export default {
 .select {
   height: 100%;
   margin: 0 10px;
-  background-color: transparent;
   font-size: var(--base-font-size);
-  border: none;
-  outline: 2px solid grey;
 }
 .select option {
   background-color: black;

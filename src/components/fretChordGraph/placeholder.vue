@@ -8,7 +8,6 @@
 <script>
 import ChordName from '@/components/antaresSheet/chordName.vue';
 import { Chord } from '@/utils/chord';
-import FretChordManager from "@/utils/fretChordManager";
 
 export default {
   name: "FretChordGraphPlaceholder",
@@ -19,8 +18,8 @@ export default {
     }
   },
   computed: {
-    isChordName() {
-      return FretChordManager.isChord(this.text)
+    isChord() {
+      return this.chordOrMsg instanceof Chord
     }
   },
   props: {
@@ -32,11 +31,6 @@ export default {
   mounted() {
     this.updateFontSize()
   },
-  computed: {
-    isChord() {
-      return this.chordOrMsg instanceof Chord
-    }
-  },
   methods: {
     updateFontSize() {
       let e = this.$refs['placeholder']
@@ -47,8 +41,6 @@ export default {
 }
 </script>
 
-<style scoped src="@/common.css"></style>
-
 <style scoped>
 .placeholder{
   width: 100%;
@@ -58,6 +50,5 @@ export default {
   justify-content: center;
   align-items: center;
   word-break: break-all;
-	color: rgba(var(--theme-color-rgb), 0.5);
 }
 </style>

@@ -2,30 +2,30 @@
   <div class="audio_player">
     <div
       v-show="showHintCover"
-      class="audio_hint_cover flex_center"
+      class="audio_hint_cover flex_hv_center"
       @click="selectMusic()"
     >{{hintCoverText}}</div>
-    <div class="audio_button_zone flex_center">
-      <div class="audio_button flex_center" @click="addMark()">
+    <div class="audio_button_zone flex_hv_center">
+      <div class="audio_button flex_hv_center" @click="addMark()">
         <Svg src="/icons/mark.svg" class="icon" />
       </div>
-      <div class="audio_button flex_center" @click="jumpToPrevMark()">
+      <div class="audio_button flex_hv_center" @click="jumpToPrevMark()">
         <Svg src="/icons/prevArrow.svg" class="icon" />
       </div>
-      <div class="audio_button flex_center" @click="jumpToNextMark()">
+      <div class="audio_button flex_hv_center" @click="jumpToNextMark()">
         <Svg src="/icons/nextArrow.svg" class="icon" />
       </div>
-      <div class="audio_button flex_center" @click="removeAllMark()">
+      <div class="audio_button flex_hv_center" @click="removeAllMark()">
         <Svg src="/icons/trash.svg" class="icon" />
       </div>
 
       <div class="audio_button-seperater"></div>
 
-      <div class="audio_button_with_text flex_center" @click="toggleMute()">
+      <div class="audio_button_with_text flex_hv_center" @click="toggleMute()">
         <Svg src="/icons/muted.svg" class="icon" v-show="this.setting.mute" />
         <Svg src="/icons/volume.svg" class="icon" v-show="!this.setting.mute" />
         <div
-          class="text flex_center"
+          class="text flex_hv_center"
         >{{ setting.mute ? "静音" : Math.round(setting.volume * 100) + "%" }}</div>
       </div>
       <input
@@ -38,9 +38,9 @@
         class="slider_default"
       />
 
-      <div class="audio_button_with_text flex_center" @click="resetSpeed()">
+      <div class="audio_button_with_text flex_hv_center" @click="resetSpeed()">
         <Svg src="/icons/speed.svg" class="icon" />
-        <div class="text flex_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
+        <div class="text flex_hv_center">×{{ parseFloat(setting.speed).toFixed(1) }}</div>
       </div>
       <input
         id="slider_audio_speed"
@@ -53,7 +53,7 @@
         class="slider_default"
       />
 
-      <div class="audio_button flex_center" @click="resetDetune()">
+      <div class="audio_button flex_hv_center" @click="resetDetune()">
         <Svg src="/icons/pitch.svg" class="icon" />
       </div>
       <input
@@ -69,10 +69,10 @@
       <label class="switch">
         <input type="checkbox" v-model="setting.follow" />
         <span class="slider"></span>
-        <div id="audio_follow_text" class="flex_center">跟随{{setting.follow ? "开" : "关"}}</div>
+        <div id="audio_follow_text" class="flex_hv_center">跟随{{setting.follow ? "开" : "关"}}</div>
       </label>
       
-      <div class="audio_button flex_center" @click="close()" style="position: absolute; right: 0; z-index: 2;">
+      <div class="audio_button flex_hv_center" @click="close()" style="position: absolute; right: 0; z-index: 2;">
         <Svg src="/icons/close.svg" class="icon" />
       </div>
     </div>
@@ -81,7 +81,7 @@
       @dblclick="onDblclickProgressSlider"
     >
       <div class="audio_slider_blank" :style="`width: ${progressSlider.padding}px`"></div>
-      <div id="audio_slider_zone_scale" class="flex_center" ref="progressSlider"
+      <div id="audio_slider_zone_scale" class="flex_hv_center" ref="progressSlider"
         :style="`width: ${progressSlider.scale * 100}%`"
         @wheel="onWheelProgressSlider"
       >
@@ -98,23 +98,23 @@
         />
         <div id="audio_mark_table">
           <div class="audio_mark" :style="getMarkStyle(mark)" v-for="(mark, i) in marks" :key="mark" @contextmenu.prevent="onContextMark($event, mark)" @mousedown="onMarkMouseDown($event, i)">
-            <div class="audio_mark-name flex_center">{{mark.text}}</div>
+            <div class="audio_mark-name flex_hv_center">{{mark.text}}</div>
             <div class="audio_mark-pin"></div>
           </div>
         </div>
       </div>
       <div class="audio_slider_blank" :style="`width: ${progressSlider.padding}px`"></div>
     </div>
-    <div class="audio_button_zone flex_center">
-      <div class="audio_button flex_center" @click="togglePlay()">
+    <div class="audio_button_zone flex_hv_center">
+      <div class="audio_button flex_hv_center" @click="togglePlay()">
         <Svg id="audio_play_icon" v-show="!setting.playing" src="/icons/play.svg" class="icon" />
         <Svg id="audio_pause_icon" v-show="setting.playing" src="/icons/pause.svg" class="icon" />
       </div>
-      <div class="audio_button flex_center" @click="stop()">
+      <div class="audio_button flex_hv_center" @click="stop()">
         <Svg id="audio_stop_icon" src="/icons/stop.svg" class="icon" />
       </div>
 
-      <div id="slider_tick_progress" class="flex_center">
+      <div id="slider_tick_progress" class="flex_hv_center">
         <div id="slider_tick">{{ tickToTimeStr(audioInfo.curTick) }}</div>
         <div id="slider_seperate">/</div>
         <div id="slider_length">{{ tickToTimeStr(audioInfo.duration) }}</div>
@@ -123,11 +123,11 @@
 
     <div id="mark_context" v-show="markContext.show" :style="markContext.style" @mouseenter="onMarkContextMouseenter" @mouseleave="onMarkContextMouseleave">
       <div id="mark_context_div">
-        <div id="mark_context_name_zone" class="flex_center">
+        <div id="mark_context_name_zone" class="flex_hv_center">
           <input type="text" id="mark_context_name" v-model="markContext.mark.text" maxlength="10" ref="markContextInput" @blur="onMarkContextBlur" @keydown="onMarkContextKeydown"/>
         </div>
-        <div id="mark_context_locate" class="flex_center" @click="jumpToMark(markContext.mark); markContext.show = false">定位到这里</div>
-        <div id="mark_context_delete" class="flex_center" @click="removeMark(markContext.mark); markContext.show = false">删除</div>
+        <div id="mark_context_locate" class="flex_hv_center" @click="jumpToMark(markContext.mark); markContext.show = false">定位到这里</div>
+        <div id="mark_context_delete" class="flex_hv_center" @click="removeMark(markContext.mark); markContext.show = false">删除</div>
       </div>
     </div>
   </div>
@@ -681,9 +681,6 @@ export default {
 };
 </script>
 
-<style scoped src="./common.css">
-</style>
-
 <style scoped>
 
 a,
@@ -930,12 +927,6 @@ a:hover {
   width: 100px;
   height: 100%;
   background-color: #16c;
-}
-
-.flex_center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* 默认滑动条样式 */
