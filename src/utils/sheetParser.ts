@@ -1,6 +1,7 @@
 import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode"
 import SheetMeta from "@/utils/sheetMeta"
 import { LineReader } from "@/utils/io"
+import { Chord } from "./chord"
 
 const ReChord = /\[([^\]]*)\]([^{]|(?:\{([^}])*\}))?/ // [X] | [X]{word}
 const ReChordPure = /!\[([^\]]*)\]/ // ![X]
@@ -95,7 +96,7 @@ const splitMethods = [
     createNodeFunc: (match) => {
       let type = ENodeType.ChordPure
       let chordNode = new SheetNode(type)
-      chordNode.chord = match[1]
+      chordNode.chord = Chord.createFromString(match[1])
       return chordNode
     }
   },
@@ -104,7 +105,7 @@ const splitMethods = [
     createNodeFunc: (match) => {
       let type = ENodeType.Chord
       let chordNode = new SheetNode(type)
-      chordNode.chord = match[1]
+      chordNode.chord = Chord.createFromString(match[1])
       if (type == ENodeType.Chord)
         chordNode.content = match[3] ?? match[2] 
       return chordNode
@@ -219,7 +220,8 @@ export function parseSheet(sheetData) : [SheetMeta, SheetNode] {
   parseNodes(rootNode, sheetBody)
 
   if (!validateTree(rootNode)) {
-    throw "bad tree"
+    throw "曲谱无效"
   }
+  console.log(meta, rootNode)
   return [meta, rootNode]
 }

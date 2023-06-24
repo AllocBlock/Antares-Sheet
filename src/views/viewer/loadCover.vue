@@ -43,8 +43,8 @@ export default {
   position: fixed;
   width: 100%;
   height: 100%;
-  background-color: wheat;
-  color: var(--sheet-theme-color);
+  background-color: var(--background-color);
+  color: var(--theme-color);
   display: flex;
   justify-content: center;
   align-items: center;

@@ -1,5 +1,5 @@
-import { NodeUtils } from "@/utils/sheetEdit.js";
-import ChordManager from "@/utils/chordManager.js";
+import { NodeUtils } from "@/utils/sheetEdit";
+import FretChordManager from "@/utils/fretChordManager";
 import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
 import { ENodeType } from "@/utils/sheetNode";
@@ -92,7 +92,7 @@ export default {
     },
     chord: {
       click: (e, node) => {
-        gThis.playChord(ChordManager.getChord(node.chord));
+        gThis.playChord(FretChordManager.getFretChord(node.chord));
       },
       dblclick: (e, node) => {
         if (!e.shiftKey) {

@@ -1,4 +1,5 @@
 import { assert } from "@/utils/assert"
+import { Chord } from "./chord";
 
 let gNextId = 1
 
@@ -41,7 +42,7 @@ export class SheetNode {
   parent : SheetNode
   children : SheetNode[]
   content : string
-  chord? : string
+  chord? : Chord
   style : object // css style
 
   constructor(type, parent = null) {
@@ -121,7 +122,7 @@ export function validateTree(root) {
     if(child.parent != root) return false; // 树结构有误，子节点未指定父节点/或有错误的父节点
 
     if (child.type == ENodeType.Underline) { // 下划线的起始/末尾必须是下划线或和弦
-      assert(child.children.length >= 1, "下划线节点必须包含两个及以上的节点")
+      assert(child.children.length >= 1, "下划线节点必须拥有子节点")
       if (child.children.length == 1)
         assert(child.children[0].isUnderline(), "下划线节点如果只有一个子节点，则这个子节点必定是下划线节点")
 

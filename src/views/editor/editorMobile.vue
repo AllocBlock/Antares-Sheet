@@ -17,9 +17,9 @@
       />
       <div id="sheet_key_block">
         <div class="title">原调</div>
-        <KeySelector class="select" v-model:value="sheetInfo.originalKey" />
+        <KeySelector class="select" :value="sheetInfo.originalKey" />
         <div class="title">选调</div>
-        <KeySelector class="select" :value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
+        <KeySelector class="select" v-model:value="sheetInfo.sheetKey" @change="onChangeSheetKey" />
       </div>
       <div id="sheet_by" class="title">制谱 锦瑟</div>
       <div class="flex_center">
@@ -95,26 +95,24 @@
 import { reactive } from "vue";
 import { getQueryVariable } from "@/utils/common.js";
 import { StringInstrument } from "@/utils/instrument.js";
-import ChordManager from "@/utils/chordManager.js";
+import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, traverseNode } from "@/utils/sheetNode";
 
 import { parseSheet } from "@/utils/sheetParser";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
-import Chord from "@/components/chord/index.vue";
 import Request from "@/utils/request.js";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
-import { NodeUtils } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit";
 
 export default {
   name: "SheetEditor",
   components: {
     ToolChord,
     PanelChordSelector,
-    Chord,
     AntaresSheet,
     KeySelector,
   },
@@ -210,7 +208,7 @@ export default {
       this.sheetInfo.originalSheetKey = rootNode.sheetKey;
 
       this.toolChord.attachedChords = this.sheetInfo.chords ? this.sheetInfo.chords.map((chordName) =>
-        ChordManager.getChord(chordName)
+        FretChordManager.getFretChord(chordName)
       ) : [];
       console.log(this.sheetInfo.chords, this.toolChord.attachedChords);
     },
@@ -233,14 +231,14 @@ export default {
     shiftKey(oldKey, newKey) {
       traverseNode(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
+          node.chord = FretChordManager.shiftKey(node.chord, oldKey, newKey);
         }
       });
 
       for (let i in this.toolChord.attachedChords) {
         let chordName = this.toolChord.attachedChords[i].name
-        let newChordName = ChordManager.shiftKey(chordName, oldKey, newKey);
-        this.toolChord.attachedChords[i] = ChordManager.getChord(newChordName)
+        let newChordName = FretChordManager.shiftKey(chordName, oldKey, newKey);
+        this.toolChord.attachedChords[i] = FretChordManager.getFretChord(newChordName)
       }
     },
     onChangeSheetKey(e) {
@@ -280,7 +278,7 @@ export default {
   },
   watch: {
     "toolChord.attachedChords": function() {
-      this.sheetInfo.chords = this.toolChord.attachedChords.map(chord => chord.name)
+      this.sheetInfo.chords = this.toolChord.attachedChords
     }
   },
 };

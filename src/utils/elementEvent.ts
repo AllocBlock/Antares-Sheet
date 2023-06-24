@@ -41,5 +41,5 @@ export class ToolChordEvent{
         this.dragStarts = this.dragStarts.concat(toolChordEvent.dragStarts)
     }
 
-    trigger(e, node) { this.dragStarts.forEach(f => f(e, node)); }
+    trigger(e, chord) { this.dragStarts.forEach(f => f(e, chord)); }
 }

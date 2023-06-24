@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "ChordError",
+  name: "FretChordGraphError",
   data() {
     return {
       fontSize: 12

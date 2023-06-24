@@ -15,11 +15,10 @@
             'display: ' + (localAttachedChords.length == 0 ? 'none' : 'flex')
           "
         >
-          <Chord
+          <FretChordGraph
             v-for="(chord, index) in localAttachedChords"
-            :key="chord.name ?? chord ?? index"
-            :chord="typeof(chord) == 'string' ? null : chord"
-            :placeholder="typeof(chord) == 'string' ? chord : chord.name"
+            :key="chord.toString()"
+            :fretChordOrChord="tryFindFretChord(chord)"
             :styles="chordStyle"
             class="prefab_chord chord_drag_sort"
             :type="index == _DraggingChordIndex ? 'fake' : ''"
@@ -58,11 +57,10 @@
               {{ type.title }}
             </div>
             <div class="recommend_sub_list">
-              <Chord
+              <FretChordGraph
                 v-for="(chord, index) in type.list"
-                :key="chord.name ?? chord ?? index"
-                :chord="typeof(chord) == 'string' ? null : chord"
-                :placeholder="typeof(chord) == 'string' ? chord : chord.name"
+                :key="chord.toString()"
+                :fretChordOrChord="tryFindFretChord(chord)"
                 :class="
                   'prefab_chord ' +
                   (isAttached(chord) ? 'chord_already_attached' : 'chord_add')
@@ -84,11 +82,10 @@
           />
         </div>
         <div id="search_chord_list">
-          <Chord
-            v-for="chord in searchChords"
-            :key="chord.name ?? chord ?? index"
-            :chord="typeof(chord) == 'string' ? null : chord"
-            :placeholder="typeof(chord) == 'string' ? chord : chord.name"
+          <FretChordGraph
+            v-for="(chord, index) in searchChords"
+            :key="chord.toString()"
+            :fretChordOrChord="tryFindFretChord(chord)"
             :class="
               'prefab_chord ' +
               (isAttached(chord) ? 'chord_already_attached' : 'chord_add')
@@ -100,8 +97,8 @@
       </div>
     </div>
     <div v-if="_isDraggingChord" id="chord_sort_drag_mark">
-      <Chord
-        :chord="_DraggingChord"
+      <FretChordGraph
+        :fretChordOrChord="tryFindFretChord(_DraggingChord)"
         class="prefab_chord"
         :styles="chordStyle"
       />
@@ -109,10 +106,11 @@
   </div>
 </template>
 
-<script>
-import ChordManager from "@/utils/chordManager.js";
-import Chord from "@/components/chord/index.vue";
-import { clone, getCursorClientPos, getEnv, setPos } from "@/utils/common.js";
+<script lang="ts">
+import FretChordManager from "@/utils/fretChordManager";
+import FretChordGraph from "@/components/fretChordGraph/index.vue"
+import { getCursorClientPos, getEnv, setPos } from "@/utils/common.js";
+import { Chord, FretChord, Key } from "@/utils/chord";
 
 const g_RecommendChordInCMajor = {
   常用: ["C", "Dm", "Em", "F", "G", "Am", "E"],
@@ -123,7 +121,7 @@ const g_RecommendChordInCMajor = {
 export default {
   name: "SheetEditorPanelChordSelector",
   components: {
-    Chord,
+    FretChordGraph,
   },
   props: {
     show: {
@@ -132,12 +130,12 @@ export default {
       default: false,
     },
     attachedChords: {
-      type: Array,
+      type: Array<Chord>,
       required: true,
     },
     tonic: {
-      type: String,
-      required: true,
+      type: Key,
+      required: true
     },
   },
   data() {
@@ -159,7 +157,7 @@ export default {
     };
   },
   mounted() {
-    this.localAttachedChords = clone(this.attachedChords)
+    this.localAttachedChords = [...this.attachedChords]
     this.updateRecommendChords();
     document.addEventListener("mousemove", this.dragSortMove);
     document.addEventListener("touchmove", this.dragSortMove);
@@ -168,6 +166,12 @@ export default {
   },
   methods: {
     getEnv,
+    tryFindFretChord(chord : Chord) : FretChord|Chord{
+      if (!chord) return undefined;
+      let fretChord = FretChordManager.getFretChord(chord)
+      if (fretChord) return fretChord;
+      return chord;
+    },
     close() {
       this.$emit("update:show", false);
     },
@@ -178,7 +182,7 @@ export default {
     cancel() {
       let confirmed = confirm("确认放弃修改的和弦？");
       if (!confirmed) return;
-      this.localAttachedChords = clone(this.attachedChords)
+      this.localAttachedChords = [...this.attachedChords]
       this.close();
     },
     updateRecommendChords() {
@@ -187,13 +191,10 @@ export default {
         for (let type in g_RecommendChordInCMajor) {
           let list = [];
           for (let chordName of g_RecommendChordInCMajor[type]) {
-            let newChordName = ChordManager.shiftKey(
-              chordName,
-              "C",
-              this.tonic
-            );
-            let newChord = ChordManager.getChord(newChordName) ?? {name: newChordName};
-            list.push(newChord);
+            let chord = Chord.createFromString(chordName)
+            let offset = this.tonic.getIndex()
+            chord = chord.shiftKey(offset)
+            list.push(chord);
           }
           recommendChords.push({
             title: type,
@@ -214,12 +215,12 @@ export default {
       text = text.replace(/\s/g, "");
 
       if (text != "") {
-        ChordManager.traverse((chord) => {
-          let chordName = chord.name;
+        FretChordManager.traverse((chord) => {
+          let chordName = chord.toString();
           if (text == chordName) {
             // 完全匹配，优先级最大
             searchResult.push({ chord, priority: 1 });
-          } else if (ChordManager.isAlias(text, chordName)) {
+          } else if (Chord.isAlias(text, chordName)) {
             // 别名
             searchResult.push({ chord, priority: 2 });
           } else if (
@@ -238,19 +239,19 @@ export default {
 
       searchResult.sort((a, b) => {
         if (a.priority != b.priority) return a.priority - b.priority;
-        else return a.chord.name.localeCompare(b);
+        else return a.chord.toString().localeCompare(b);
       });
 
       this.searchChords = searchResult.map(entry => entry.chord);
     },
 
     isAttached(chord) {
-      return this.localAttachedChords.find(e => e.name == chord.name) != undefined;
+      return this.localAttachedChords.find(e => e.toString() == chord.toString()) != undefined;
     },
 
     addAttachedChord(chord) {
       if (this.isAttached(chord)) {
-        alert(`和弦${chord.name}已存在`);
+        alert(`和弦${chord.toString()}已存在`);
         return;
       }
       this.localAttachedChords.push(chord);
@@ -313,7 +314,7 @@ export default {
   watch: {
     show: function () {
       if (this.show)
-        this.localAttachedChords = clone(this.attachedChords)
+        this.localAttachedChords = [...this.attachedChords]
     },
     tonic: function () {
       this.updateRecommendChords();
@@ -322,7 +323,7 @@ export default {
       this.updateSearchChords();
     },
     attachedChords: function () {
-      this.localAttachedChords = clone(this.attachedChords)
+      this.localAttachedChords = [...this.attachedChords]
     },
   },
 };

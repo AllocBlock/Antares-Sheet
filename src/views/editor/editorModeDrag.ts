@@ -1,4 +1,4 @@
-import { NodeUtils } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit";
 import { getCursorClientPos } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
 import { ENodeType, SheetNode } from "@/utils/sheetNode";
@@ -6,6 +6,7 @@ import { EditorMode } from "./editorMode";
 import SheetEditor from "./editor";
 import { MouseDelta } from '@/utils/mouse.js';
 import { assert } from "@/utils/assert";
+import { Chord } from "@/utils/chord";
 
 /** 高亮节点 */
 function highlightNode(node : SheetNode) {
@@ -80,10 +81,11 @@ class DragChordState {
         this.toInsertNode = null
     }
 
-    startDrag(e, chordName) {
+    startDrag(e, chord : Chord) {
         this.info.isDragging = true
-        this.info.text = chordName
-        this.toInsertNode = NodeUtils.createChordNode('', chordName)
+        this.info.text = chord.toString()
+        console.log(chord, chord.toString())
+        this.toInsertNode = NodeUtils.createChordNode('', chord)
         this.toUpdateNode = null
         this.onCursorMove(e)
     }
@@ -171,7 +173,7 @@ class DragChordState {
 
 class ShiftChordState {
     isShifting: boolean
-    chordName: string
+    chord: Chord
     mouseDelta: MouseDelta
     curNode: SheetNode
     shiftThreshold: number
@@ -195,8 +197,8 @@ class ShiftChordState {
     }
     reset() {
         this.isShifting = false
-        this.chordName = null,
-            this.shiftThreshold = 50
+        this.chord = null,
+        this.shiftThreshold = 50
         this.curShiftDistance = 0
         this.setCurShiftNode(null)
     }
@@ -208,7 +210,7 @@ class ShiftChordState {
         if (this.isShifting) {
             this.editor.pauseHistory()
             this.mouseDelta.start(e)
-            this.chordName = node.chord
+            this.chord = node.chord
             this.setCurShiftNode(node)
         }
     }
@@ -248,10 +250,10 @@ class ShiftChordState {
         let oldNode = this.curNode
 
         if (replace) { // 替换，则把和弦移动到前一个文本上
-            let curNode = this.editor.convertToChord(nearbyNode, this.chordName)
+            let curNode = this.editor.convertToChord(nearbyNode, this.chord)
             this.setCurShiftNode(curNode)
         } else { // 否则在前方插入一个和弦
-            let curNode = NodeUtils.createChordNode("_", this.chordName)
+            let curNode = NodeUtils.createChordNode("_", this.chord)
             curNode.temp = true // 设置为临时节点，可以被删除
             this.setCurShiftNode(curNode)
             if (toLeft) NodeUtils.insertBefore(oldNode, this.curNode);
@@ -321,9 +323,8 @@ export class EditorModeDrag extends EditorMode {
             that.shiftChordState.onCursorDownNode(e, node)
         })
 
-        this.toolChordEvents.dragStarts.push( (e, chord) => {
-            if (chord && chord.name)
-                that.dragChordState.startDrag(e, chord.name);
+        this.toolChordEvents.dragStarts.push( (e, chord : Chord) => {
+            that.dragChordState.startDrag(e, chord);
             // e.preventDefault()
         })
     }

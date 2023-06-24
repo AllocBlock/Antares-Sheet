@@ -3,8 +3,8 @@ import { assert } from "@/utils/assert"
 import { NodeUtils } from "@/utils/sheetEdit"
 import History from "@/utils/history"
 import SheetMeta from "@/utils/sheetMeta"
-import ChordManager from "@/utils/chordManager"
 import { reactive } from "vue"
+import { Chord, Key } from "@/utils/chord"
 
 const MAX_UNDO_TIMES = 100
 
@@ -417,22 +417,22 @@ export default class SheetEditor {
         }
     }
 
-    updateChord(node, chordName) {
-        node.chord = chordName
+    updateChord(node, chord : Chord) {
+        node.chord = chord
         this.addHistory()
     }
 
-    convertToChord(node, chordName) {
+    convertToChord(node, chord : Chord) {
         this.pauseHistory()
         try {
             if (NodeUtils.isChord(node)) {
-                this.updateChord(node, chordName);
+                this.updateChord(node, chord);
                 return node
             }
             else if (node.type == ENodeType.Text) {
                 if (node.content.length > 1)
                     console.warn(`文本内容 ${node.content} 超出一个字符，不符合规范`);
-                let chordNode = NodeUtils.createChordNode(node.content, chordName)
+                let chordNode = NodeUtils.createChordNode(node.content, chord)
                 NodeUtils.replace(node, chordNode)
                 return chordNode
             }
@@ -531,16 +531,19 @@ export default class SheetEditor {
 
     }
 
-    shiftKey(newKey) {
+    setKey(newKey : Key, shiftChord : boolean) {
         let oldKey = this.meta.sheetKey
         if (newKey == oldKey) return;
-        this.meta.sheetKey = newKey
 
-        NodeUtils.traverseNode(this.root, (node) => {
-            if (NodeUtils.isChord(node)) {
-                node.chord = ChordManager.shiftKey(node.chord, oldKey, newKey);
-            }
-        });
+        this.meta.sheetKey = newKey
+        if (shiftChord) {
+            let offset = Key.getOffset(oldKey, newKey)
+            NodeUtils.traverseDFS(this.root, (node : SheetNode) => {
+                if (NodeUtils.isChord(node)) {
+                    node.chord = node.chord.shiftKey(offset);
+                }
+            });
+        }
     }
 
     insert(node, type, insertBefore) {

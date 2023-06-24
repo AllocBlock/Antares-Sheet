@@ -1,6 +1,7 @@
 import { SheetNode, ENodeType } from "@/utils/sheetNode";
 import { reactive } from "vue";
 import { assert } from "./assert";
+import { Chord } from "./chord";
 
 function _getInputText(tips, defaultText = "") {
   return prompt(tips, defaultText);
@@ -218,10 +219,10 @@ export const NodeUtils = {
     return reactive(new SheetNode(ENodeType.Root));
   },
   /** 创建一个和弦节点 */
-  createChordNode(content, chordName) {
-    let node = reactive(new SheetNode(ENodeType.Chord));
+  createChordNode(content,  chord : Chord) : SheetNode {
+    let node = new SheetNode(ENodeType.Chord);
     node.content = content;
-    node.chord = chordName;
+    node.chord = chord;
     return node;
   },
   /** 创建一个文本节点，只能是单个字符 */

@@ -31,9 +31,9 @@
               @focus="beginTyping" @blur="endTyping" />
             <div id="sheet_key_block">
               <div class="title">原调</div>
-              <KeySelector class="select" v-model:value="editor.meta.originalKey" />
+              <KeySelector class="select" :value="editor.meta.originalKey" />
               <div class="title">选调</div>
-              <KeySelector class="select" :value="editor.meta.sheetKey" @change="onChangeSheetKey" />
+              <KeySelector class="select" :value="editor.meta.sheetKey" @update:value="onChangeSheetKey" />
               <div id="sheet_capo_block">
                 <div class="title">变调夹</div>
                 <CapoSelector id="capo_selector" class="select" v-model:value="player.capo" />
@@ -115,7 +115,7 @@
         <div id="raw_sheet_title">在下方编辑原始曲谱，可以直接粘贴歌词~</div>
         <textarea id="raw_sheet_textarea" v-model="rawSheetPanel.data"></textarea>
         <div v-if="!rawSheetPanel.isValid" class="flex" style="color: red">
-          曲谱格式格式有误，请检查qysnqys
+          曲谱格式格式有误，请检查：「{{ rawSheetPanel.invalidReason }}」
         </div>
         <div class="flex">
           <div v-if="rawSheetPanel.isValid" id="raw_sheet_button_confirm" class="button" @click="confirmRawSheet">确认</div>
@@ -147,7 +147,6 @@ import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
-import Chord from "@/components/chord/index.vue";
 import CapoSelector from "@/components/capoSelector.vue";
 import Svg from "@/components/svg.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
@@ -159,7 +158,7 @@ import { startRepeatTimeout } from "@/utils/common.js";
 
 import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
-import { NodeUtils } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit";
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import SheetEditor from "./editor";
 import { EditorModeCombined } from './editorMode'
@@ -168,11 +167,13 @@ import { EditorModeDrag, DragChordInfo } from './editorModeDrag'
 import EditorModeProgression from './editorModeProgression'
 
 import { StringInstrument } from "@/utils/instrument.js";
-import ChordManager from "@/utils/chordManager.js";
+import FretChordManager from "@/utils/fretChordManager";
 import Storage from "@/utils/storage.js";
 import { Project } from "@/utils/project";
 import HotKey from "@/utils/hotKey";
 import { NodeEventList } from "@/utils/elementEvent";
+import { Key } from "@/utils/chord";
+import { toSheetFileString } from "@/utils/sheetWriter";
 
 export default {
   name: "SheetEditorPc",
@@ -180,7 +181,6 @@ export default {
     Svg,
     ToolChord,
     PanelChordSelector,
-    Chord,
     AntaresSheet,
     KeySelector,
     CapoSelector,
@@ -249,6 +249,7 @@ export default {
         show: false,
         data: "",
         isValid: true,
+        invalidReason: ""
       },
       helpPanel: {
         show: false,
@@ -288,7 +289,7 @@ export default {
     editorMode.nodeEventList.newline.contentMenus.push(this.openContext.bind(this))
     
     // play chord
-    editorMode.nodeEventList.chord.mouseDowns.push((e, node) => this.playChord(ChordManager.getChord(node.chord)))
+    editorMode.nodeEventList.chord.mouseDowns.push((e, node) => this.playChord(FretChordManager.getFretChord(node.chord)))
 
     editorMode.hook()
     if (editorMode.toolChordEvents)
@@ -341,9 +342,7 @@ export default {
       this.editor.meta = meta
       this.editor.replaceSheet(root, true)
 
-      this.toolChord.attachedChords = this.editor.meta.chords ? this.editor.meta.chords.map((chordName) =>
-        ChordManager.getChord(chordName)
-      ) : [];
+      this.toolChord.attachedChords = this.editor.meta.chords ?? [];
       console.log("已加载曲谱：", meta, root);
     },
     openPanelChord() {
@@ -423,27 +422,30 @@ export default {
       node = node ?? this.contextMenu.node;
       this.editor.addUnderlineForChord(node);
     },
-    onChangeSheetKey(e) {
+    onChangeSheetKey(newKey) {
       let oldKey = this.editor.meta.sheetKey
-      let newKey = e.currentTarget.value
       if (newKey == oldKey) return;
-      let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
-      if (!confirmed) return
-      this.editor.shiftKey(newKey)
+      
+      let shiftChord = confirm("你修改了曲谱调式，是否将和弦一起转调？")
+      this.editor.setKey(newKey, shiftChord)
 
-      for (let i in this.toolChord.attachedChords) {
-        let chordName = this.toolChord.attachedChords[i].name
-        let newChordName = ChordManager.shiftKey(chordName, oldKey, newKey);
-        this.toolChord.attachedChords[i] = ChordManager.getChord(newChordName)
+      if (shiftChord) {
+        let offset = Key.getOffset(oldKey, newKey)
+        console.log(oldKey, newKey, offset)
+        for (let i in this.toolChord.attachedChords) {
+          let chord = this.toolChord.attachedChords[i]
+          chord = chord.shiftKey(offset);
+          this.toolChord.attachedChords[i] = chord
+        }
       }
     },
-    onToolChordDragStart(e, node) {
+    onToolChordDragStart(e, chord) {
       if (this.editorMode) {
-        this.editorMode.toolChordEvents.trigger(e, node)
+        this.editorMode.toolChordEvents.trigger(e, chord)
       }
     },  
     openRawSheetPanel() {
-      this.rawSheetPanel.data = this.editor.toText([], true)
+      this.rawSheetPanel.data = toSheetFileString(this.editor.root)
       this.rawSheetPanel.show = true
     },
     confirmRawSheet() {
@@ -457,7 +459,7 @@ export default {
     },
     saveSheetToFile() {
       // TODO: remove un used chord?
-      let fileData = this.editor.toText(this.toolChord.attachedChords.map(n => n.name))
+      let fileData = toSheetFileString(this.editor.root, this.editor.meta, this.toolChord.attachedChords)
       let time = new Date().toLocaleDateString().replace(/\//g, "_")
 
       let blob = new Blob([fileData], { type: 'text/plain' })
@@ -493,7 +495,7 @@ export default {
     },
     _saveSheet() {
       if (this.sheetSource == ESheetSource.PROJECT) {
-        Project.update(this.pid, this.editor.meta, this.editor.root, this.toolChord.attachedChords.map(n => n.name))
+        Project.update(this.pid, this.editor.meta, this.editor.root, this.toolChord.attachedChords)
         console.log("曲谱已保存")
         return true
       }
@@ -521,7 +523,7 @@ export default {
       );
     },
     "toolChord.attachedChords": function () {
-      this.editor.meta.chords = this.toolChord.attachedChords.map(chord => chord.name)
+      this.editor.meta.chords = this.toolChord.attachedChords
     },
     "rawSheetPanel.data": function () {
       console.log("changed", this.rawSheetPanel.data)
@@ -533,7 +535,9 @@ export default {
         validateTree(root);
         this.rawSheetPanel.isValid = true
       }
-      catch { }
+      catch (e) { 
+        this.rawSheetPanel.invalidReason = e.toString()
+      }
     },
   },
 };

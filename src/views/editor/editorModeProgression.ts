@@ -1,9 +1,10 @@
-import { NodeUtils } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit";
 import HotKey from "@/utils/hotKey.js";
-import ChordManager from "@/utils/chordManager.js";
+import FretChordManager from "@/utils/fretChordManager";
 import { EditorMode } from "./editorMode";
 import { SheetNode } from "@/utils/sheetNode";
 import SheetEditor from "./editor";
+import { Chord, EChordQuality, Key } from "@/utils/chord";
 
 const gProgressionList = [
     [0, true], // distance to tonic, is major
@@ -58,16 +59,18 @@ export default class EditorModeProgression extends EditorMode {
             const keyName = "Digit" + (i + 1).toString()
             let listenerId = HotKey.addListener(keyName, (e, [shift, isMajor]) => {
                 if (!this.curNode) return
-                let chordName = ChordManager.shiftKey(this.editor.meta.sheetKey, shift)
+                let rootNote = Key.createFromIndex(shift)
+                let chord = new Chord(rootNote)
                 if (this.curNode.isChord()) {
-                    if (ChordManager.getDistance(this.curNode.chord, chordName) == 0) { // 同级的和弦，再次按下则切换大小和弦
-                        let isCurMajor = ChordManager.isMajor(this.curNode.chord)
-                        isMajor = !isCurMajor
+                    if (Key.getOffset(this.curNode.chord.root, chord.root) == 0) { // 同级的和弦，再次按下则切换大小和弦
+                        if (this.curNode.chord.quality == EChordQuality.Major)
+                            chord.quality = EChordQuality.Minor;
+                        else if (this.curNode.chord.quality == EChordQuality.Minor)
+                            chord.quality = EChordQuality.Major;
                     }
                 }
 
-                if (!isMajor) chordName += "m"
-                this.curNode = this.editor.convertToChord(this.curNode, chordName)
+                this.curNode = this.editor.convertToChord(this.curNode, chord)
             }, false, false, false, [shift, isMajor])
             this.hookIds.push(listenerId)
         })

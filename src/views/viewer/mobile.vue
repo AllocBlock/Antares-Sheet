@@ -31,8 +31,6 @@
       </div>
     </div>
 
-    <!-- <Chord id="tip_chord" v-if="tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" /> -->
-
     <div id="sheet">
       <div id="song_title" class="title">{{sheet.meta.title}}</div>
       <div id="song_singer" class="title">{{sheet.meta.singer}}</div>
@@ -59,7 +57,7 @@
 
 <script type="module">
 import { StringInstrument } from "@/utils/instrument.js";
-import ChordManager from "@/utils/chordManager.js";
+import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser"
 import { ELoadState } from "@/utils/common.js"
@@ -67,7 +65,7 @@ import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
-import Chord from "@/components/chord/index.vue"
+import FretChordGraph from "@/components/fretChordGraph/index.vue"
 import Request from "@/utils/request.js"
 import SheetViewerLoadCover from "./loadCover.vue";
 import SheetViewContext from "./sheetViewContext";
@@ -79,7 +77,7 @@ export default {
   name: "SheetViewerMobile",
   components: {
     AntaresSheet,
-    Chord,
+    FretChordGraph,
     SheetViewerLoadCover
   },
   data() {
@@ -134,7 +132,7 @@ export default {
   created() {
     let nodeEventList = new NodeEventList()
     nodeEventList.chord.mouseDowns.push((e, node) => {
-      this.playChord(ChordManager.getChord(node.chord))
+      this.playChord(FretChordManager.getFretChord(node.chord))
     })
     this.nodeEvents = nodeEventList
   },
@@ -198,12 +196,11 @@ export default {
     },
     shiftKey(offset) {
       let curKey = this.sheet.meta.sheetKey;
-      let newKey = ChordManager.shiftKey(curKey, offset);
+      let newKey = curKey.shift(offset)
       this.sheet.meta.sheetKey = newKey
-
       traverseNode(this.sheet.root, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = ChordManager.shiftKey(node.chord, offset)
+          node.chord = node.chord.shiftKey(offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
           node.valid = (this.sheet.originalSheetKey == this.sheet.meta.sheetKey);
         }

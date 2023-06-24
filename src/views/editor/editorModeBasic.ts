@@ -1,4 +1,4 @@
-import { NodeUtils } from "@/utils/sheetEdit.js";
+import { NodeUtils } from "@/utils/sheetEdit";
 import HotKey from "@/utils/hotKey.js";
 import { EditorMode } from "./editorMode";
 import { SheetNode } from "@/utils/sheetNode";

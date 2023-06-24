@@ -8,17 +8,17 @@
   >
     <template v-if="isMarkChord">
       <chord-body>
-        <Placeholder v-if="isPlaceholder()"/>
+        <Placeholder v-if="isPlaceholder"/>
         <template v-else>
           {{node.content}}
         </template>
       </chord-body>
       <chord-ruby>
-        <ChordName :chord-name="node.chord" />
+        <ChordName :chord="node.chord" />
       </chord-ruby>
     </template>
     <chord-body v-else>
-      <ChordName :chord-name="node.chord" />
+      <ChordName :chord="node.chord" />
     </chord-body>
   </component>
 </template>
@@ -65,14 +65,14 @@ export default {
   computed: {
     isMarkChord: function() {
       return this.node.type == ENodeType.Chord
-    }
+    },
+    isPlaceholder() {
+      return !this.node.content || this.node.content == '_' || this.node.content == ' ';
+    },
   },
   methods: {
     getTag() {
       return this.node.type == ENodeType.Chord ? "chord" : "chord-pure"
-    },
-    isPlaceholder() {
-      return !this.node.content || this.node.content == '_' || this.node.content == ' ';
     },
   },
 };

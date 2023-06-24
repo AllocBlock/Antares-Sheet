@@ -31,7 +31,11 @@
       </div>
     </div>
 
-    <Chord id="tip_chord" v-if="tools.tipChord.enable" :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" :chord="tools.tipChord.chord" />
+    <FretChordGraph id="tip_chord" 
+      v-if="tools.tipChord.enable" 
+      :style="`opacity: ${tools.tipChord.show ? 1 : 0}`" 
+      :fretChordOrChord="tryFindFretChord(tools.tipChord.chord)"
+    />
 
     <div id="tools_player" class="tools_block" v-if="tools.player.enable">
       <transition name="trans_fade_out">
@@ -97,9 +101,9 @@
   </div>
 </template>
 
-<script type="module">
+<script lang="ts">
 import { StringInstrument } from "@/utils/instrument.js";
-import ChordManager from "@/utils/chordManager.js";
+import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser"
 import { ELoadState } from "@/utils/common.js"
@@ -108,13 +112,13 @@ import AutoScroll from "./autoScroll.js"
 
 import Metronome from "@/components/metronome/index.vue"
 import AntaresSheet from "@/components/antaresSheet/index.vue"
-import Chord from "@/components/chord/index.vue"
-import Request from "@/utils/request.js"
+import FretChordGraph from "@/components/fretChordGraph/index.vue"
 import CapoSelector from "@/components/capoSelector.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
 import SheetViewerLoadCover from "./loadCover.vue";
 import SheetViewContext from "./sheetViewContext";
 import { NodeEventList } from "@/utils/elementEvent";
+import { Chord, FretChord } from "@/utils/chord";
 
 let gPlayer = null
 
@@ -123,7 +127,7 @@ export default {
   components: {
     Metronome,
     AntaresSheet,
-    Chord,
+    FretChordGraph,
     CapoSelector,
     DraggablePanel,
     SheetViewerLoadCover
@@ -149,7 +153,7 @@ export default {
         tipChord: {
           enable: true,
           show: false,
-          chord: ChordManager.getChord("C")
+          chord: Chord.createFromString("C")
         },
         player: {
           enable: true,
@@ -199,11 +203,10 @@ export default {
   },
   created() {
     let nodeEventList = new NodeEventList()
-    nodeEventList.chord.mouseDowns.push((e, node) => this.playChord(ChordManager.getChord(node.chord)))
+    nodeEventList.chord.mouseDowns.push((e, node) => this.playChord(FretChordManager.getFretChord(node.chord)))
     nodeEventList.chord.mouseEnters.push((e, node) => {
       this.tools.tipChord.show = true
-      this.tools.tipChord.chord = ChordManager.getChord(node.chord)
-      console.log(this.tools.tipChord)
+      this.tools.tipChord.chord = FretChordManager.getFretChord(node.chord)
     })
     nodeEventList.chord.mouseLeaves.push((e, node) => {
       this.tools.tipChord.show = false
@@ -245,6 +248,12 @@ export default {
     }
   },
   methods: {
+    tryFindFretChord(chord : Chord) : FretChord|Chord{
+      if (!chord) return undefined;
+      let fretChord = FretChordManager.getFretChord(chord)
+      if (fretChord) return fretChord;
+      return chord;
+    },
     changeScale() {
       let scale = parseFloat(this.tools.sheetControl.scale)
       let defaultFontSize = 20
@@ -279,12 +288,11 @@ export default {
     },
     shiftKey(offset) {
       let curKey = this.sheet.meta.sheetKey;
-      let newKey = ChordManager.shiftKey(curKey, offset);
+      let newKey = curKey.shift(offset)
       this.sheet.meta.sheetKey = newKey
-
       traverseNode(this.sheet.root, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
-          node.chord = ChordManager.shiftKey(node.chord, offset)
+          node.chord = node.chord.shiftKey(offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
           node.valid = (this.sheet.originalSheetKey == this.sheet.meta.sheetKey);
         }

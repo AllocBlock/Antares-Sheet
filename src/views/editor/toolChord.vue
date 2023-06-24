@@ -3,12 +3,12 @@
     <div class="title">和弦工具</div>
     <div class="list">
       <div id="no_chord" class="flex_h_center" v-if="chords.length == 0">暂未添加任何和弦</div>
-      <Chord
+      <FretChordGraph
         v-else
         v-for="chord in chords"
-        :key="chord.name"
+        :key="chord.toString()"
         class="prefab_chord drag attached_chord"
-        :chord="chord"
+        :fretChordOrChord="tryFindFretChord(chord)"
         @mousedown="dragStart($event, chord)"
         @touchstart="dragStart($event, chord)"
       />
@@ -16,30 +16,37 @@
   </div>
 </template>
 
-<script>
-import Chord from "@/components/chord/index.vue";
+<script lang="ts">
+import FretChordGraph from "@/components/fretChordGraph/index.vue"
+import { Chord, FretChord } from "@/utils/chord";
 import { getEnv } from "@/utils/common.js";
+import fretChordManager from "@/utils/fretChordManager";
 
 export default {
   name: "SheetEditorToolChord",
   components: {
-    Chord,
+    FretChordGraph,
   },
   data() {
     return {};
   },
   props: {
     chords: {
-      type: Array,
+      type: Array<Chord>,
       required: true,
     },
   },
   methods: {
     getEnv,
     dragStart(e, chord) {
-      console.log("dragstarttttttttttt")
       this.$emit("dragStart", e, chord)
-    }
+    },
+    tryFindFretChord(chord : Chord) : FretChord|Chord{
+      if (!chord) return undefined;
+      let fretChord = fretChordManager.getFretChord(chord)
+      if (fretChord) return fretChord;
+      return chord;
+    },
   }
 };
 </script>

@@ -5,6 +5,7 @@ import { parseSheet } from "./sheetParser";
 import SheetMeta from "./sheetMeta";
 import { SheetNode } from "./sheetNode";
 import { toSheetFileString } from "./sheetWriter"
+import { Chord } from "./chord";
 
 const NEW_PROJECT_TEMPLATE = `$sheet "*SHEET_TITLE*"
 
@@ -120,7 +121,7 @@ export const Project = {
     getAll() : ProjectInfo[] {
         return loadProjectInfos()
     },
-    update(pid : string, sheetMeta : SheetMeta, sheetRoot : SheetNode, attachedChords : string[] = []) : void {
+    update(pid : string, sheetMeta : SheetMeta, sheetRoot : SheetNode, attachedChords : Chord[] = []) : void {
         assert(pid)
         let projectInfos = loadProjectInfos()
         for (let i in projectInfos) {

@@ -8,14 +8,14 @@
 </template>
 
 <script>
-import Chord from "@/components/chord/index.vue"
+import FretChordGraph from "@/components/fretChordGraph/index.vue"
 import SheetNodeRoot from "./root.vue"
 import { SheetNode } from "@/utils/sheetNode"
 
 export default {
   name: "AntaresSheet",
   components: {
-    Chord, SheetNodeRoot
+    FretChordGraph, SheetNodeRoot
   },
   data() {
     return {

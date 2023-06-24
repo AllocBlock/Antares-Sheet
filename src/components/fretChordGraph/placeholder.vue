@@ -1,16 +1,17 @@
 <template>
   <div class="placeholder flex_hv_center" ref="placeholder" :style="`font-size: ${fontSize}px`">
-    <ChordName v-if="isChordName" :chord-name="text" />
-    <div v-else>{{text}}</div>
+    <ChordName v-if="isChord" :chord="chordOrMsg" />
+    <div v-else>{{chordOrMsg}}</div>
   </div>
 </template>
 
 <script>
 import ChordName from '@/components/antaresSheet/chordName.vue';
-import ChordManager from "@/utils/chordManager.js";
+import { Chord } from '@/utils/chord';
+import FretChordManager from "@/utils/fretChordManager";
 
 export default {
-  name: "ChordPlaceholder",
+  name: "FretChordGraphPlaceholder",
   components: { ChordName },
   data() {
     return {
@@ -19,17 +20,22 @@ export default {
   },
   computed: {
     isChordName() {
-      return ChordManager.isChord(this.text)
+      return FretChordManager.isChord(this.text)
     }
   },
   props: {
-    text: {
-      type: String,
+    chordOrMsg: {
+      type: [String, Chord],
       default: "未知和弦"
     }
   },
   mounted() {
     this.updateFontSize()
+  },
+  computed: {
+    isChord() {
+      return this.chordOrMsg instanceof Chord
+    }
   },
   methods: {
     updateFontSize() {

@@ -1,6 +1,7 @@
 import { ENodeType, SheetNode, toPluginTypeString } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser";
 import SheetMeta from "@/utils/sheetMeta";
+import { Chord } from "./chord";
 
 function _toSheetFileString(node) {
   switch (node.type) {
@@ -33,7 +34,7 @@ function _toSheetFileString(node) {
   }
 }
 
-export function toSheetFileString(root : SheetNode, meta : SheetMeta = null, attachedChords : string[] = []) {
+export function toSheetFileString(root : SheetNode, meta : SheetMeta = null, attachedChords : Chord[] = []) {
   // generate
   let data = ""
 
@@ -45,7 +46,7 @@ export function toSheetFileString(root : SheetNode, meta : SheetMeta = null, att
     data += "$originalKey " + meta.originalKey + "\n"
     data += "$sheetKey " + meta.sheetKey + "\n"
     if (attachedChords.length > 0)
-      data += "$chords " + attachedChords.join(" ") + "\n"
+      data += "$chords " + attachedChords.map(c => c.toString()).join(" ") + "\n"
     data += "$rhythms \n"
     data += "$createTime " + new Date().toLocaleString() + "\n"
     data += "\n"
