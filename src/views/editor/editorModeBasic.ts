@@ -83,7 +83,6 @@ export default class EditorModeBasic extends EditorMode {
     _delete(e) {
         e.preventDefault()
         if (!this.curNode) return
-
         this.editor.remove(this.curNode)
         this.curNode = null
     }

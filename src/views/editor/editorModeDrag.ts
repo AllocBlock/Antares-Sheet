@@ -6,9 +6,13 @@ import SheetEditor from "./editor";
 import { MouseDelta } from '@/utils/mouse.js';
 import { assert } from "@/utils/assert";
 import { Chord } from "@/utils/chord";
+import { reactive } from "vue";
 
 /** 高亮节点 */
 function highlightNode(node : SheetNode) {
+    // FIXME: style is not reactive for sometimes...there force a reactive style
+    node.style = reactive(node.style)
+    
     node.style.opacity = 0.5
     if (node.type == ENodeType.Text && NodeUtils.isPlaceholder(node.content)) {
         node.style.background = "var(--theme-color)"
@@ -16,10 +20,9 @@ function highlightNode(node : SheetNode) {
 }
 /** 取消高亮节点 */
 function unhighlightNode(node : SheetNode) {
-    if (node) {
-        node.style.opacity = 1.0
-        if (node.style.background) node.style.background = ''
-    }
+    node.style.opacity = 1.0
+    node.style.background = ''
+    console.log("unhighlight", node)
 }
 
 export class DragChordInfo {
@@ -175,6 +178,7 @@ class ShiftChordState {
     chord: Chord
     mouseDelta: MouseDelta
     curNode: SheetNode
+    isCurNodeTemp: boolean
     shiftThreshold: number
     curShiftDistance: number
     editor: SheetEditor
@@ -185,21 +189,23 @@ class ShiftChordState {
         this.reset()
     }
 
-    setCurShiftNode(n) {
+    setCurShiftNode(n : SheetNode, isTemp : boolean) {
         if (this.curNode)
             unhighlightNode(this.curNode)
 
-        if (n)
+        if (n) {
             highlightNode(n)
+            this.isCurNodeTemp = isTemp
+        }
 
         this.curNode = n;
     }
     reset() {
         this.isShifting = false
+        this.setCurShiftNode(null, false)
         this.chord = null,
         this.shiftThreshold = 50
         this.curShiftDistance = 0
-        this.setCurShiftNode(null)
     }
 
     onCursorDownNode(e, node) {
@@ -210,7 +216,7 @@ class ShiftChordState {
             this.editor.pauseHistory()
             this.mouseDelta.start(e)
             this.chord = node.chord
-            this.setCurShiftNode(node)
+            this.setCurShiftNode(node, false)
         }
     }
     onCursorMove(e) {
@@ -230,6 +236,9 @@ class ShiftChordState {
         }
     }
     onCursorUp(e) {
+        if (!this.isShifting) return;
+
+        this.reset()
         this.editor.resumeHistory(true)
     }
 
@@ -247,20 +256,20 @@ class ShiftChordState {
 
         let replace = nearbyNode.type == ENodeType.Text && (isPlaceholder || NodeUtils.isPlaceholder(nearbyNode.content))
         let oldNode = this.curNode
+        let isOldNodeTemp = this.isCurNodeTemp
 
         if (replace) { // 替换，则把和弦移动到前一个文本上
             let curNode = this.editor.convertToChord(nearbyNode, this.chord)
-            this.setCurShiftNode(curNode)
+            this.setCurShiftNode(curNode, false)
         } else { // 否则在前方插入一个和弦
             let curNode = NodeUtils.createChordNode("_", this.chord)
-            curNode.temp = true // 设置为临时节点，可以被删除
-            this.setCurShiftNode(curNode)
+            this.setCurShiftNode(curNode, true) 
             if (toLeft) NodeUtils.insertBefore(oldNode, this.curNode);
             else NodeUtils.insertAfter(oldNode, this.curNode);
         }
 
-        // 如果是新建的节点，则删除
-        this.editor.convertToText(oldNode, oldNode.temp == true) // TIPS: 发现一点，如果传入undefined，似乎会使用默认参数
+        // 如果此前的节点是拖拽中新建的节点，则删除
+        this.editor.convertToText(oldNode, isOldNodeTemp)
     }
 
     _shiftChord(offset) {

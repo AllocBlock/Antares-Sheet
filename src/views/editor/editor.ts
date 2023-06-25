@@ -2,7 +2,6 @@ import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode"
 import { assert } from "@/utils/assert"
 import History from "@/utils/history"
 import SheetMeta from "@/utils/sheetMeta"
-import { reactive } from "vue"
 import { Chord, Key } from "@/utils/chord"
 
 const MAX_UNDO_TIMES = 100
@@ -15,7 +14,7 @@ export default class SheetEditor {
 
     constructor() {
         this.meta = new SheetMeta()
-        this.root = reactive(NodeUtils.createRootNode())
+        this.root = NodeUtils.createRootNode()
         this.history = new History<SheetNode>(MAX_UNDO_TIMES, this.root.clone())
         this.historyPauseCount = 0
     }
@@ -46,6 +45,7 @@ export default class SheetEditor {
 
     resumeHistory(addCurrentToHistory = false) {
         this.historyPauseCount--
+        assert(this.historyPauseCount >= 0, "should not resume more than pause")
         if (this.historyPauseCount == 0 && addCurrentToHistory) {
             this.addHistory()
         }
@@ -118,36 +118,39 @@ export default class SheetEditor {
 
     /** 更新节点的内容 */
     updateContent(node: SheetNode, content: string) {
-        assert([ENodeType.Text, ENodeType.Chord, ENodeType.Mark].includes(node.type), `不能编辑${node.type}节点的内容`)
+        this.pauseHistory()
 
-        assert(content.length > 0, "新内容不能为空")
-        if (node.type == ENodeType.Text || node.type == ENodeType.Chord)
-            assert(node.content.length == 1, "文本/和弦节点的原始内容应该为单个字符")
+        try {
+            assert([ENodeType.Text, ENodeType.Chord, ENodeType.Mark].includes(node.type), `不能编辑${node.type}节点的内容`)
 
-        switch (node.type) {
-            case ENodeType.Text:
-            case ENodeType.Chord: { // text node and chord node's content can only be one char
-                node.content = content[0]
-                let remaining = content.slice(1)
-                if (remaining.length > 0) {
-                    let textNodes = NodeUtils.createTextNodes(remaining)
-                    this.pauseHistory()
-                    this.insertAfter(node, textNodes)
-                    this.resumeHistory(false)
+            assert(content.length > 0, "新内容不能为空")
+            if (node.type == ENodeType.Text || node.type == ENodeType.Chord)
+                assert(node.content.length == 1, "文本/和弦节点的原始内容应该为单个字符")
+
+            switch (node.type) {
+                case ENodeType.Text:
+                case ENodeType.Chord: { // text node and chord node's content can only be one char
+                    node.content = content[0]
+                    let remaining = content.slice(1)
+                    if (remaining.length > 0) {
+                        let textNodes = NodeUtils.createTextNodes(remaining)
+                        this.insertAfter(node, textNodes)
+                    }
+                    break;
                 }
-                break;
-            }
-            case ENodeType.Mark: {
-                node.content = content
-                break;
-            }
-            default: {
-                console.warn("无法编辑该节点的内容", node);
-                break;
+                case ENodeType.Mark: {
+                    node.content = content
+                    break;
+                }
+                default: {
+                    console.warn("无法编辑该节点的内容", node);
+                    break;
+                }
             }
         }
-
-        this.addHistory()
+        finally {
+            this.resumeHistory(true)
+        }
     }
 
     replace(node: SheetNode, newNode: SheetNode) {
@@ -616,31 +619,39 @@ export default class SheetEditor {
 
     /** 对连接的文本节点统一编辑输入 */
     editTextWithNeighbor(node) {
-        if (!node) throw "节点为空"
+        this.pauseHistory()
 
-        let text = node.content
-        let textNodes = [node]
-        // 向前
-        let cur = node.prevSibling()
-        while (cur) {
-            if (cur.type != ENodeType.Text) break;
-            textNodes.splice(0, 0, cur)
-            text = cur.content + text
-            cur = cur.prevSibling()
+        try {
+            if (!node) throw "节点为空"
+
+            let text = node.content
+            let textNodes = [node]
+            // 向前
+            let cur = node.prevSibling()
+            while (cur) {
+                if (cur.type != ENodeType.Text) break;
+                textNodes.splice(0, 0, cur)
+                text = cur.content + text
+                cur = cur.prevSibling()
+            }
+
+            // 向后
+            cur = node.nextSibling()
+            while (cur) {
+                if (cur.type != ENodeType.Text) break;
+                textNodes.push(cur)
+                text += cur.content
+                cur = cur.nextSibling()
+            }
+
+            let newText = prompt("编辑文本", text);
+            if (!newText) return;
+
+            NodeUtils.insertAfter(node, NodeUtils.createTextNodes(newText))
+            NodeUtils.removeFromParent(textNodes)
         }
-
-        // 向后
-        cur = node.nextSibling()
-        while (cur) {
-            if (cur.type != ENodeType.Text) break;
-            textNodes.push(cur)
-            text += cur.content
-            cur = cur.nextSibling()
+        finally {
+            this.resumeHistory(true)
         }
-
-        let newText = prompt("编辑文本", text);
-
-        NodeUtils.insertAfter(node, NodeUtils.createTextNodes(newText))
-        NodeUtils.removeFromParent(textNodes)
     }
 }

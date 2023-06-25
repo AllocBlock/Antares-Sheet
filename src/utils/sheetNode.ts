@@ -43,7 +43,11 @@ export class SheetNode {
   children : SheetNode[]
   content : string
   chord? : Chord
-  style : object // css style
+  style : {
+    opacity?: number,
+    color?: string,
+    background?: string
+  }
 
   constructor(type, parent = null) {
     this.id = gNextId++

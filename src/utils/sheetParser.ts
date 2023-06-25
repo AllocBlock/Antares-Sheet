@@ -216,12 +216,11 @@ export function parseSheet(sheetData) : [SheetMeta, SheetNode] {
     };
   }
 
-  let sheetBody = reader.pop_all_remaining()
+  let sheetBody = reader.pop_all_remaining() as string
   parseNodes(rootNode, sheetBody)
 
   if (!NodeUtils.validateSheetTree(rootNode)) {
     throw "曲谱无效"
   }
-  console.log(meta, rootNode)
   return [meta, rootNode]
 }

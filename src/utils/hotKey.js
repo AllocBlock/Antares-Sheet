@@ -85,3 +85,8 @@ export default {
   addKeyDownListener, removeKeyDownListener,
   addKeyUpListener, removeKeyUpListener,
 }
+
+
+setTimeout(() => {
+  console.log(gKeyDownNormalListener, gKeyDownNoRepeatListener, gKeyUpListener)
+}, 8000)
