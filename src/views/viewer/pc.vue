@@ -104,7 +104,7 @@
 <script lang="ts">
 import { StringInstrument } from "@/utils/instrument.js";
 import FretChordManager from "@/utils/fretChordManager";
-import { ENodeType, EPluginType, traverseNode } from "@/utils/sheetNode"
+import { ENodeType, EPluginType, NodeUtils } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser"
 import { ELoadState } from "@/utils/common.js"
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
@@ -118,7 +118,7 @@ import DraggablePanel from "@/components/draggablePanel.vue";
 import SheetViewerLoadCover from "./loadCover.vue";
 import SheetViewContext from "./sheetViewContext";
 import { NodeEventList } from "@/utils/elementEvent";
-import { Chord, FretChord } from "@/utils/chord";
+import { Chord, FretChord, Key } from "@/utils/chord";
 
 let gPlayer = null
 
@@ -290,11 +290,11 @@ export default {
       let curKey = this.sheet.meta.sheetKey;
       let newKey = curKey.shift(offset)
       this.sheet.meta.sheetKey = newKey
-      traverseNode(this.sheet.root, (node) => {
+      NodeUtils.traverseDFS(this.sheet.root, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
           node.chord = node.chord.shiftKey(offset)
         } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {
-          node.valid = (this.sheet.originalSheetKey == this.sheet.meta.sheetKey);
+          node.valid = (Key.isEqual(this.sheet.originalSheetKey, this.sheet.meta.sheetKey));
         }
       })
     },

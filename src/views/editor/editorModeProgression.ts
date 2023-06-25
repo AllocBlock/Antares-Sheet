@@ -1,6 +1,4 @@
-import { NodeUtils } from "@/utils/sheetEdit";
 import HotKey from "@/utils/hotKey.js";
-import FretChordManager from "@/utils/fretChordManager";
 import { EditorMode } from "./editorMode";
 import { SheetNode } from "@/utils/sheetNode";
 import SheetEditor from "./editor";

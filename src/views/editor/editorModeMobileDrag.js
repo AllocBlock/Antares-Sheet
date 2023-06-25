@@ -1,8 +1,7 @@
-import { NodeUtils } from "@/utils/sheetEdit";
 import FretChordManager from "@/utils/fretChordManager";
 import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
-import { ENodeType } from "@/utils/sheetNode";
+import { ENodeType, NodeUtils } from "@/utils/sheetNode";
 
 let gThis = null
 

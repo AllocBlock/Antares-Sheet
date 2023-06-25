@@ -1,7 +1,6 @@
-import { NodeUtils } from "@/utils/sheetEdit";
 import { getCursorClientPos } from "@/utils/common.js";
 import { setPos } from "@/utils/common.js";
-import { ENodeType, SheetNode } from "@/utils/sheetNode";
+import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode";
 import { EditorMode } from "./editorMode";
 import SheetEditor from "./editor";
 import { MouseDelta } from '@/utils/mouse.js';
@@ -237,7 +236,7 @@ class ShiftChordState {
     _shiftChordByStep(toLeft = true) {
         // TODO: 这会破坏下划线，如何保留？
         let isPlaceholder = NodeUtils.isPlaceholder(this.curNode.content)
-        let nearbyNode = toLeft ? NodeUtils.prevSibling(this.curNode) : NodeUtils.nextSibling(this.curNode)
+        let nearbyNode = toLeft ? this.curNode.prevSibling() : this.curNode.nextSibling()
         // 插入还是替换？
         // 如果当前是占位和弦，则替换
         // 否则，如果临近是文本，且是空文本，则替换

@@ -98,7 +98,7 @@ import { reactive } from "vue";
 import { getQueryVariable } from "@/utils/common.js";
 import { StringInstrument } from "@/utils/instrument.js";
 import FretChordManager from "@/utils/fretChordManager";
-import { ENodeType, traverseNode } from "@/utils/sheetNode";
+import { ENodeType, NodeUtils } from "@/utils/sheetNode";
 
 import { parseSheet } from "@/utils/sheetParser";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
@@ -108,7 +108,6 @@ import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 
 import EditorModeMobileDrag from './editorModeMobileDrag.js'
-import { NodeUtils } from "@/utils/sheetEdit";
 
 export default {
   name: "SheetEditor",
@@ -195,7 +194,7 @@ export default {
   methods: {
     loadSheet(sheetData) {
       let rootNode = reactive(parseSheet(sheetData));
-      NodeUtils.normalizeSheetTree(rootNode);
+      NodeUtils.toEditingSheetTree(rootNode);
       if (!rootNode) {
         throw "曲谱解析失败！";
       }
@@ -231,7 +230,7 @@ export default {
       player.playChord(chord, volume, duration);
     },
     shiftKey(oldKey, newKey) {
-      traverseNode(this.sheetInfo.sheetTree, (node) => {
+      NodeUtils.traverseDFS(this.sheetInfo.sheetTree, (node) => {
         if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
           node.chord = FretChordManager.shiftKey(node.chord, oldKey, newKey);
         }
@@ -246,7 +245,7 @@ export default {
     onChangeSheetKey(e) {
       let oldKey = this.sheetInfo.sheetKey
       let newKey = e.currentTarget.value
-      if (newKey == oldKey) return;
+      if (Key.isEqual(newKey, oldKey)) return;
       this.sheetInfo.sheetKey = newKey
       let confirmed = confirm("你修改了曲谱调式，是否将和弦一起转调？")
       if (!confirmed) return
@@ -256,7 +255,7 @@ export default {
       e.preventDefault()
     },
     openRawSheetPanel() {
-      this.rawSheetPanel.data = NodeUtils.toString(this.sheetInfo.sheetTree, true)
+      // this.rawSheetPanel.data = NodeUtils.toString(this.sheetInfo.sheetTree, true)
       this.rawSheetPanel.show = true
     },
     confirmLyric() {
@@ -272,7 +271,7 @@ export default {
       this.contextMenu.show = true;
       this.contextMenu.node = node;
 
-      let isChord = NodeUtils.isChord(node);
+      let isChord = node.isChord();
       this.contextMenu.enableAddUnderline = isChord;
       this.contextMenu.enableRemoveUnderline = isChord && NodeUtils.hasUnderlineToNextChord(node);
       this.contextMenu.enableRecoverChord = isChord;

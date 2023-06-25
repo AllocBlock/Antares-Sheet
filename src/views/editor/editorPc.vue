@@ -156,9 +156,8 @@ import Focusable from "@/components/focusable.vue";
 import { defineAsyncComponent } from "vue";
 import { startRepeatTimeout } from "@/utils/common.js";
 
-import { ENodeType, traverseNode, validateTree } from "@/utils/sheetNode";
+import { NodeUtils } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
-import { NodeUtils } from "@/utils/sheetEdit";
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import SheetEditor from "./editor";
 import { EditorModeCombined } from './editorMode'
@@ -334,8 +333,8 @@ export default {
     },
     loadSheet(sheetText) {
       let [meta, root] = parseSheet(sheetText)
-      validateTree(root)
-      NodeUtils.normalizeSheetTree(root);
+      NodeUtils.validateSheetTree(root)
+      NodeUtils.toEditingSheetTree(root);
       if (!root) {
         throw "曲谱解析失败！";
       }
@@ -399,7 +398,7 @@ export default {
       let newContent = prompt("编辑内容", node.content);
       if (!newContent) return;
       this.editor.updateContent(node, newContent)
-      validateTree(this.editor.root)
+      NodeUtils.validateSheetTree(this.editor.root)
     },
     editRemove(node = null) {
       node = node ?? this.contextMenu.node;
@@ -408,7 +407,7 @@ export default {
     editRemoveUnderline(node = null) {
       node = node ?? this.contextMenu.node;
       this.editor.removeUnderlineOnChord(node);
-      validateTree(this.editor.root)
+      NodeUtils.validateSheetTree(this.editor.root)
     },
     editRecoverChord(node = null) {
       node = node ?? this.contextMenu.node;
@@ -424,7 +423,7 @@ export default {
     },
     onChangeSheetKey(newKey) {
       let oldKey = this.editor.meta.sheetKey
-      if (newKey == oldKey) return;
+      if (Key.isEqual(newKey, oldKey)) return;
       
       let shiftChord = confirm("你修改了曲谱调式，是否将和弦一起转调？")
       this.editor.setKey(newKey, shiftChord)
@@ -452,8 +451,8 @@ export default {
       if (!confirm("是否确认修改？将会覆盖原本的曲谱")) return;
 
       let [meta, root] = parseSheet(this.rawSheetPanel.data)
-      NodeUtils.normalizeSheetTree(root);
-      validateTree(root);
+      NodeUtils.toEditingSheetTree(root);
+      NodeUtils.validateSheetTree(root);
       this.editor.replaceSheet(root)
       this.rawSheetPanel.show = false
     },
@@ -505,7 +504,7 @@ export default {
       }
     },
     insertNode(type, insertBefore) {
-      this.editor.insertNode(this.contextMenu.node, type, insertBefore)
+      this.editor.insert(this.contextMenu.node, type, insertBefore)
     },
     onContextButtonMouseEnter(tip) {
       this.contextMenu.tip.show = true
@@ -531,8 +530,8 @@ export default {
       this.rawSheetPanel.isValid = false
       try {
         let [meta, root] = parseSheet(this.rawSheetPanel.data)
-        NodeUtils.normalizeSheetTree(root);
-        validateTree(root);
+        NodeUtils.toEditingSheetTree(root);
+        NodeUtils.validateSheetTree(root);
         this.rawSheetPanel.isValid = true
       }
       catch (e) { 

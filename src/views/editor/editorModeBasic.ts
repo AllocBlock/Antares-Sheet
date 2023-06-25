@@ -1,7 +1,6 @@
-import { NodeUtils } from "@/utils/sheetEdit";
 import HotKey from "@/utils/hotKey.js";
 import { EditorMode } from "./editorMode";
-import { SheetNode } from "@/utils/sheetNode";
+import { SheetNode, NodeUtils } from "@/utils/sheetNode";
 import SheetEditor from "./editor";
 
 export default class EditorModeBasic extends EditorMode {
@@ -91,7 +90,7 @@ export default class EditorModeBasic extends EditorMode {
 
     _recoverChordToText(e) {
         e.preventDefault()
-        if (NodeUtils.isChord(this.curNode)) {
+        if (this.curNode.isChord()) {
             this.curNode = this.editor.convertChordToText(this.curNode)[0]
         }
     }
@@ -114,7 +113,7 @@ export default class EditorModeBasic extends EditorMode {
     _addUnderline(e) {
         e.preventDefault()
         if (!this.curNode) return
-        if (!NodeUtils.isChord(this.curNode)) return
+        if (!this.curNode.isChord()) return
 
         this.editor.addUnderlineForChord(this.curNode)
     }
@@ -122,7 +121,7 @@ export default class EditorModeBasic extends EditorMode {
     _removeUnderline(e) {
         e.preventDefault()
         if (!this.curNode) return
-        if (!NodeUtils.isChord(this.curNode)) return
+        if (!this.curNode.isChord()) return
         if (!NodeUtils.hasUnderlineToNextChord(this.curNode)) return
 
         this.editor.removeUnderlineOnChord(this.curNode)
@@ -131,7 +130,7 @@ export default class EditorModeBasic extends EditorMode {
     _switchChordType(e) {
         e.preventDefault()
         if (!this.curNode) return
-        if (!NodeUtils.isChord(this.curNode)) return
+        if (!this.curNode.isChord()) return
 
         this.editor.switchChordType(this.curNode)
     }

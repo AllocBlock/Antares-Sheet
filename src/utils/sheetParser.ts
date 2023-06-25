@@ -1,4 +1,4 @@
-import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, createUnknownNode, validateTree } from "@/utils/sheetNode"
+import { SheetNode, ENodeType, EPluginType, toPluginTypeEnum, NodeUtils } from "@/utils/sheetNode"
 import SheetMeta from "@/utils/sheetMeta"
 import { LineReader } from "@/utils/io"
 import { Chord } from "./chord"
@@ -127,17 +127,17 @@ function matchSplit(content, matcher, createNode) {
   const newContent = match[0]
   let splitNodes = []
   if (match.index > 0) {
-    splitNodes.push(createUnknownNode(content.substr(0, match.index)))
+    splitNodes.push(NodeUtils.createUnknownNode(content.substr(0, match.index)))
   }
   splitNodes.push(createNode(match))
   if (match.index + newContent.length < content.length) {
-    splitNodes.push(createUnknownNode(content.substr(match.index + newContent.length)))
+    splitNodes.push(NodeUtils.createUnknownNode(content.substr(match.index + newContent.length)))
   }
   return splitNodes
 }
 
-function parseNodes(parentNode, str) {
-  let nodes = [createUnknownNode(str, parentNode)]
+function parseNodes(parentNode : SheetNode, str : string) {
+  let nodes = [NodeUtils.createUnknownNode(str)]
   // 遍历
   for(let i = 0; i < nodes.length; ++i) {
     const node = nodes[i]
@@ -164,7 +164,7 @@ function parseNodes(parentNode, str) {
       node.type = ENodeType.Text
     }
   }
-  parentNode.children = nodes
+  NodeUtils.append(parentNode, nodes)
 }
 
 export function parseSheet(sheetData) : [SheetMeta, SheetNode] {
@@ -219,7 +219,7 @@ export function parseSheet(sheetData) : [SheetMeta, SheetNode] {
   let sheetBody = reader.pop_all_remaining()
   parseNodes(rootNode, sheetBody)
 
-  if (!validateTree(rootNode)) {
+  if (!NodeUtils.validateSheetTree(rootNode)) {
     throw "曲谱无效"
   }
   console.log(meta, rootNode)

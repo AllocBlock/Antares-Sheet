@@ -1,6 +1,6 @@
 import Color from 'color'
 
-function toRgbString(color) {
+function toRgbString(color : Color) : string {
     color = new Color(color)
     return `${color.red()}, ${color.green()}, ${color.blue()}`
 }

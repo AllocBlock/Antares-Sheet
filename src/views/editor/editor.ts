@@ -1,6 +1,5 @@
-import { ENodeType, SheetNode } from "@/utils/sheetNode"
+import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode"
 import { assert } from "@/utils/assert"
-import { NodeUtils } from "@/utils/sheetEdit"
 import History from "@/utils/history"
 import SheetMeta from "@/utils/sheetMeta"
 import { reactive } from "vue"
@@ -85,7 +84,7 @@ export default class SheetEditor {
         // constrain: underline node should have chord node at both begin and end
         // to void this, these inserted node will be inserted after the underline
         let targetNode = node
-        while (targetNode.nextSibling() == null && NodeUtils.isUnderline(targetNode.parent)) {
+        while (targetNode.nextSibling() == null && targetNode.parent.isUnderline()) {
             targetNode = targetNode.parent
         }
 
@@ -104,7 +103,7 @@ export default class SheetEditor {
         // constrain: underline node should have chord node at both begin and end
         // to void this, these inserted node will be inserted before the underline
         let targetNode = node
-        while (targetNode.prevSibling() == null && NodeUtils.isUnderline(targetNode.parent)) {
+        while (targetNode.prevSibling() == null && targetNode.parent.isUnderline()) {
             targetNode = targetNode.parent
         }
 
@@ -160,7 +159,7 @@ export default class SheetEditor {
     remove(node: SheetNode) {
         this.pauseHistory()
         try {
-            if (NodeUtils.isChord(node)) {
+            if (node.isChord()) {
                 this.removeAllUnderlineOfChord(node)
             }
             NodeUtils.removeFromParent(node)
@@ -425,7 +424,7 @@ export default class SheetEditor {
     convertToChord(node, chord : Chord) {
         this.pauseHistory()
         try {
-            if (NodeUtils.isChord(node)) {
+            if (node.isChord()) {
                 this.updateChord(node, chord);
                 return node
             }
@@ -474,7 +473,7 @@ export default class SheetEditor {
                     let cur = node
                     let topUnderline = null
                     while (cur) {
-                        if (NodeUtils.isUnderline(cur)) topUnderline = cur;
+                        if (cur.isUnderline()) topUnderline = cur;
                         cur = cur.parent
                     }
 
@@ -510,7 +509,7 @@ export default class SheetEditor {
                     let cur = node
                     let topUnderline = null
                     while (cur) {
-                        if (NodeUtils.isUnderline(cur)) topUnderline = cur;
+                        if (cur.isUnderline()) topUnderline = cur;
                         cur = cur.parent
                     }
 
@@ -533,13 +532,13 @@ export default class SheetEditor {
 
     setKey(newKey : Key, shiftChord : boolean) {
         let oldKey = this.meta.sheetKey
-        if (newKey == oldKey) return;
+        if (Key.isEqual(newKey, oldKey)) return;
 
         this.meta.sheetKey = newKey
         if (shiftChord) {
             let offset = Key.getOffset(oldKey, newKey)
             NodeUtils.traverseDFS(this.root, (node : SheetNode) => {
-                if (NodeUtils.isChord(node)) {
+                if (node.isChord()) {
                     node.chord = node.chord.shiftKey(offset);
                 }
             });
@@ -622,21 +621,21 @@ export default class SheetEditor {
         let text = node.content
         let textNodes = [node]
         // 向前
-        let cur = NodeUtils.prevSibling(node)
+        let cur = node.prevSibling()
         while (cur) {
             if (cur.type != ENodeType.Text) break;
             textNodes.splice(0, 0, cur)
             text = cur.content + text
-            cur = NodeUtils.prevSibling(cur)
+            cur = cur.prevSibling()
         }
 
         // 向后
-        cur = NodeUtils.nextSibling(node)
+        cur = node.nextSibling()
         while (cur) {
             if (cur.type != ENodeType.Text) break;
             textNodes.push(cur)
             text += cur.content
-            cur = NodeUtils.nextSibling(cur)
+            cur = cur.nextSibling()
         }
 
         let newText = prompt("编辑文本", text);
