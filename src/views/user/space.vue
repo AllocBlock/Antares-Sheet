@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { Project, ProjectInfo } from '@/utils/project';
+import { gProjectManager } from '@/utils/project';
 
 export default {
   name: "UserSpace",
@@ -30,7 +30,7 @@ export default {
     }
   },
   mounted() {
-    this.allProjectInfos = Project.getAll()
+    this.allProjectInfos = gProjectManager.getAll()
     this.projectInfos = this.allProjectInfos
     console.log(this.allProjectInfos)
   },

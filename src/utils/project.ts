@@ -51,25 +51,20 @@ export class ProjectInfo {
     createTime : Date
     updateTime : Date
 
-    description : string
-    tags : string[]
+    sync : boolean
+    isPublic : boolean
     sheetMeta : SheetMeta
     sheetData : string
     
-    constructor(pid : string, title : string, description : string = "") {
+    constructor(pid : string, title : string) {
         this.pid = pid
         this.createTime = new Date()
         this.updateTime = this.createTime
-        this.description = description
-        this.tags = []
+        this.sync = false
+        this.isPublic = false
         this.sheetMeta = new SheetMeta()
         this.sheetMeta.title = title
-        let data = NEW_PROJECT_TEMPLATE
-        if (title) {
-            data = data.replace("*SHEET_TITLE*", title)
-        }
-        
-        this.sheetData = data
+        this.sheetData = NEW_PROJECT_TEMPLATE.replace("*SHEET_TITLE*", title ?? "") 
     }
 }
 
@@ -91,11 +86,34 @@ function saveProjectInfos(projectInfos : ProjectInfo[]) {
     Storage.save(PROJECT_STORAGE_KEY, JSON.stringify(projectInfos)) 
 }
 
-export const Project = {
-    create(title : string = "未命名项目", description : string = "") : string {
-        let projectInfos = loadProjectInfos()
+class ProjectManager {
+    projectInfos : ProjectInfo[]
+
+    constructor() {
+        this.load()
+    }
+
+    save() { saveProjectInfos(this.projectInfos) }
+    load() { this.projectInfos = loadProjectInfos() }
+    
+    has(pid : string) {
+        for (let info of this.projectInfos) {
+            if (info.pid == pid) {
+                return true
+            }
+        }
+        return false
+    }
+
+    add(projectInfo : ProjectInfo) {
+        assert(!this.has(projectInfo.pid), "项目已存在，不可重复添加")
+        this.projectInfos.push(projectInfo)
+        this.save()
+    }
+
+    create(title : string = "未命名") : string {
         // generate project id
-        let existedPids = projectInfos.map(info => info.pid)
+        let existedPids = this.projectInfos.map(info => info.pid)
         let pid = generateRandomCode(8)
         do {
             if (existedPids.includes(pid)) {
@@ -105,51 +123,56 @@ export const Project = {
         } while (true);
 
         // add new project
-        let projectInfo = new ProjectInfo(pid, title, description)
-        projectInfos.push(projectInfo)
+        let projectInfo = new ProjectInfo(pid, title)
+        this.projectInfos.push(projectInfo)
 
         // save changes to storage
-        saveProjectInfos(projectInfos)
+        this.save()
         return pid
-    },
+    }
+
     get(pid : string) : ProjectInfo {
         assert(pid)
-        let projectInfos = loadProjectInfos()
-        for (let info of projectInfos) {
+        for (let info of this.projectInfos) {
             if (info.pid == pid) {
                 return info
             }
         }
         return null
-    },
+    }
+    
     getAll() : ProjectInfo[] {
-        return loadProjectInfos()
-    },
-    update(pid : string, sheetMeta : SheetMeta, sheetRoot : SheetNode, attachedChords : Chord[] = []) : void {
+        return this.projectInfos
+    }
+
+    set(pid : string, sheetMeta : SheetMeta, sheetData : string, sync : boolean, isPublic : boolean) {
+        let projectInfo = this.get(pid)
+        assert(projectInfo, "项目不存在")
+        projectInfo.sheetMeta = sheetMeta
+        projectInfo.sheetData = sheetData
+        projectInfo.sync = sync
+        projectInfo.isPublic = isPublic
+        this.save()
+    }
+
+    update(pid : string, sheetMeta : SheetMeta, sheetData : string, sync : boolean, isPublic : boolean) : void {
         assert(pid)
-        let projectInfos = loadProjectInfos()
-        for (let i in projectInfos) {
-            if (projectInfos[i].pid == pid) {
-                let projectInfo = projectInfos[i]
-                projectInfo.updateTime = new Date()
-                projectInfo.sheetMeta = sheetMeta
-                projectInfo.sheetData = toSheetFileString(sheetRoot, sheetMeta, attachedChords)
-                saveProjectInfos(projectInfos)
-                return
-            }
-        }
-        console.warn(`未找到pid为${pid}的项目，更新项目失败`)
-    },
+        let info = this.get(pid)
+        assert(info, `未找到pid为${pid}的项目，更新项目失败`)
+        info.updateTime = new Date()
+        this.set(pid, sheetMeta, sheetData, sync, isPublic)
+    }
+
     remove(pid : string) {
         assert(pid)
-        let projectInfos = loadProjectInfos()
-        for (let i = 0; i < projectInfos.length; ++i) {
-            if (projectInfos[i].pid == pid) {
-                projectInfos.splice(i, 1)
-                saveProjectInfos(projectInfos)
+        for (let i = 0; i < this.projectInfos.length; ++i) {
+            if (this.projectInfos[i].pid == pid) {
+                this.projectInfos.splice(i, 1)
+                this.save()
                 return
             }
         }
     }
-
 }
+
+export const gProjectManager = new ProjectManager()

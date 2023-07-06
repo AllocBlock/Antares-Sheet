@@ -5,23 +5,36 @@
         :style="`height: ${layout.showAudioPlayer ? ('calc(100% - ' + layout.audioPlayerHeight + 'px)') : '100%'}; position: relative;`">
         <div id="help_button" @click="helpPanel.show = true">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
-          <div id="tools_title" class="title flex_hv_center">工具栏</div>
-          <div id="tools_title" class="flex_hv_center">
-            <div :class="`button ${editor.canUndo() ? '' : 'disabled_button'}`"
-              @click="editor.canUndo() ? editor.undo : null">
+          <div class="tools_title flex_hv_center">工具栏</div>
+          <ToolChord id="chord_tool" v-model:chords="toolChord.attachedChords" @dragStart="onToolChordDragStart" />
+          <div class="button" @click="this.toolChord.showPanel = true">
+            编辑和弦
+          </div>
+          
+          <div class="tools_title flex_hv_center">同步设置</div>
+          <div class="flex_hv_center">
+            <div>开启同步</div>
+            <input type="checkbox" class="toggle" v-model="project.sync" @change="onSyncChange"/>
+          </div>
+          
+          <div class="flex_hv_center" v-if="project.sync">
+            <div>公开曲谱</div>
+            <input type="checkbox" class="toggle" v-model="project.isPublic" @change="onPublicStateChange"/>
+          </div>
+
+          <div class="tools_title flex_hv_center">曲谱操作</div>
+          <div class="flex_hv_center">
+            <div class="button" v-if="editor.canUndo()" @click="editor.undo">
               撤销
             </div>
             <div class="button" v-if="editor.canRedo()" @click="editor.redo">
               重做
             </div>
           </div>
-          <ToolChord id="chord_tool" v-model:chords="toolChord.attachedChords" @dragStart="onToolChordDragStart" />
-          <div class="button" @click="this.toolChord.showPanel = true">
-            编辑和弦
-          </div>
           <div id="clear_sheet_button" class="button" @click="clearSheet">
             清空曲谱
           </div>
+          
         </div>
         <div class="fill" style="display: flex; justify-content: center; overflow: auto;">
           <div id="sheet_block" :style="`width: ${100 - layout.toolWidthPercentage}%`">
@@ -42,7 +55,7 @@
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_hv_center">
               <div id="edit_raw_sheet_button" class="button" @click="openRawSheetPanel">编辑原始曲谱</div>
-              <div class="button" @click="saveSheet">保存</div>
+              <div class="button" @click="saveSheet(true)">保存</div>
               <div class="button" @click="loadSheetFromFile">载入</div>
             </div>
             <AntaresSheet id="sheet_box" :sheet-tree="editor.root" :events="nodeEventList" />
@@ -139,6 +152,8 @@
       v-model:isFolded="keyboard.isFolded">
       <InstrumentSimulatorKeyboard :mute-hot-key="muteKeyboardHotKey" />
     </DraggablePanel>
+
+    <TopCover :show="!loaded">{{ loadCoverMessage }}</TopCover> 
   </div>
 </template>
 
@@ -152,13 +167,13 @@ import Svg from "@/components/svg.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
 import InstrumentSimulatorKeyboard from "@/components/instrumentSimulator/keyboard.vue";
 import Focusable from "@/components/focusable.vue";
+import TopCover from "@/components/topCover.vue";
 
 import { defineAsyncComponent } from "vue";
-import { startRepeatTimeout } from "@/utils/common.js";
+import { DelayTrigger, ELoadState, getQueryVariable, startRepeatTimeout } from "@/utils/common";
 
 import { NodeUtils } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
-import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import SheetEditor from "./editor";
 import { EditorModeCombined } from './editorMode'
 import EditorModeBasic from './editorModeBasic'
@@ -168,11 +183,13 @@ import EditorModeProgression from './editorModeProgression'
 import { StringInstrument } from "@/utils/instrument.js";
 import FretChordManager from "@/utils/fretChordManager";
 import Storage from "@/utils/storage.js";
-import { Project } from "@/utils/project";
+import { gProjectManager } from "@/utils/project";
 import HotKey from "@/utils/hotKey";
 import { NodeEventList } from "@/utils/elementEvent";
 import { Key } from "@/utils/chord";
 import { toSheetFileString } from "@/utils/sheetWriter";
+import addToast from "@/utils/toast";
+import Sync from "@/utils/sync";
 
 export default {
   name: "SheetEditorPc",
@@ -186,6 +203,7 @@ export default {
     DraggablePanel,
     InstrumentSimulatorKeyboard,
     Focusable,
+    TopCover,
     "AudioPlayer": defineAsyncComponent(() => import('./audioPlayer.vue'))
   },
   data() {
@@ -204,7 +222,13 @@ export default {
         showAudioPlayer: false
       },
       editor: new SheetEditor(),
-      pid: null,
+      project: {
+        loadState: ELoadState.Loading,
+        pid: null,
+        sync: false,
+        isPublic: false,
+        syncTrigger: null
+      },
       toolChord: {
         showPanel: false,
         attachedChords: [],
@@ -259,6 +283,15 @@ export default {
     };
   },
   computed: {
+    loaded() { return this.project.loadState == ELoadState.Loaded; },
+    loadCoverMessage() { 
+      switch(this.project.loadState) {
+        case ELoadState.Loaded: return "加载完成";
+        case ELoadState.Loading: return "加载中...";
+        case ELoadState.Failed: return "加载失败，项目不存在";
+        default: return "加载遇到未知问题"
+      }
+    },
     nodeEventList() {
       return this.editorMode ? this.editorMode.nodeEventList : new NodeEventList()
     },
@@ -273,6 +306,29 @@ export default {
     }
   },
   created() {
+    this.syncTrigger = new DelayTrigger(
+      ((showToast = false) => {
+        return new Promise((resolve, reject) => {
+          let sheetData = this.toSheetString()
+          Sync.create_or_update_project(
+            this.project.pid,
+            this.editor.meta.title,
+            this.editor.meta.singer,
+            sheetData,
+            this.project.isPublic
+          ).then(result => {
+            if (result.success) {
+              if (showToast)
+                addToast("同步成功！")
+            } else {
+              addToast("同步失败：" + result.message)
+            }
+          }).finally(() => {
+            resolve(null)
+          })
+        });
+      }).bind(this)
+    )
   },
   mounted() {
 
@@ -296,21 +352,27 @@ export default {
 
     this.editorMode = editorMode
 
-    loadSheetFromUrlParam().then(res => {
-      let [sheetSource, sheetData, pid] = res
-      this.sheetSource = sheetSource
-      this.pid = pid
-      this.loadSheet(sheetData)
-    })
+    let pid = getQueryVariable("pid");
+    let projectInfo = gProjectManager.get(pid)
 
-    let that = this
+    if (!projectInfo) {
+      this.project.loadState = ELoadState.Failed;
+      return;
+    }
+
+    this.project.loadState = ELoadState.Loaded
+    this.project.pid = pid
+    this.project.sync = projectInfo.sync
+    this.project.isPublic = projectInfo.isPublic
+    this.loadSheet(projectInfo.sheetData)
+
     startRepeatTimeout(() => {
-      that._saveSheet()
+      this.saveSheet(false)
     }, 5000)
 
     document.addEventListener("click", () => this.closeContext());
     HotKey.addKeyDownListener("KeyS", (e) => {
-      this.saveSheet()
+      this.saveSheet(true)
       e.preventDefault()
     }, true, false, false)
   },
@@ -456,9 +518,12 @@ export default {
       this.editor.replaceSheet(root)
       this.rawSheetPanel.show = false
     },
+    toSheetString() {
+      return toSheetFileString(this.editor.root, this.editor.meta, this.toolChord.attachedChords)
+    },
     saveSheetToFile() {
       // TODO: remove un used chord?
-      let fileData = toSheetFileString(this.editor.root, this.editor.meta, this.toolChord.attachedChords)
+      let fileData = this.toSheetString()
       let time = new Date().toLocaleDateString().replace(/\//g, "_")
 
       let blob = new Blob([fileData], { type: 'text/plain' })
@@ -473,11 +538,6 @@ export default {
       input.type = 'file';
       input.accept = ".atrs"
       input.onchange = e => {
-        if (!confirm("确定：导入当前项目\n取消：单独作为新项目")) {
-          this.sheetSource = ESheetSource.FILE
-          this.pid = null
-        }
-
         let file = e.target.files[0];
         let fileReader = new FileReader()
         fileReader.onload = () => this.loadSheet(fileReader.result)
@@ -486,22 +546,10 @@ export default {
       input.click();
       input.remove()
     },
-    saveSheet() {
-      if (this._saveSheet())
-        this.$toast("曲谱已保存~")
-      else
-        this.$toast("曲谱保存失败...本曲谱并非你的项目，或保存过程中遇到其他错误")
-    },
-    _saveSheet() {
-      if (this.sheetSource == ESheetSource.PROJECT) {
-        Project.update(this.pid, this.editor.meta, this.editor.root, this.toolChord.attachedChords)
-        console.log("曲谱已保存")
-        return true
-      }
-      else {
-        console.log("警告：并非项目，无法保存")
-        return false
-      }
+    saveSheet(showTip = false) {
+      gProjectManager.update(this.project.pid, this.editor.meta, this.toSheetString(), this.project.sync, this.project.isPublic)
+      if (showTip)
+        addToast("曲谱已保存~")
     },
     insertNode(type, insertBefore) {
       this.editor.insert(this.contextMenu.node, type, insertBefore)
@@ -513,6 +561,16 @@ export default {
     onContextButtonMouseLeave() {
       this.contextMenu.tip.show = false
     },
+    onSyncChange: function () {
+      this.saveSheet()
+      if (this.project.sync) {
+        this.syncTrigger.trigger(false)
+      }
+    },
+    onPublicStateChange: function () {
+      this.saveSheet()
+      this.syncTrigger.trigger(false)
+    }
   },
   watch: {
     "layout.toolWidthPercentage": function () {
@@ -553,6 +611,14 @@ export default {
   flex-shrink: 0;
 }
 
+.tools_title {
+  width: 100%;
+  font-size: 120%;
+  font-weight: bold;
+  border-top: 2px black solid;
+  border-bottom: 2px black solid;
+}
+
 .input {
   outline: none;
   border: none;
@@ -576,7 +642,7 @@ export default {
 }
 
 .toggle {
-  --size: 30px;
+  --size: 24px;
   position: relative;
   appearance: none;
   width: calc(var(--size) * 2);
@@ -585,6 +651,9 @@ export default {
   border-radius: calc(var(--size) / 2);
   background: transparent;
   transition: border 0.2s ease-out;
+  outline: none;
+  border: 2px grey solid;
+  transition: background 0.2s ease-out;
 
   display: flex;
   align-items: center;
@@ -604,15 +673,12 @@ export default {
 
   &:checked {
     background: #e9266a33;
+    border: 2px var(--theme-color) solid;
   }
 
   &:checked::before {
     left: calc(100% - var(--ball-size) - var(--margin-size));
     background: var(--theme-color);
-  }
-
-  &:focus {
-    outline: none;
   }
 }
 

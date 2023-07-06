@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import Request from "@/utils/request.js";
+import Request from "@/utils/request";
 
 export default {
   name: "Svg",

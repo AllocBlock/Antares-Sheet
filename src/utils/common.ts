@@ -118,3 +118,34 @@ export function createDownloadTextFile(textData, fileName) {
     download.click()
     download.remove()
 }
+
+export class DelayTrigger {
+    running: boolean
+    retrigger: boolean
+    reTriggerParams: any
+    func : Function
+    
+    constructor(func : Function) {
+        this.running = false
+        this.retrigger = false
+        this.func = func
+    }
+
+    isRunning() : boolean { return this.running; }
+    trigger(...params) {
+        if (this.running) {
+            this.retrigger = true
+            this.reTriggerParams = params
+        }
+        else {
+            this.running = true
+            this.func(...params).finally(() => {
+                this.running = false
+                if (this.retrigger) {
+                    this.retrigger = false
+                    this.trigger(...this.reTriggerParams)
+                }
+            })
+        }
+    }
+}

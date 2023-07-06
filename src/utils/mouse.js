@@ -1,4 +1,4 @@
-import { getCursorClientPos } from '@/utils/common.js';
+import { getCursorClientPos } from '@/utils/common';
 
 export class MouseDelta {
     constructor() {

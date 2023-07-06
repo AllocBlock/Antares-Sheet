@@ -1,6 +1,6 @@
-import { getQueryVariable } from "@/utils/common.js";
+import { getQueryVariable } from "@/utils/common";
 import Request from "@/utils/request";
-import { Project } from "@/utils/project";
+import { gProjectManager } from "@/utils/project";
 
 export enum ESheetSource {
     UNKNOWN,
@@ -20,7 +20,7 @@ export async function loadSheetFromUrlParam() : Promise<[ESheetSource, string, s
     // load by pid
     let pid = getQueryVariable("pid");
     if (pid) {
-        let projectInfo = Project.get(pid)
+        let projectInfo = gProjectManager.get(pid)
         if (projectInfo) {
             return [ESheetSource.PROJECT, projectInfo.sheetData, pid]
         }

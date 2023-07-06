@@ -137,8 +137,9 @@
 import Svg from "@/components/svg.vue";
 import AudioPlayer from "@/utils/audioPlayer.js";
 import HotKey from "@/utils/hotKey.js";
-import { getEnv, clone } from "@/utils/common.js";
-import { ELoadState, getPos, getRelativePos } from "@/utils/common.js"
+import { getEnv, clone } from "@/utils/common";
+import { ELoadState, getPos, getRelativePos } from "@/utils/common"
+import addToast from "@/utils/toast";
 
 const PlaybackSpeedLevels = {
   1: 0.5,
@@ -328,7 +329,7 @@ export default {
     loadAudio(file) {
       let that = this
       if (file == null) {
-        this.$toast("打开文件失败！");
+        addToast("打开文件失败！");
         return;
       }
 
@@ -358,7 +359,7 @@ export default {
     },
     togglePlay() {
       if (this.loadState != ELoadState.Loaded) {
-        this.$toast("请先加载音乐！");
+        addToast("请先加载音乐！");
         return;
       }
       if (this.setting.playing) {
@@ -431,7 +432,7 @@ export default {
     },
     addMark(text = "标记", timeTick = null, overwrite = true) {
       if (this.loadState != ELoadState.Loaded) {
-        this.$toast("请先加载音乐！");
+        addToast("请先加载音乐！");
         return;
       }
 

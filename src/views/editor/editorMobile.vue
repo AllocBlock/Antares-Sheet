@@ -95,7 +95,7 @@
 
 <script>
 import { reactive } from "vue";
-import { getQueryVariable } from "@/utils/common.js";
+import { getQueryVariable } from "@/utils/common";
 import { StringInstrument } from "@/utils/instrument.js";
 import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, NodeUtils } from "@/utils/sheetNode";
@@ -103,7 +103,7 @@ import { ENodeType, NodeUtils } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
-import Request from "@/utils/request.js";
+import Request from "@/utils/request";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 

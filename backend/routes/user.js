@@ -1,6 +1,7 @@
 'use strict'
 const { sql } = require('mysqls')
 const { genReply, onFastifyMysql } = require('../utils/common')
+const { get_user_info_by_token } = require('../utils/database')
 
 const TOKEN_LENGTH = 16
 const CHARACTERS = 'ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789' // no 1-l, 0-o-O which cause confused
@@ -34,33 +35,13 @@ async function get_user_id(connection, userName, password) {
       name: userName,
       password: password
     }).select(), [])
-  console.log(rows)
   if (rows.length > 0)
     return rows[0]
   else
     return null
 }
-
-async function get_user_info_by_token(connection, token) {
-  const [rows, _] = await connection.query(
-    sql.table('user').field("id,name").where({
-      token: token,
-    }).select(), [])
-  console.log(rows)
-  if (rows.length > 0)
-    return rows[0]
-  else
-    return null
-}
-
-
 
 module.exports = async function (fastify, opts) {
-  fastify.get('/user/get_all', onFastifyMysql(fastify, async (conn, request) => {
-    const [rows, fields] = await conn.query(sql.table('user').field("*").select(), [])
-    return rows
-  }))
-
   fastify.get(
     '/user/login_or_register', 
     {

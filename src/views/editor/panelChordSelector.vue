@@ -109,7 +109,7 @@
 <script lang="ts">
 import FretChordManager from "@/utils/fretChordManager";
 import FretChordGraph from "@/components/fretChordGraph/index.vue"
-import { getCursorClientPos, getEnv, setPos } from "@/utils/common.js";
+import { getCursorClientPos, getEnv, setPos } from "@/utils/common";
 import { Chord, FretChord, Key } from "@/utils/chord";
 
 const g_RecommendChordInCMajor = {

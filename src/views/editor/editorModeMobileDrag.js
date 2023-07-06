@@ -1,6 +1,6 @@
 import FretChordManager from "@/utils/fretChordManager";
-import { getCursorClientPos, getInnerSize } from "@/utils/common.js";
-import { setPos } from "@/utils/common.js";
+import { getCursorClientPos, getInnerSize } from "@/utils/common";
+import { setPos } from "@/utils/common";
 import { ENodeType, NodeUtils } from "@/utils/sheetNode";
 
 let gThis = null

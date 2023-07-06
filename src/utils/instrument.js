@@ -239,14 +239,14 @@ class StringInstrumentInterface {
     this.capo = 0
   }
 
-  isChordMatch(chord) {
+  doesChordMatch(chord) {
     if (!chord.stringNum) return false
     if (chord.stringNum != this.stringNum) return false
     return true
   }
 
   getFretsOfChord(chord) {
-    assert(this.isChordMatch(chord), "和弦有误或与本乐器不匹配")
+    assert(this.doesChordMatch(chord), "和弦有误或与本乐器不匹配")
 
     let stringNum = chord.stringNum
     let fingerings = chord.fingerings
@@ -274,7 +274,7 @@ class StringInstrumentInterface {
   }
 
   getFretOfStringOfChord(chord, string) {
-    assert(this.isChordMatch(chord), "和弦有误或与本乐器不匹配")
+    assert(this.doesChordMatch(chord), "和弦有误或与本乐器不匹配")
 
     if (chord.disabledStrings.includes(string)) // 禁用弦不弹
       return null;

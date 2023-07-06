@@ -60,13 +60,13 @@ import { StringInstrument } from "@/utils/instrument.js";
 import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, EPluginType, NodeUtils } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser"
-import { ELoadState } from "@/utils/common.js"
+import { ELoadState } from "@/utils/common"
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
 
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import FretChordGraph from "@/components/fretChordGraph/index.vue"
-import Request from "@/utils/request.js"
+import Request from "@/utils/request"
 import SheetViewerLoadCover from "./loadCover.vue";
 import SheetViewContext from "./sheetViewContext";
 import { NodeEventList } from "@/utils/elementEvent";

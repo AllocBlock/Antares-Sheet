@@ -29,6 +29,7 @@
 
 <script>
 import Sync from '@/utils/sync'
+import addToast from '@/utils/toast';
 
 export default {
   name: "UserLogin",
@@ -59,11 +60,11 @@ export default {
     },
     login() {
       if (!this.userName) {
-        this.$toast("请输入用户名")
+        addToast("请输入用户名")
         return
       }
       if (!this.password) {
-        this.$toast("请输入密码")
+        addToast("请输入密码")
         return
       }
 
@@ -71,11 +72,8 @@ export default {
       
       this.isLogging = true
       Sync.login(this.userName, this.password).then(result => {
-        if (!result.success) {
-          this.$toast("登录失败：" + result.message)
-        }
-        else {
-          this.$toast(result.message)
+        addToast(result.message, 5)
+        if (result.success) {
           this.isLogged = true
         }
 

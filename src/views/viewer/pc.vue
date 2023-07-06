@@ -106,7 +106,7 @@ import { StringInstrument } from "@/utils/instrument.js";
 import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, EPluginType, NodeUtils } from "@/utils/sheetNode"
 import { parseSheet } from "@/utils/sheetParser"
-import { ELoadState } from "@/utils/common.js"
+import { ELoadState } from "@/utils/common"
 import { loadSheetFromUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import AutoScroll from "./autoScroll.js"
 

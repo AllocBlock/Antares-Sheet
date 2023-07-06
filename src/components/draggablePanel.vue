@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { setPos, getOuterSize, getWindowSize } from '@/utils/common.js';
+import { setPos, getOuterSize, getWindowSize } from '@/utils/common';
 import { MouseDelta } from '@/utils/mouse.js';
 
 export default {

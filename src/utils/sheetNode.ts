@@ -373,7 +373,7 @@ export const NodeUtils = {
   },
   /** 判断是否有连向后方的下划线 */
   hasUnderlineToNextChord(chordNode) {
-    if (!this.isChord(chordNode)) throw "类型错误";
+    if (!chordNode.isChord()) throw "类型错误";
     let chordType = chordNode.type;
     let underlineType;
     switch (chordType) {
@@ -395,7 +395,7 @@ export const NodeUtils = {
   },
   /** 判断是否在下划线内 */
   isInUnderline(chordNode) {
-    if (!this.isChord(chordNode)) throw "类型错误";
+    if (!chordNode.isChord()) throw "类型错误";
     let cur = chordNode
     while (cur) {
       if (cur.isUnderline()) return true;

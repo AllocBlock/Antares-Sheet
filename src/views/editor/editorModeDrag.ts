@@ -1,5 +1,5 @@
-import { getCursorClientPos } from "@/utils/common.js";
-import { setPos } from "@/utils/common.js";
+import { getCursorClientPos } from "@/utils/common";
+import { setPos } from "@/utils/common";
 import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode";
 import { EditorMode } from "./editorMode";
 import SheetEditor from "./editor";

@@ -19,7 +19,7 @@
 <script lang="ts">
 import FretChordGraph from "@/components/fretChordGraph/index.vue"
 import { Chord, FretChord } from "@/utils/chord";
-import { getEnv } from "@/utils/common.js";
+import { getEnv } from "@/utils/common";
 import fretChordManager from "@/utils/fretChordManager";
 
 export default {
