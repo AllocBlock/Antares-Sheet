@@ -38,14 +38,14 @@ function handleResponse(response: AxiosResponse, resolve) {
 }
 
 export default {
-    get(url, params = {}) {
+    get(url, params = {}) : Promise<object> {
         return new Promise((resolve, reject) => {
             axios.get(url, { params })
                 .then(response => handleResponse(response, resolve))
                 .catch(error => handleError(error, resolve))
         })
     },
-    post(url, params = {}) {
+    post(url, params = {}) : Promise<object>  {
         return new Promise((resolve, reject) => {
             axios.post(url, params)
                 .then(response => handleResponse(response, resolve))

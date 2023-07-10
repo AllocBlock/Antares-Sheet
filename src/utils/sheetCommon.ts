@@ -9,7 +9,7 @@ export enum ESheetSource {
 }
 
 // load sheet data by url, return source type, data and pid (if it's from project)
-export async function loadSheetFromUrlParam() : Promise<[ESheetSource, string, string]>{
+export async function loadSheetByUrlParam() : Promise<[ESheetSource, string, string]>{
     // load from file
     let sheetName = getQueryVariable("sheet");
     if (sheetName) {
