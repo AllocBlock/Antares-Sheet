@@ -4,7 +4,7 @@
     <input type="text" placeholder="搜索曲谱..." v-model="searchText" @input="onSearch" />
     <div id="sheet-table">
       <div id="sheet-not-found" class="flex_hv_center" v-if="projects.length == 0">
-        {{ isLoading ? "加载中" : "未找到任何曲谱..." }}
+        {{ loadStateStr }}
       </div>
       <template v-else>
         <div v-for="project in projects" class="sheet_block button" @click="openProject(project)">
@@ -18,8 +18,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import Sync from '@/utils/sync';
+import { ELoadState } from '@/utils/common'
 
 class ProjectMeta {
   pid: string
@@ -34,7 +35,7 @@ class ProjectMeta {
   }
 }
 
-const isLoading = ref(true)
+const loadState = ref(ELoadState.Loading)
 const allProjects = reactive([])
 const projects = reactive([])
 const searchText = ref('')
@@ -47,8 +48,20 @@ onMounted(() => {
     }
     console.log(allProjects )
     projects.push(...allProjects)
-    isLoading.value = false
+    loadState.value = ELoadState.Loaded
+  }).catch(() => {
+    loadState.value = ELoadState.Failed
   })
+})
+
+const loadStateStr = computed(() => {
+  switch (loadState.value) {
+    case ELoadState.Empty: return "未知错误...";
+    case ELoadState.Loading: return "加载中...";
+    case ELoadState.Loaded: return "加载完成";
+    case ELoadState.Failed: return "加载失败！请检查网络";
+  }
+  return "未知错误...";
 })
 
 function openProject(project) {

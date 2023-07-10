@@ -17,7 +17,7 @@
 
 <script>
 import { setPos, getOuterSize, getWindowSize } from '@/utils/common';
-import { MouseDelta } from '@/utils/mouse.js';
+import { MouseDelta } from '@/utils/mouse';
 
 export default {
   name: "DraggablePanel",

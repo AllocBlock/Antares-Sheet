@@ -3,7 +3,7 @@ import { setPos } from "@/utils/common";
 import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode";
 import { EditorMode } from "./editorMode";
 import SheetEditor from "./editor";
-import { MouseDelta } from '@/utils/mouse.js';
+import { MouseDelta } from '@/utils/mouse';
 import { assert } from "@/utils/assert";
 import { Chord } from "@/utils/chord";
 import { reactive } from "vue";

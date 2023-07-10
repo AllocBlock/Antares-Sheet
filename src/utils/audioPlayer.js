@@ -1,5 +1,5 @@
 import * as Tone from 'tone'
-import { assert } from '@/utils/assert.js'
+import { assert } from '@/utils/assert'
 
 class AudioPlayer {
   constructor() {

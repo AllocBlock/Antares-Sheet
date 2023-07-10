@@ -1,4 +1,6 @@
 export class DeltaTimer {
+    lastTime : number
+
     constructor() {
         this.lastTime = null
     }

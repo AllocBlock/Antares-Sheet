@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { assert } from '@/utils/assert.js';
+import { assert } from '@/utils/assert';
 import Metronome from "./metronome.js";
 
 export default {

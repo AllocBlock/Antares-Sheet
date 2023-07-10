@@ -5,7 +5,8 @@
           "@/*": ["src/*"]
         },
         "target": "ES2021",
-        "allowJs": true
+        "allowJs": true,
+        "moduleResolution": "Node"
     },
     "exclude": [
         "node_modules",

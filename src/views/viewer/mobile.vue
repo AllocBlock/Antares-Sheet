@@ -67,7 +67,7 @@ import AutoScroll from "./autoScroll.js"
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import FretChordGraph from "@/components/fretChordGraph/index.vue"
 import Request from "@/utils/request"
-import SheetViewerLoadCover from "./loadCover.vue";
+import SheetViewerLoadCover from "./viewerLoadCover.vue";
 import SheetViewContext from "./sheetViewContext";
 import { NodeEventList } from "@/utils/elementEvent";
 import { Key } from "@/utils/chord";

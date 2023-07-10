@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import { computed, defineEmits, ref } from "vue"
+import { computed } from "vue"
 
 const props = defineProps({
   disabled: {

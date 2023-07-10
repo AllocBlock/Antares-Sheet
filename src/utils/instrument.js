@@ -1,5 +1,5 @@
 import { loadFileBuffer } from "@/utils/audio.js"
-import { assert } from "@/utils/assert.js";
+import { assert } from "@/utils/assert";
 
 const g_ToneNameMap = {
   "A": 0,

@@ -1,8 +1,8 @@
-function save(name, data) {
+function save(name : string, data) {
     window.localStorage.setItem(name, data);
 }
 
-function load(name) {
+function load(name : string) {
     return window.localStorage.getItem(name);
 }
 
