@@ -22,15 +22,15 @@ export function useGlobalCss() {
 }
 
 export function useIntrument() {
-    let gIntrument = null
+    let instrument = null
     const instrumentConfig = reactive({
         enable: true,
         instrument: {
             type: "Ukulele",
             audioSource: "Oscillator",
             needUpdate: true,
-            capo: 0,
         },
+        capo: 0,
         bpm: 120,
         loadState: ELoadState.Loading,
     })
@@ -47,12 +47,6 @@ export function useIntrument() {
     const showPlayerLoadCover = computed(() => {
         return instrumentConfig.loadState != ELoadState.Loaded;
     })
-    
-    const capoName = computed(() => {
-        let capo = instrumentConfig.instrument.capo
-        if (capo == 0) return "无"
-        else return `${capo}品`
-    })
 
     function loadInstrument() {
         if (instrumentConfig.instrument.needUpdate) {
@@ -68,23 +62,23 @@ export function useIntrument() {
                 }
             }
 
-            gIntrument = new StringInstrument(instrumentConfig.instrument.type, instrumentConfig.instrument.audioSource, callbacks)
+            instrument = new StringInstrument(instrumentConfig.instrument.type, instrumentConfig.instrument.audioSource, callbacks)
 
             instrumentConfig.instrument.needUpdate = false;
         }
     }
 
     function playChord(chord) {
-        const capo = Math.trunc(instrumentConfig.instrument.capo) ?? 0
+        const capo = Math.trunc(instrumentConfig.capo) ?? 0
 
         const bpm = instrumentConfig.bpm;
         let volume = 1.0;
 
         // play chord
         let duration = (1 / bpm) * 60 * 4;
-        if (gIntrument && gIntrument.audioSource.loaded) {
-            gIntrument.setCapo(capo);
-            gIntrument.playChord(chord, volume, duration);
+        if (instrument && instrument.audioSource.loaded) {
+            instrument.setCapo(capo);
+            instrument.playChord(chord, volume, duration);
         }
     }
 
@@ -92,7 +86,6 @@ export function useIntrument() {
         instrumentConfig,
         intrumentLoadingText,
         showPlayerLoadCover,
-        capoName,
         loadInstrument,
         playChord
     }

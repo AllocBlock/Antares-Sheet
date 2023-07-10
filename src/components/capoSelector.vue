@@ -1,6 +1,9 @@
 <template>
-  <div>
-    <select title="选择变调夹位置" v-model="localValue" @change="onChange">
+  <div class="flex_hv_center">
+    <div class="title">
+      <slot></slot>
+    </div>
+    <select title="选择变调夹位置" v-model.number="localValue" @change="onChange">
       <option value="0">无</option>
       <option value="1">1品</option>
       <option value="2">2品</option>
@@ -41,7 +44,7 @@ export default {
   },
   methods: {
     onChange() {
-      const v = parseInt(this.localValue)
+      const v = Math.trunc(this.localValue)
       this.$emit("update:value", v)
     }
   }
@@ -54,5 +57,10 @@ select {
   width: 100%;
   height: 100%;
   font-size: inherit;
+}
+
+.title {
+  white-space: nowrap;
+  margin-right: 5px;
 }
 </style>

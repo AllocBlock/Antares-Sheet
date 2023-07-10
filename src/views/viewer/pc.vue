@@ -49,9 +49,7 @@
             <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
           </div>
         </div>
-        <div id="sheet_capo_block">
-          <div class="title">变调夹 {{ capoName }}</div>
-        </div>
+        <CapoSelector id="sheet_capo_block" v-model:value="instrumentConfig.capo">变调夹</CapoSelector>
       </div>
       <div id="sheet_by" class="title">{{ sheet.meta.by }}</div>
       <AntaresSheet id="sheet_body_block" :sheet-tree="sheet.root" :events="nodeEvents" />
@@ -95,6 +93,7 @@ import { loadSheetByUrlParam, ESheetSource } from "@/utils/sheetCommon";
 import Metronome from "@/components/metronome/index.vue"
 import AntaresSheet from "@/components/antaresSheet/index.vue"
 import FretChordGraph from "@/components/fretChordGraph/index.vue"
+import CapoSelector from "@/components/capoSelector.vue"
 import DraggablePanel from "@/components/draggablePanel.vue";
 import SheetViewerLoadCover from "./viewerLoadCover.vue";
 import { NodeEventList } from "@/utils/elementEvent";
@@ -115,7 +114,6 @@ const {
   instrumentConfig,
   intrumentLoadingText,
   showPlayerLoadCover,
-  capoName,
   loadInstrument,
   playChord 
 } = useIntrument()
