@@ -26,7 +26,7 @@
           <div>{{ intrumentLoadingText }}</div>
         </div>
       </transition>
-      <select id="instrument_combo" v-model="instrumentConfig.instrument.audioSource">
+      <select id="instrument_combo" v-model="instrumentConfig.instrument.audioSourceName">
         <option value="Oscillator">合成器音源</option>
         <option value="Ukulele">尤克里里音源</option>
       </select>
@@ -118,7 +118,7 @@ const {
   playChord 
 } = useIntrument()
 
-watch(() => instrumentConfig.instrument.audioSource, function () {
+watch(() => instrumentConfig.instrument.audioSourceName, function () {
   instrumentConfig.instrument.needUpdate = true
   loadInstrument()
 })

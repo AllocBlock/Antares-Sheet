@@ -96,7 +96,7 @@
 <script>
 import { reactive } from "vue";
 import { getQueryVariable } from "@/utils/common";
-import { StringInstrument } from "@/utils/instrument.js";
+// import { StringInstrument } from "@/utils/instrument"; 
 import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, NodeUtils } from "@/utils/sheetNode";
 
@@ -170,8 +170,8 @@ export default {
         enableRemoveUnderline: false,
         enableRecoverChord: false,
       },
-      ukulelePlayer: new StringInstrument("Ukulele", "Ukulele"),
-      oscillatorPlayer: new StringInstrument("Ukulele", "Oscillator")
+      // ukulelePlayer: new StringInstrument("Ukulele", "Ukulele"),
+      // oscillatorPlayer: new StringInstrument("Ukulele", "Oscillator")
     };
   },
   created() {

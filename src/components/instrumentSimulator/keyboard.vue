@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { Keyboard } from "@/utils/instrument.js"
+import { Keyboard, Oscillator, Note } from "@/utils/instrument"
 import HotKey from "@/utils/hotKey.js";
 
 function calcKeyboardSize(whiteKeyWidth, length) {
@@ -36,9 +36,9 @@ function toPx(num) {
   return num + "px"
 }
 
-const octaveWhiteKeyTone = ["C", "D", "E", "F", "G", "A", "B"]
+const octaveWhiteKey = ["C", "D", "E", "F", "G", "A", "B"]
 const blackKeyPoses = [0, 1, 3, 4, 5]
-const octaveBlackKeyTone = ["#C", "#D", "#F", "#G", "#A"]
+const octaveBlackKey = ["#C", "#D", "#F", "#G", "#A"]
 function addOctave(keyboardSize, offset, octave, outWhiteKeys, outBlackKeys) {
   let keyInterval = keyboardSize.whiteKey.width
 
@@ -49,10 +49,7 @@ function addOctave(keyboardSize, offset, octave, outWhiteKeys, outBlackKeys) {
         height: toPx(keyboardSize.whiteKey.length),
         left: toPx(offset + i * keyInterval),
       },
-      tone: {
-        name: octaveWhiteKeyTone[i],
-        octave: i < 5 ? octave : octave + 1
-      }
+      note: new Note(octaveWhiteKey[i], octave)
     })
   }
 
@@ -65,10 +62,7 @@ function addOctave(keyboardSize, offset, octave, outWhiteKeys, outBlackKeys) {
         height: toPx(keyboardSize.blackKey.length),
         left: toPx(offset + blackKeyStart + blackKeyPoses[i] * keyInterval),
       },
-      tone: {
-        name: octaveBlackKeyTone[i],
-        octave: i < 4 ? octave : octave + 1
-      }
+      note: new Note(octaveBlackKey[i], octave)
     })
   }
 }
@@ -91,7 +85,7 @@ export default {
       whiteKeys: [],
       blackKeys: [],
       pressedKeys: new Map(),
-      keyboard: new Keyboard(),
+      keyboard: new Keyboard(new Oscillator(new AudioContext()).load()),
     }
   },
   props: {
@@ -129,16 +123,15 @@ export default {
     },
     pressKey(key, isMouse) {
       key.pressed = true
-      let nodes = this.keyboard.playKey(key.tone, 0.2)
+      this.keyboard.playNote(key.note, 0.2)
       this.pressedKeys.set(key, {
-        nodes,
         isMouse
       })
     },
     releaseKey(key) {
       key.pressed = false
       if (!this.pressedKeys.has(key)) return
-      this.keyboard.stopKey(key.tone)
+      this.keyboard.stopNote(key.note)
       this.pressedKeys.delete(key)
     },
     bindHotKeys() {

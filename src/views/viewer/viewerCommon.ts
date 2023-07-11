@@ -1,6 +1,6 @@
 
 import { reactive, ref, computed } from "vue";
-import { StringInstrument } from "@/utils/instrument.js";
+import { Ukulele, Oscillator, UkuleleSample } from "@/utils/instrument";
 import FretChordManager from "@/utils/fretChordManager";
 import { ENodeType, EPluginType, NodeUtils } from "@/utils/sheetNode"
 import { ELoadState } from "@/utils/common"
@@ -8,6 +8,7 @@ import AutoScroll from "./autoScroll.js"
 
 import SheetViewContext from "./sheetViewContext";
 import { Chord, FretChord, Key } from "@/utils/chord";
+import { assert } from "@/utils/assert.js";
 
 export function useGlobalCss() {
     return reactive({
@@ -23,11 +24,12 @@ export function useGlobalCss() {
 
 export function useIntrument() {
     let instrument = null
+    const audioContext = new AudioContext()
     const instrumentConfig = reactive({
         enable: true,
         instrument: {
             type: "Ukulele",
-            audioSource: "Oscillator",
+            audioSourceName: "Oscillator",
             needUpdate: true,
         },
         capo: 0,
@@ -59,10 +61,20 @@ export function useIntrument() {
                 },
                 onFailed: function () {
                     instrumentConfig.loadState = ELoadState.Failed
-                }
+                },
             }
-
-            instrument = new StringInstrument(instrumentConfig.instrument.type, instrumentConfig.instrument.audioSource, callbacks)
+            
+            assert(instrumentConfig.instrument.type == "Ukulele", "暂不支持其他乐器")
+            let audioSource = null
+            if (instrumentConfig.instrument.audioSourceName == "Oscillator") {
+                audioSource = new Oscillator(audioContext)
+            } else if (instrumentConfig.instrument.audioSourceName == "Ukulele") {
+                audioSource = new UkuleleSample(audioContext)
+            } else {
+                throw "不支持的音源类型"
+            }
+            audioSource.load(callbacks)
+            instrument = new Ukulele(audioSource)
 
             instrumentConfig.instrument.needUpdate = false;
         }

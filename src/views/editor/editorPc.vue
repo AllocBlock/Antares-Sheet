@@ -180,7 +180,7 @@ import EditorModeBasic from './editorModeBasic'
 import { EditorModeDrag, DragChordInfo } from './editorModeDrag'
 import EditorModeProgression from './editorModeProgression'
 
-import { StringInstrument } from "@/utils/instrument.js";
+import { Ukulele, Oscillator, UkuleleSample } from "@/utils/instrument";
 import FretChordManager from "@/utils/fretChordManager";
 import Storage from "@/utils/storage.js";
 import { gProjectManager } from "@/utils/project";
@@ -190,6 +190,11 @@ import { Key } from "@/utils/chord";
 import { toSheetFileString } from "@/utils/sheetWriter";
 import addToast from "@/utils/toast";
 import Sync from "@/utils/sync";
+
+function createUkulele(audioSource) {
+  audioSource.load()
+  return new Ukulele(audioSource)
+}
 
 export default {
   name: "SheetEditorPc",
@@ -278,8 +283,8 @@ export default {
         show: false,
       },
       isTyping: false,
-      ukulelePlayer: new StringInstrument("Ukulele", "Ukulele"),
-      oscillatorPlayer: new StringInstrument("Ukulele", "Oscillator")
+      ukulelePlayer: createUkulele(new UkuleleSample(new AudioContext())),
+      oscillatorPlayer: createUkulele(new Oscillator(new AudioContext()))
     };
   },
   computed: {
