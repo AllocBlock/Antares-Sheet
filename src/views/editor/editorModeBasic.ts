@@ -1,4 +1,4 @@
-import HotKey from "@/utils/hotKey.js";
+import HotKey from "@/utils/hotKey";
 import { EditorMode } from "./editorMode";
 import { SheetNode, NodeUtils } from "@/utils/sheetNode";
 import SheetEditor from "./editor";

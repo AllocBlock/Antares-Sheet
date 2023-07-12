@@ -2,7 +2,7 @@
 import { reactive, ref, computed } from "vue";
 import { Ukulele, Oscillator, UkuleleSample } from "@/utils/instrument";
 import FretChordManager from "@/utils/fretChordManager";
-import { ENodeType, EPluginType, NodeUtils } from "@/utils/sheetNode"
+import { ENodeType, EPluginType, NodeUtils, SheetNode } from "@/utils/sheetNode"
 import { ELoadState } from "@/utils/common"
 import AutoScroll from "./autoScroll.js"
 
@@ -155,7 +155,7 @@ export function useSheet() {
         let curKey = sheet.meta.sheetKey;
         let newKey = curKey.shift(offset)
         sheet.meta.sheetKey = newKey
-        NodeUtils.traverseDFS(sheet.root, (node) => {
+        NodeUtils.traverseDFS(sheet.root, (node : SheetNode) => {
             if (node.type == ENodeType.Chord || node.type == ENodeType.ChordPure) {
                 node.chord = node.chord.shiftKey(offset)
             } else if (node.type == ENodeType.Plugin && node.pluginType == EPluginType.Tab) {

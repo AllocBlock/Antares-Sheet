@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps } from "vue";
+import { computed } from "vue";
 import { ELoadState } from "@/utils/common"
 import TopCover from "@/components/topCover.vue"
 

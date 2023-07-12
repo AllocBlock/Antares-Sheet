@@ -11,6 +11,13 @@ export const ELoadState = {
   Empty: 3,
 }
 
+export interface LoadCallback {
+    onLoadStart?: () => void
+    onLoadProgress?: (number) => void
+    onFailed?: (string) => void
+    onLoaded?: () => void
+}
+
 export function getPos(element) {
   // *raw dom implementation
   // var rect = element.getBoundingClientRect();

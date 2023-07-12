@@ -2,12 +2,12 @@
   <TabNoteBase 
     v-if="note.type == 'single'" 
     :note="note" 
-    :global-config="globalConfig"
+    :tab-config="tabConfig"
   />
   <TabNoteConnect 
     v-else 
     :note="note" 
-    :global-config="globalConfig"
+    :tab-config="tabConfig"
   />
 </template>
 
@@ -26,7 +26,7 @@ export default {
       type: Object,
       required: true,
     },
-    globalConfig: {
+    tabConfig: {
       type: Object,
       required: true,
     },

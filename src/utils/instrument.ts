@@ -1,6 +1,7 @@
-import { loadFileBuffer } from "@/utils/audio.js"
+import { loadFileBuffer } from "@/utils/audio"
 import { assert } from "@/utils/assert";
 import { Key } from "./chord";
+import { LoadCallback } from "./common";
 
 const gStandardFrequencyA = 440
 export class Note {
@@ -50,13 +51,6 @@ const gAudioSourceLibrary = [
         maxId: 24,
     }
 ]
-
-interface LoadCallback {
-    onLoadStart?: () => void
-    onLoadProgress?: (number) => void
-    onFailed?: (string) => void
-    onLoaded?: () => void
-}
 
 /**
  * 有调音源

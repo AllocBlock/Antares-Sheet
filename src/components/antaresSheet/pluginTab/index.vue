@@ -1,132 +1,94 @@
 <template>
   <tab-box ref="tabBox" :style="globalCssVar" :state="tabState">
-    <TabRow
-      v-for="(row, rowIndex) in tabRows"
-      :key="row"
-      :bars="row"
-      :row-number="rowIndex + 1"
-      :first-bar-number="row[0].number"
-      :global-config="tabConfig"
-    />
+    <TabRow v-for="(row, rowIndex) in tabRows" :key="row" :bars="row" :row-number="rowIndex + 1"
+      :first-bar-number="row[0].number" :tab-config="tabConfig" />
   </tab-box>
 </template>
 
-<script>
-import { SheetNode } from "@/utils/sheetNode";
-import { parseTab } from "./tabParser.js";
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref, Ref, onBeforeUnmount } from "vue";
+import { SheetNode, ENodeType } from "@/utils/sheetNode";
+import { Tab, TabConfig, parseTab } from "./tabParser";
 import TabRow from "./row.vue";
 
-export default {
-  name: "Tab",
-  components: {
-    TabRow,
-  },
-  data() {
-    return {
-      globalCssVar: {
-        "--string-num": "4",
-        "--fret-font-size": "16px",
-        "--row-split-width": "3px",
-        "--bar-split-width": "1px",
-        "--row-height": "60px",
-        "--row-margin-top": "30px",
-        "--stem-margin": "70px",
-      },
-      tabRows: [],
-      tabConfig: null,
-      tabResizeObserver: null,
-    };
-  },
-  props: {
-    node: {
-      type: SheetNode,
-      required: true,
-      default: function () {
-        let node = new SheetNode(ENodeType.Text);
-        node.content = "未知节点";
-        node.valid = true;
-        return node;
-      },
+const globalCssVar = reactive({
+  "--string-num": "4",
+  "--fret-font-size": "16px",
+  "--row-split-width": "3px",
+  "--bar-split-width": "1px",
+  "--row-height": "60px",
+  "--row-margin-top": "30px",
+  "--stem-margin": "70px",
+})
+
+const tab : Ref<Tab> = ref(null)
+const tabRows = reactive([])
+const tabConfig = ref(new TabConfig())
+const tabBox : Ref<HTMLElement> = ref(null)
+
+let tabResizeObserver = null
+
+const props = defineProps({
+  node: {
+    type: SheetNode,
+    required: true,
+    default: function () {
+      let node = new SheetNode(ENodeType.Text);
+      node.content = "未知节点";
+      node.valid = true;
+      return node;
     },
   },
-  computed: {
-    tabState: function() {
-      return this.node.valid ? "valid" : "invalid";
+})
+
+const tabState = computed(() => {
+  return props.node.valid ? "valid" : "invalid";
+})
+
+function updateTabLayout() {
+  if (!tabBox.value) return
+  tabRows.splice(0, tabRows.length)
+  tabConfig.value = tab.value.config
+
+  let width = tabBox.value.clientWidth
+  const BarEspectWidth = 300
+  let BarNum = Math.max(1, Math.round(width / BarEspectWidth))
+
+  for (let i = 0; i < tab.value.bars.length; i += BarNum) {
+    let row = []
+    for (let k = i; k < i + BarNum && k < tab.value.bars.length; ++k) {
+      let bar = tab.value.bars[k]
+      bar.number = k + 1
+      row.push(bar)
     }
-  },
-  mounted() {
-    this.tab = parseTab(this.node.content)
-    this.updateTabLayout()
+    tabRows.push(row)
+  }
+}
 
-    let timer = null
-    const delay = 200
-    this.tabResizeObserver = new ResizeObserver(entries => {
-      window.clearTimeout(timer)
-      timer = window.setTimeout(() => {
-        this.updateTabLayout()
-      }, delay)
-    })
-    this.tabResizeObserver.observe(this.$refs['tabBox'])
-  },
-  beforeDestroy() {
-    this.tabResizeObserver.disconnect()
-  },
-  methods: {
-    updateTabLayout() {
-      if (!this.$refs['tabBox']) return
-      this.tabRows = []
-      this.tabConfig = this.tab.config
+onMounted(() => {
+  tab.value = parseTab(props.node.content)
+  updateTabLayout()
 
-      let width = this.$refs['tabBox'].clientWidth
-      const BarEspectWidth = 300
-      let BarNum = Math.max(1, Math.round(width / BarEspectWidth))
+  let timer = null
+  const delay = 200
+  tabResizeObserver = new ResizeObserver(entries => {
+    window.clearTimeout(timer)
+    timer = window.setTimeout(() => {
+      updateTabLayout()
+    }, delay)
+  })
+  tabResizeObserver.observe(tabBox.value)
+})
 
-      for (let i = 0; i < this.tab.bars.length; i += BarNum) {
-        let row = []
-        for(let k = i; k < i + BarNum && k < this.tab.bars.length; ++k) {
-          let bar = this.tab.bars[k] // TODO: 自定义class如何拷贝？
-          bar.number = k + 1
-          row.push(bar)
-        }
-        this.tabRows.push(row)
-      }
-    },
-    isBarNumberVisible(bar) {
-      let globalConfig = this.tab.config.getBool("showBarNumber");
-      let localConfig = bar.config.getBool("showBarNumber");
-      return globalConfig && localConfig;
-    },
-    hasSplitLine(bar) {
-      let lastBarHasEndRepeat =
-        bar.number > 1
-          ? this.tab.bars[bar.number - 2].config.getStr("repeat") == "end"
-          : false;
-      return bar.number != 1 && lastBarHasEndRepeat;
-    },
-    hasTimeSignature(bar) {
-      return !!bar.config.getStr("ts");
-    },
-    getTimeSignature(bar) {
-      let timeSignatureStr = bar.config.getStr("ts");
-      if (!timeSignatureStr) return null;
-      const reTimeSignature = /(\d+)\/(\d+)/;
-      let res = timeSignatureStr.match(reTimeSignature);
-      if (!res) throw `指法谱：拍号配置项有误[ts:{timeSignature}]`;
-      let tapPerBar = res[1];
-      let notePerTap = res[2];
-      return [notePerTap, tapPerBar];
-    },
-    hasRepeat(bar, type) {
-      return bar.config.getStr("repeat") == type;
-    },
-  },
-};
+onBeforeUnmount(() => {
+  tabResizeObserver.disconnect()
+})
 </script>
 
 <style scoped>
 @font-face {
-    font-family: MusicNotation;
-    src: url(./fonts/Aruvarb.ttf);
+  font-family: MusicNotation;
+  src: url(./fonts/Aruvarb.ttf);
 }
 
 tab-box {
@@ -139,7 +101,7 @@ tab-box {
   user-select: none;
 }
 
-tab-box[state="invalid"] > * {
+tab-box[state="invalid"]>* {
   filter: blur(4px);
 }
 

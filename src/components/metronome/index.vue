@@ -24,7 +24,7 @@
 
 <script>
 import { assert } from '@/utils/assert';
-import Metronome from "./metronome.js";
+import Metronome from "./metronome";
 
 export default {
   name: "Metronome",

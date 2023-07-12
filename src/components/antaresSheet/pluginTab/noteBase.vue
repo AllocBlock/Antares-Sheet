@@ -1,7 +1,7 @@
 <template>
   <!-- TODO: 配置项的元素 -->
   <note>
-    <TabStum v-if="isStum()" :note="note" :global-config="globalConfig"/>
+    <TabStum v-if="isStum()" :note="note" :tab-config="tabConfig"/>
     <template v-else-if="isFretVisible()">
       <note-element
         v-for="(fret, fretIndex) in note.frets"
@@ -45,7 +45,7 @@ export default {
         return []
       }
     },
-    globalConfig: {
+    tabConfig: {
       type: Object,
       required: true,
     },
@@ -62,10 +62,10 @@ export default {
     },
     isFretVisible() {
       if (!this.isStum()) return true;
-      let globalConfig = this.globalConfig.getBool("showStumFret") ?? true;
+      let tabConfig = this.tabConfig.getBool("showStumFret") ?? true;
       let localConfig = this.note.config.getBool("showStumFret");
 
-      return globalConfig && localConfig;
+      return tabConfig && localConfig;
     },
     hasMiddleStem(fretIndex, frets) {
       let globalHasMiddleStem = true;

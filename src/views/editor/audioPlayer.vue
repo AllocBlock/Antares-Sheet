@@ -135,8 +135,8 @@
 
 <script>
 import Svg from "@/components/svg.vue";
-import AudioPlayer from "@/utils/audioPlayer.js";
-import HotKey from "@/utils/hotKey.js";
+import AudioPlayer from "@/utils/audioPlayer";
+import HotKey from "@/utils/hotKey";
 import { getEnv, clone } from "@/utils/common";
 import { ELoadState, getPos, getRelativePos } from "@/utils/common"
 import addToast from "@/utils/toast";

@@ -31,6 +31,7 @@ module.exports = {
         "vue"
     ],
     "rules": {
-        "prefer-const": 0
+        "prefer-const": 0,
+        "@typescript-eslint/no-inferrable-types": "off"
     }
 }

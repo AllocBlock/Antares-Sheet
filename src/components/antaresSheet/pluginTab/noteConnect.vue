@@ -4,7 +4,7 @@
     :key="note"
     :note="note"
     :flags="getFlags(noteIndex)"
-    :global-config="globalConfig"
+    :tab-config="tabConfig"
   />
 </template>
 
@@ -21,7 +21,7 @@ export default {
       type: Object,
       required: true,
     },
-    globalConfig: {
+    tabConfig: {
       type: Object,
       required: true,
     },

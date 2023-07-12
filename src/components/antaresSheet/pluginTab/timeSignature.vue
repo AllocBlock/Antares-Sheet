@@ -1,36 +1,21 @@
 <template>
   <time-signature>
-    <div>{{ tapPerBar }}</div>
-    <div>{{ notePerTap }}</div>
+    <div>{{ num }}</div>
+    <div>{{ divide }}</div>
   </time-signature>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   name: "TabTimeSignature",
-  data() {
-    return {
-      tapPerBar: 4,
-      notePerTap: 4,
-    }
-  },
   props: {
-    timeSignature: {
-      type: String,
+    num: {
+      type: Number,
       required: true,
     },
-  },
-  created() {
-    [this.tapPerBar, this.notePerTap] = this.parseTimeSignature()
-  },
-  methods: {
-    parseTimeSignature() {
-      let timeSignatureStr = this.timeSignature
-      if (!timeSignatureStr) return null
-      const reTimeSignature = /(\d+)\/(\d+)/
-      let res = timeSignatureStr.match(reTimeSignature)
-      if (!res) throw `指法谱：拍号配置项有误[ts:{timeSignature}]`
-      return [parseInt(res[1]), parseInt(res[2])]
+    divide: {
+      type: Number,
+      required: true,
     },
   }
 };

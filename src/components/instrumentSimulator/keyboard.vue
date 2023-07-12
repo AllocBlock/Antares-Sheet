@@ -17,7 +17,7 @@
 
 <script>
 import { Keyboard, Oscillator, Note } from "@/utils/instrument"
-import HotKey from "@/utils/hotKey.js";
+import HotKey from "@/utils/hotKey";
 
 function calcKeyboardSize(whiteKeyWidth, length) {
   return {

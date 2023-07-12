@@ -5,23 +5,24 @@
     </bar-number>
     <bar-split v-if="hasSplitLine()" />
     <TabRepeat v-if="hasRepeat('start')" type="start" />
-    <TabTimeSignature v-if="hasTimeSignature()" :time-signature="getTimeSignature()" />
+    <TabTimeSignature v-if="hasTimeSignature()" :num="getTimeSignatureNum()" :divide="getTimeSignatureDivide()" />
     <notes>
       <TabNote 
         v-for="note in bar.notes" 
         :key="note" 
         :note="note" 
-        :global-config="globalConfig"
+        :tab-config="tabConfig"
       />
     </notes>
     <TabRepeat v-if="hasRepeat('end')" type="end" />
   </bar>
 </template>
 
-<script>
+<script lang="ts">
 import TabNote from "./note.vue"
 import TabTimeSignature from "./timeSignature.vue"
 import TabRepeat from "./repeat.vue"
+import { TabBar, TabConfig } from "./tabParser";
 
 export default {
   name: "TabBar",
@@ -30,23 +31,25 @@ export default {
   },
   props: {
     bar: {
-      type: Object,
+      type: TabBar,
       required: true,
     },
     isFirstBar: {
       type: Boolean,
       required: true,
     },
-    globalConfig: {
-      type: Object,
+    tabConfig: {
+      type: TabConfig,
       required: true,
     },
   },
   methods: {
     isBarNumberVisible() {
-      let globalConfig = this.globalConfig.getBool("showBarNumber");
-      let localConfig = this.bar.config.getBool("showBarNumber");
-      return globalConfig && localConfig;
+      if (this.bar.config.showBarNumber != undefined)
+        return this.bar.config.showBarNumber
+      if (this.tabConfig.showBarNumber != undefined)
+        return this.tabConfig.showBarNumber
+      return false;
     },
     hasSplitLine() {
       // TODO: 如何拿到上一个组件的数据？
@@ -58,13 +61,16 @@ export default {
       return !this.isFirstBar
     },
     hasTimeSignature() {
-      return !!this.bar.config.getStr("ts");
+      return !!this.bar.config.timeSignature;
     },
-    getTimeSignature() {
-      return this.bar.config.getStr("ts")
+    getTimeSignatureNum() {
+      return this.bar.config.timeSignature[0]
+    },
+    getTimeSignatureDivide() {
+      return this.bar.config.timeSignature[1]
     },
     hasRepeat(type) {
-      return this.bar.config.getStr("repeat") == type;
+      return this.bar.config.repeat == type;
     },
   },
 };

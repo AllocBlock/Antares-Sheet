@@ -10,7 +10,7 @@
       :key="bar"
       :bar="bar"
       :is-first-bar="firstBarNumber == bar.number"
-      :global-config="globalConfig"
+      :tab-config="tabConfig"
     />
     <row-split type="end" v-if="hasEndRowSplit()" />
   </row>
@@ -43,13 +43,13 @@ export default {
       type: Number,
       required: true,
     },
-    globalConfig: {
+    tabConfig: {
       type: Object,
       required: true,
     },
   },
   created() {
-    this.stringNum = this.globalConfig ? this.globalConfig.getInt("stringNum") ?? 4 : 4
+    this.stringNum = this.tabConfig ? this.tabConfig.getInt("stringNum") ?? 4 : 4
   },
   methods: {
     hasClef() {

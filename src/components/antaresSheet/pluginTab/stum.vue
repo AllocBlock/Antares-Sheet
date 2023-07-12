@@ -33,7 +33,7 @@ export default {
       type: Object,
       required: true,
     },
-    globalConfig: {
+    tabConfig: {
       type: Object,
       required: true,
     },
@@ -87,7 +87,7 @@ export default {
       }
     },
     getStumStyle() {
-      let stringNum = this.globalConfig.getInt("stringNum")
+      let stringNum = this.tabConfig.getInt("stringNum")
       let stumBodyNum = this.range.end - this.range.start
       return {
         top: `${(this.range.start / (stringNum - 1)) * 100}%`,

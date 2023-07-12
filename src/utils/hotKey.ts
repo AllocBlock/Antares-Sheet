@@ -4,6 +4,10 @@
 import { assert } from "./assert"
 
 class KeyListener {
+  hookId: number
+  listeners: object
+  allowRepeat: boolean
+
   constructor(eventName, allowRepeat = true) {
     this.hookId = 1
     this.listeners = {}
@@ -85,8 +89,3 @@ export default {
   addKeyDownListener, removeKeyDownListener,
   addKeyUpListener, removeKeyUpListener,
 }
-
-
-setTimeout(() => {
-  console.log(gKeyDownNormalListener, gKeyDownNoRepeatListener, gKeyUpListener)
-}, 8000)

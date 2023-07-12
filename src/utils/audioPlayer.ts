@@ -2,11 +2,18 @@ import * as Tone from 'tone'
 import { assert } from '@/utils/assert'
 
 class AudioPlayer {
+  audioContext: AudioContext
+  loaded: boolean
+  loading: boolean
+  audio: HTMLAudioElement
+  pitchShiftNode: Tone.PitchShift
+
   constructor() {
     this.audioContext = null  // delay init
     this.loaded = false
     this.loading = false
     this.audio = null
+    this.pitchShiftNode = null
   }
 
   _prepareAudioContext() {
@@ -24,20 +31,17 @@ class AudioPlayer {
   }
 
   load(file, cbOnDurationChange, cbOnEnd) { 
-    let that = this
-    return new Promise(function(resolve, reject) {
-      that.callbackPlayEnded = cbOnEnd
-
-      const context = that._prepareAudioContext()
+    return new Promise((resolve, reject) => {
+      const context = this._prepareAudioContext()
 
       if (!file) reject("参数有误");
-      that.loaded = false;
-      that.loading = true;
+      this.loaded = false;
+      this.loading = true;
 
       // 如果已经打开，则销毁
-      if (that.audio != null) {
-        that.pause();
-        that.audio = null
+      if (this.audio != null) {
+        this.pause();
+        this.audio = null
       }
 
       let fileURL = URL.createObjectURL(file);
@@ -49,15 +53,15 @@ class AudioPlayer {
 
       audio.onloadeddata = () => {
         let audioNode = context.createMediaElementSource(audio)
-        Tone.connect(audioNode, that.pitchShiftNode)
+        Tone.connect(audioNode, this.pitchShiftNode)
         
-        that.loaded = true;
-        that.loading = false;
+        this.loaded = true;
+        this.loading = false;
         resolve(fileURL)
       };
       
       audio.load();
-      that.audio = audio
+      this.audio = audio
     })
   }
 
@@ -74,7 +78,7 @@ class AudioPlayer {
   restart() {
     assert(this.isLoaded(), "还未加载音频")
     this.setTimePoint(0);
-    resume();
+    this.resume();
   }
 
   getTimePoint() {
