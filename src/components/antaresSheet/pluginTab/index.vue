@@ -1,12 +1,15 @@
 <template>
   <tab-box ref="tabBox" :style="globalCssVar" :state="tabState">
     <TabRow v-for="(row, rowIndex) in tabRows" :key="row" :bars="row" :row-number="rowIndex + 1"
-      :first-bar-number="row[0].number" :tab-config="tabConfig" />
+      :first-bar-number="row[0].number" />
   </tab-box>
 </template>
 
+
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, Ref, onBeforeUnmount } from "vue";
+// TODO: 不再把tabConfig当作参数传入，而是用provide/inject
+
+import { computed, onMounted, reactive, ref, Ref, onBeforeUnmount, provide, readonly } from "vue";
 import { SheetNode, ENodeType } from "@/utils/sheetNode";
 import { Tab, TabConfig, parseTab } from "./tabParser";
 import TabRow from "./row.vue";
@@ -21,10 +24,12 @@ const globalCssVar = reactive({
   "--stem-margin": "70px",
 })
 
-const tab : Ref<Tab> = ref(null)
+const tab: Ref<Tab> = ref(null)
 const tabRows = reactive([])
 const tabConfig = ref(new TabConfig())
-const tabBox : Ref<HTMLElement> = ref(null)
+const tabBox: Ref<HTMLElement> = ref(null)
+
+provide('tabConfig', readonly(tabConfig))
 
 let tabResizeObserver = null
 

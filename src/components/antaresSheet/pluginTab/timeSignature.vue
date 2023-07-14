@@ -1,28 +1,25 @@
 <template>
-  <time-signature>
+  <span class="time_signature">
     <div>{{ num }}</div>
     <div>{{ divide }}</div>
-  </time-signature>
+  </span>
 </template>
 
-<script lang="ts">
-export default {
-  name: "TabTimeSignature",
-  props: {
-    num: {
-      type: Number,
-      required: true,
-    },
-    divide: {
-      type: Number,
-      required: true,
-    },
-  }
-};
+<script setup lang="ts">
+const props = defineProps({
+  num: {
+    type: Number,
+    required: true,
+  },
+  divide: {
+    type: Number,
+    required: true,
+  },
+})
 </script>
 
 <style scoped>
-time-signature {
+.time_signature {
   font-family: MusicNotation, Arial, Helvetica, sans-serif;
   margin: 0 8px;
   width: 30px;
@@ -33,7 +30,8 @@ time-signature {
   justify-content: space-around;
   align-items: center;
 }
-time-signature div {
+
+.time_signature div {
   display: flex;
   justify-content: center;
   align-items: center;

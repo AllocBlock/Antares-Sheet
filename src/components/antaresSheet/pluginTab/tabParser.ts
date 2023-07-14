@@ -109,7 +109,6 @@ export class BarConfig extends IConfig {
     timeSignature?: [number, number]
     repeat?: string
     showBarNumber?: boolean
-    showStumFret?: boolean
 
     protected _set(key, value : string) : boolean {
         switch(key) {
@@ -125,7 +124,6 @@ export class BarConfig extends IConfig {
                 return true; 
             }
             case "showBarNumber": { this.showBarNumber = parseBool(value); return true; }
-            case "showStumFret": { this.showStumFret = parseBool(value); return true; }
             default: return false;
         }
     }
@@ -150,6 +148,7 @@ export class NoteConfig extends IConfig {
     chordGraph?: Chord
     arpeggio?: EPlayDirection // 琶音
     strum?: EPlayDirection // 扫弦
+    showStumFret?: boolean // 琶音或扫弦时，是否显示指法
 
     protected _set(key, value : string) : boolean {
         switch(key) {
@@ -167,6 +166,7 @@ export class NoteConfig extends IConfig {
                 this.strum = parsePlayDirection(value)
                 return true; 
             }
+            case "showStumFret": { this.showStumFret = parseBool(value); return true; }
             default: return false;
         }
     }
@@ -174,7 +174,7 @@ export class NoteConfig extends IConfig {
 
 export class TabConnectNote {
     type: string
-    notes: (TabSingleNote|TabConnectNote)[]
+    notes: TabSingleNote[]
 
     constructor() {
         this.type = "connect"

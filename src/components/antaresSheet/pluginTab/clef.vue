@@ -1,19 +1,13 @@
 <template>
-  <clef>
+  <span class="clef">
     <div>T</div>
     <div>A</div>
     <div>B</div>
-  </clef>
+  </span>
 </template>
 
-<script>
-export default {
-  name: "TabClef",
-};
-</script>
-
 <style scoped>
-clef {
+.clef {
   margin: 0 4px;
   width: 20px;
   height: 90%;
@@ -23,7 +17,7 @@ clef {
   justify-content: space-around;
   align-items: center;
 }
-clef div {
+.clef div {
   display: flex;
   justify-content: center;
   align-items: center;

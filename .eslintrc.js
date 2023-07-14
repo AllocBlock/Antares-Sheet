@@ -32,6 +32,7 @@ module.exports = {
     ],
     "rules": {
         "prefer-const": 0,
-        "@typescript-eslint/no-inferrable-types": "off"
+        "@typescript-eslint/no-inferrable-types": "off",
+        "vue/multi-word-component-names": "off"
     }
 }
