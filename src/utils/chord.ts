@@ -90,6 +90,7 @@ export class Key {
         }
         if (hasSharp && hasFlat) throw "和弦格式错误，不应同时拥有#和b";
         let baseNoteName = keyStr.replace(/[#b]/, "")
+        if (EBaseNote[baseNoteName] === undefined) throw `和弦根音[${baseNoteName}]有误`;
         let baseNote = baseNoteName as EBaseNote
         assert(baseNote , "和弦有误，未找到根音")
         return new Key(baseNote, accidental)
@@ -190,8 +191,14 @@ export class Chord {
      * @param {string | Chord} chord2
      */
     static isAlias(chord1: string | Chord, chord2: string | Chord): boolean {
-        chord1 = chord1 instanceof Chord ? chord1 : Chord.createFromString(chord1)
-        chord2 = chord2 instanceof Chord ? chord2 : Chord.createFromString(chord2)
+        if (typeof chord1 === 'string') {
+            if (!Chord.isChord(chord1)) return false;
+            chord1 = Chord.createFromString(chord1)
+        }
+        if (typeof chord2 === 'string') {
+            if (!Chord.isChord(chord2)) return false;
+            chord2 = Chord.createFromString(chord2)
+        }
         if (chord1.root.getIndex() != chord2.root.getIndex()) return false;
         if (chord1.quality != chord2.quality) return false;
         if (chord1.extension != chord2.extension) return false;

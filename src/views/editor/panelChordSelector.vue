@@ -82,17 +82,21 @@
           />
         </div>
         <div id="search_chord_list">
-          <FretChordGraph
-            v-for="(chord, index) in searchChords"
-            :key="chord.toString()"
-            :fretChordOrChord="tryFindFretChord(chord)"
-            :class="
-              'prefab_chord ' +
-              (isAttached(chord) ? 'chord_already_attached' : 'chord_add')
-            "
-            :styles="chordStyle"
-            @click="addAttachedChord(chord)"
-          />
+          <template v-if="searchChords.length > 0">
+            <FretChordGraph
+              v-for="(chord, index) in searchChords"
+              :key="chord.toString()"
+              :fretChordOrChord="tryFindFretChord(chord)"
+              :class="
+                'prefab_chord ' +
+                (isAttached(chord) ? 'chord_already_attached' : 'chord_add')
+              "
+              :styles="chordStyle"
+              @click="addAttachedChord(chord)"
+            />
+          </template>
+          <template v-else-if="searchText">未找到任何匹配的和弦</template>
+          <template v-else>输入要搜索的和弦</template>
         </div>
       </div>
     </div>
@@ -214,7 +218,8 @@ export default {
       text = text.replace(/\s/g, "");
 
       if (text != "") {
-        FretChordManager.traverse((chord) => {
+        FretChordManager.traverse((fretChord : FretChord) => {
+          let chord = fretChord.chord
           let chordName = chord.toString();
           if (text == chordName) {
             // 完全匹配，优先级最大

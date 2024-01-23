@@ -112,6 +112,7 @@ class FretChordManager {
         for (let chordArray of CHORD_ARRAY_LIST) {
             let fretChord = chordArrayToObject(chordArray)
             this.map.set(fretChord.chord.toString(), fretChord)
+            this.fretChords.push(fretChord)
         }
     }
 

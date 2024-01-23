@@ -6,24 +6,7 @@ import SheetEditor from "./editor";
 import { MouseDelta } from '@/utils/mouse';
 import { assert } from "@/utils/assert";
 import { Chord } from "@/utils/chord";
-import { reactive } from "vue";
-
-/** 高亮节点 */
-function highlightNode(node : SheetNode) {
-    // FIXME: style is not reactive for sometimes...there force a reactive style
-    node.style = reactive(node.style)
-    
-    node.style.opacity = 0.5
-    if (node.type == ENodeType.Text && NodeUtils.isPlaceholder(node.content)) {
-        node.style.background = "var(--theme-color)"
-    }
-}
-/** 取消高亮节点 */
-function unhighlightNode(node : SheetNode) {
-    node.style.opacity = 1.0
-    node.style.background = ''
-    console.log("unhighlight", node)
-}
+import { highlightNode, unhighlightNode } from "./editorModeCommon";
 
 export class DragChordInfo {
     isDragging: boolean
@@ -43,9 +26,9 @@ export class DragChordInfo {
 class DragUIInfo {
     willUpdateNextFrame: boolean
     willUpdatePos: AbsolutePosition
-    dragMarkElement: Object
+    dragMarkElement: object
 
-    constructor(dragMarkElement: Object) {
+    constructor(dragMarkElement: object) {
         this.willUpdateNextFrame = false
         this.willUpdatePos = new AbsolutePosition()
         this.dragMarkElement = dragMarkElement
@@ -70,7 +53,7 @@ class DragChordState {
     ui: DragUIInfo
     editor: SheetEditor
 
-    constructor(info: DragChordInfo, dragMarkElement: Object, editor: SheetEditor) {
+    constructor(info: DragChordInfo, dragMarkElement: object, editor: SheetEditor) {
         this.info = info
         this.ui = new DragUIInfo(dragMarkElement)
         this.editor = editor
@@ -303,7 +286,7 @@ export class EditorModeDrag extends EditorMode {
     dragChordState: DragChordState
     shiftChordState: ShiftChordState
 
-    constructor(dragChordInfo: DragChordInfo, dragMarkElement: Object, editor : SheetEditor) {
+    constructor(dragChordInfo: DragChordInfo, dragMarkElement: object, editor : SheetEditor) {
         super()
         this.editor = editor
         this.curNode = null

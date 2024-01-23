@@ -4,8 +4,6 @@ import SheetViewer from '@/views/viewer/index.vue'
 import SheetEditor from '@/views/editor/index.vue'
 import UserProject from '@/views/user/project.vue'
 import UserSpace from '@/views/user/space.vue'
-import UserLogin from '@/views/user/login.vue'
-import PublicSheet from '@/views/publicSheet.vue'
 import NotFound from '@/views/404.vue'
 
 const routes = [
@@ -33,16 +31,6 @@ const routes = [
     path: '/user/space',
     name: 'Space',
     component: UserSpace
-  },
-  {
-    path: '/user/login',
-    name: 'Login',
-    component: UserLogin
-  },
-  {
-    path: '/publicSheet',
-    name: 'PublicSheet',
-    component: PublicSheet
   },
   {
     path: "/:catchAll(.*)",

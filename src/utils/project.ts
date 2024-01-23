@@ -51,8 +51,6 @@ export class ProjectInfo {
     createTime : Date
     updateTime : Date
 
-    sync : boolean
-    isPublic : boolean
     sheetMeta : SheetMeta
     sheetData : string
     
@@ -60,8 +58,6 @@ export class ProjectInfo {
         this.pid = pid
         this.createTime = new Date()
         this.updateTime = this.createTime
-        this.sync = false
-        this.isPublic = false
         this.sheetMeta = new SheetMeta()
         this.sheetMeta.title = title
         this.sheetData = NEW_PROJECT_TEMPLATE.replace("*SHEET_TITLE*", title ?? "") 
@@ -142,25 +138,23 @@ class ProjectManager {
     }
     
     getAll() : ProjectInfo[] {
-        return this.projectInfos
+        return this.projectInfos.map(p => p)
     }
 
-    set(pid : string, sheetMeta : SheetMeta, sheetData : string, sync : boolean, isPublic : boolean) {
+    set(pid : string, sheetMeta : SheetMeta, sheetData : string) {
         let projectInfo = this.get(pid)
         assert(projectInfo, "项目不存在")
         projectInfo.sheetMeta = sheetMeta
         projectInfo.sheetData = sheetData
-        projectInfo.sync = sync
-        projectInfo.isPublic = isPublic
         this.save()
     }
 
-    update(pid : string, sheetMeta : SheetMeta, sheetData : string, sync : boolean, isPublic : boolean) : void {
+    update(pid : string, sheetMeta : SheetMeta, sheetData : string) : void {
         assert(pid)
         let info = this.get(pid)
         assert(info, `未找到pid为${pid}的项目，更新项目失败`)
         info.updateTime = new Date()
-        this.set(pid, sheetMeta, sheetData, sync, isPublic)
+        this.set(pid, sheetMeta, sheetData)
     }
 
     remove(pid : string) {
