@@ -32,9 +32,24 @@ export default class SheetMeta {
                 }
                 break; 
             }
-            case "rhythms": { this.rhythms = value; break; }
+            case "rhythms": { 
+                this.rhythms = []
+                // TODO: add rhythm support
+            }
             default: { this.extras.set(key, value); break; }
         }
+    }
+
+    assign(meta : SheetMeta) {
+        console.log(meta)
+        this.title = meta.title
+        this.singer = meta.singer
+        this.by = meta.by
+        this.originalKey = meta.originalKey
+        this.sheetKey = meta.sheetKey
+        this.chords = meta.chords.map(c => c)
+        this.rhythms = meta.rhythms.map(c => c)
+        this.extras = new Map(meta.extras)
     }
 
     reset() {

@@ -16,5 +16,4 @@ export function highlightNode(node : SheetNode) {
 export function unhighlightNode(node : SheetNode) {
     node.style.opacity = 1.0
     node.style.background = ''
-    console.log("unhighlight", node)
 }

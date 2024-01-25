@@ -3,10 +3,10 @@ import { parseSheet } from "@/utils/sheetParser";
 import SheetMeta from "@/utils/sheetMeta";
 import { Chord } from "./chord";
 
-function _toSheetFileString(node) {
+function generateNodeText(node) {
     switch (node.type) {
         case ENodeType.Root: {
-            return node.children.map(n => _toSheetFileString(n)).join('');
+            return node.children.map(n => generateNodeText(n)).join('');
         }
         case ENodeType.Text: return node.content;
         case ENodeType.NewLine: return "\n";
@@ -19,10 +19,10 @@ function _toSheetFileString(node) {
         case ENodeType.ChordPure: return `![${node.chord}]`;
         case ENodeType.Mark: return `!(${node.content})`;
         case ENodeType.Underline: {
-            return "{" + node.children.map(n => _toSheetFileString(n)).join('') + "}";
+            return "{" + node.children.map(n => generateNodeText(n)).join('') + "}";
         }
         case ENodeType.UnderlinePure: {
-            return "!{" + node.children.map(n => _toSheetFileString(n)).join('') + "}";
+            return "!{" + node.children.map(n => generateNodeText(n)).join('') + "}";
         }
         case ENodeType.Plugin: {
             let pluginTypeString = toPluginTypeString(node.pluginType)
@@ -34,7 +34,7 @@ function _toSheetFileString(node) {
     }
 }
 
-export function toSheetFileString(root: SheetNode, meta: SheetMeta = null, attachedChords: Chord[] = []) {
+export function generateSheetText(root: SheetNode, meta: SheetMeta = null, attachedChords: Chord[] = []) {
     // generate
     let data = ""
 
@@ -52,7 +52,7 @@ export function toSheetFileString(root: SheetNode, meta: SheetMeta = null, attac
         data += "\n"
     }
 
-    data += _toSheetFileString(root)
+    data += generateNodeText(root)
 
     // 测试能否解析
     try {

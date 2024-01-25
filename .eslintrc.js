@@ -33,6 +33,7 @@ module.exports = {
     "rules": {
         "prefer-const": 0,
         "@typescript-eslint/no-inferrable-types": "off",
-        "vue/multi-word-component-names": "off"
+        "vue/multi-word-component-names": "off",
+        "no-constant-condition": ["error", { "checkLoops": false }]
     }
 }

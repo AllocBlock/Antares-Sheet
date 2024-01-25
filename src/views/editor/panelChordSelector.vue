@@ -333,7 +333,7 @@ export default {
 };
 </script>
 
-<style scoped src="./editorCommon.css"></style>
+<style scoped src="@/components/editorCommon.css"></style>
 
 <style scoped>
 * {

@@ -7,15 +7,14 @@
   </div>
 </template>
 
-<script>
-import FretChordGraph from "@/components/fretChordGraph/index.vue"
+<script lang="ts">
 import SheetNodeRoot from "./root.vue"
 import { SheetNode } from "@/utils/sheetNode"
 
 export default {
   name: "AntaresSheet",
   components: {
-    FretChordGraph, SheetNodeRoot
+    SheetNodeRoot
   },
   data() {
     return {

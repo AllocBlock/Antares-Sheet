@@ -1,6 +1,6 @@
 <template>
   <div>
-    <select title="选择调式" v-model="localValue" @change="onChange">
+    <select title="选择调式" :value="value.toString()" @change="onChange">
       <option disabled value="">请选择</option>
       <option value="C">C</option>
       <option value="#C">♯C</option>
@@ -23,28 +23,20 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { Key } from '@/utils/chord';
 
 export default {
   name: "KeySelector",
-  data() {
-    return {
-      localValue: "C"
-    }
-  },
   props: {
     value: {
       type: Key,
       required: true
     }
   },
-  mounted() {
-    this.localValue = this.value.toString()
-  },
   methods: {
-    onChange() {
-      let newKey = Key.createFromString(this.localValue)
+    onChange(event : Event) {
+      let newKey = Key.createFromString((event.target as HTMLInputElement).value)
       this.$emit("update:value", newKey)
     }
   }

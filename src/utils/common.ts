@@ -1,4 +1,5 @@
 import $ from "jquery"
+import { Time } from "tone"
 
 export function clone(obj) {
   return JSON.parse(JSON.stringify(obj))
@@ -74,10 +75,10 @@ export function getWindowSize() {
 }
 
 export function getQueryVariable(key) {
-  var query = window.location.search.substring(1)
-  var vars = query.split("&")
-  for (var pairStr of vars) {
-    var pair = pairStr.split("=", 2)
+  let query = window.location.search.substring(1)
+  let vars = query.split("&")
+  for (let pairStr of vars) {
+    let pair = pairStr.split("=", 2)
     if (pair[0] == key)
       return decodeURI(pair[1])
   }
@@ -95,7 +96,7 @@ export function setEnv(env) {
 }
 
 export function getCursorClientPos(e) {
-  if (e.originalEvent) e = originalEvent
+  if (e.originalEvent) e = e.originalEvent
 
   if (e.clientX != undefined) { // pc mouse event
     return [e.clientX, e.clientY];
@@ -126,33 +127,66 @@ export function createDownloadTextFile(textData, fileName) {
     download.remove()
 }
 
+export class Ticker {
+  intervalMs : number
+  callback : CallableFunction
+  timer : number
+
+  constructor(intervalMs : number, callback : CallableFunction) {
+    this.intervalMs = intervalMs
+    this.callback = callback
+    this.timer = null
+  }
+
+  tick() {
+    this.callback()
+    this.timer = window.requestAnimationFrame(() => this.tick())
+  }
+
+  start() {
+    this.stop()
+    this.timer = window.requestAnimationFrame(() => this.tick())
+  }
+
+  stop() {
+    if (this.timer) {
+      window.cancelAnimationFrame(this.timer)
+      this.timer = null
+    }
+  }
+}
+
 export class DelayTrigger {
-    running: boolean
-    retrigger: boolean
-    reTriggerParams: any
-    func : Function
+    isWaiting: boolean
+    lastTriggerTime: number
+    minIntervalMs: number
+    ticker: Ticker
+    callback : CallableFunction
     
-    constructor(func : Function) {
-        this.running = false
-        this.retrigger = false
-        this.func = func
+    constructor(callback : CallableFunction, minIntervalMs : number) {
+        this.isWaiting = false
+        this.minIntervalMs = minIntervalMs
+        this.callback = callback
+        this.lastTriggerTime = 0
+        this.ticker = new Ticker(minIntervalMs, () => this.tick())
+        this.ticker.start()
     }
 
-    isRunning() : boolean { return this.running; }
-    trigger(...params) {
-        if (this.running) {
-            this.retrigger = true
-            this.reTriggerParams = params
-        }
-        else {
-            this.running = true
-            this.func(...params).finally(() => {
-                this.running = false
-                if (this.retrigger) {
-                    this.retrigger = false
-                    this.trigger(...this.reTriggerParams)
-                }
-            })
-        }
+    tick() {
+      let curTime = new Date().getTime()
+      if (this.isWaiting && curTime > this.lastTriggerTime + this.minIntervalMs) {
+        this.callback()
+        this.isWaiting = false
+        this.lastTriggerTime = curTime
+      }
     }
+
+    trigger() {
+      this.isWaiting = true
+    }
+}
+
+export class Position {
+  left: number = 0
+  top: number = 0
 }

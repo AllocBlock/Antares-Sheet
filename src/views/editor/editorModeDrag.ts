@@ -2,7 +2,7 @@ import { getCursorClientPos } from "@/utils/common";
 import { setPos } from "@/utils/common";
 import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode";
 import { EditorMode } from "./editorMode";
-import SheetEditor from "./editor";
+import { SheetEditor } from "./editor";
 import { MouseDelta } from '@/utils/mouse';
 import { assert } from "@/utils/assert";
 import { Chord } from "@/utils/chord";
@@ -83,7 +83,7 @@ class DragChordState {
         this.startDrag(e, node.chord)
 
         if (e.shiftKey) { // move chord
-            this.editor.convertToText(node, false)
+            this.editor.core.convertToText(node, false)
         }
     }
     onCursorEnterNode(e, node : SheetNode) {
@@ -91,7 +91,7 @@ class DragChordState {
         if (!this.info.isDragging) return;
         if (node == this.toInsertNode) return;
 
-        this.editor.pauseHistory()
+        this.editor.core.pauseHistory()
 
         // mark this node
         if (this.toUpdateNode) // unhighlight prev node
@@ -124,9 +124,9 @@ class DragChordState {
             }
             // TODO: 检查是否能够替换，有没有不能直接替换的情况？
             unhighlightNode(this.toUpdateNode)
-            this.editor.replace(this.toUpdateNode, this.toInsertNode)
+            this.editor.core.replace(this.toUpdateNode, this.toInsertNode)
         }
-        this.editor.resumeHistory(true)
+        this.editor.core.resumeHistory(true)
         this.reset()
     }
 
@@ -196,7 +196,7 @@ class ShiftChordState {
 
         this.isShifting = e.altKey ? true : false
         if (this.isShifting) {
-            this.editor.pauseHistory()
+            this.editor.core.pauseHistory()
             this.mouseDelta.start(e)
             this.chord = node.chord
             this.setCurShiftNode(node, false)
@@ -222,13 +222,14 @@ class ShiftChordState {
         if (!this.isShifting) return;
 
         this.reset()
-        this.editor.resumeHistory(true)
+        this.editor.core.resumeHistory(true)
     }
 
     _shiftChordByStep(toLeft = true) {
         // TODO: 这会破坏下划线，如何保留？
         let isPlaceholder = NodeUtils.isPlaceholder(this.curNode.content)
-        let nearbyNode = toLeft ? this.curNode.prevSibling() : this.curNode.nextSibling()
+        // let nearbyNode = toLeft ? this.curNode.prevSibling() : this.curNode.nextSibling()
+        let nearbyNode = toLeft ? this.curNode.prevNode() : this.curNode.nextNode()
         // 插入还是替换？
         // 如果当前是占位和弦，则替换
         // 否则，如果临近是文本，且是空文本，则替换
@@ -242,7 +243,7 @@ class ShiftChordState {
         let isOldNodeTemp = this.isCurNodeTemp
 
         if (replace) { // 替换，则把和弦移动到前一个文本上
-            let curNode = this.editor.convertToChord(nearbyNode, this.chord)
+            let curNode = this.editor.core.convertToChord(nearbyNode, this.chord)
             this.setCurShiftNode(curNode, false)
         } else { // 否则在前方插入一个和弦
             let curNode = NodeUtils.createChordNode("_", this.chord)
@@ -252,7 +253,7 @@ class ShiftChordState {
         }
 
         // 如果此前的节点是拖拽中新建的节点，则删除
-        this.editor.convertToText(oldNode, isOldNodeTemp)
+        this.editor.core.convertToText(oldNode, isOldNodeTemp)
     }
 
     _shiftChord(offset) {
@@ -286,7 +287,7 @@ export class EditorModeDrag extends EditorMode {
     dragChordState: DragChordState
     shiftChordState: ShiftChordState
 
-    constructor(dragChordInfo: DragChordInfo, dragMarkElement: object, editor : SheetEditor) {
+    constructor(dragChordInfo: DragChordInfo, dragMarkElement: Element, editor : SheetEditor) {
         super()
         this.editor = editor
         this.curNode = null

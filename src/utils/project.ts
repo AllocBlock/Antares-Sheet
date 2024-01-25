@@ -1,11 +1,7 @@
 import Storage from "@/utils/storage.js";
 import { generateRandomCode } from "@/utils/random.js"
 import { assert } from "./assert";
-import { parseSheet } from "./sheetParser";
 import SheetMeta from "./sheetMeta";
-import { SheetNode } from "./sheetNode";
-import { toSheetFileString } from "./sheetWriter"
-import { Chord } from "./chord";
 
 const NEW_PROJECT_TEMPLATE = `$sheet "*SHEET_TITLE*"
 

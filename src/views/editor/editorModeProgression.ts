@@ -1,7 +1,7 @@
 import HotKey from "@/utils/hotKey";
 import { EditorMode } from "./editorMode";
 import { SheetNode } from "@/utils/sheetNode";
-import SheetEditor from "./editor";
+import { SheetEditor } from "./editor";
 import { Chord, EChordQuality, Key } from "@/utils/chord";
 
 const gProgressionList = [
@@ -68,7 +68,7 @@ export default class EditorModeProgression extends EditorMode {
                     }
                 }
 
-                this.curNode = this.editor.convertToChord(this.curNode, chord)
+                this.curNode = this.editor.core.convertToChord(this.curNode, chord)
             }, false, false, false, [shift, isMajor])
             this.hookIds.push(listenerId)
         })
@@ -80,3 +80,5 @@ export default class EditorModeProgression extends EditorMode {
         }
     }
 }
+
+//// TODO: mute hot key

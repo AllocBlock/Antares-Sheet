@@ -3,11 +3,11 @@
     <div class="flex_hv_center fill" style="flex-direction: column;">
       <div class="flex_hv_center fill"
         :style="`height: ${layout.showAudioPlayer ? ('calc(100% - ' + layout.audioPlayerHeight + 'px)') : '100%'}; position: relative;`">
-        <div id="help_button" @click="helpPanel.show = true">?</div>
+        <div id="help_button" @click="layout.showHelpPanel = true">?</div>
         <div id="tools_block" :style="`width: ${layout.toolWidthPercentage}%;`">
           <div class="tools_title flex_hv_center">工具栏</div>
           <ToolChord id="chord_tool" v-model:chords="toolChord.attachedChords" @dragStart="onToolChordDragStart" />
-          <div class="button" @click="this.toolChord.showPanel = true">
+          <div class="button" @click="toolChord.showPanel = true">
             编辑和弦
           </div>
 
@@ -27,27 +27,27 @@
         </div>
         <div class="fill" style="display: flex; justify-content: center; overflow: auto;">
           <div id="sheet_block" :style="`width: ${100 - layout.toolWidthPercentage}%`">
-            <input type="text" id="song_title_input" class="input" placeholder="在此处输入歌名" v-model="editor.meta.title"
+            <input type="text" id="song_title_input" class="input" placeholder="在此处输入歌名" v-model="sheetMeta.title"
               @focus="beginTyping" @blur="endTyping" />
-            <input type="text" id="song_singer_input" class="input" placeholder="在此处输入歌手" v-model="editor.meta.singer"
+            <input type="text" id="song_singer_input" class="input" placeholder="在此处输入歌手" v-model="sheetMeta.singer"
               @focus="beginTyping" @blur="endTyping" />
             <div id="sheet_key_block">
               <div class="title">原调</div>
-              <KeySelector class="select" :value="editor.meta.originalKey" />
+              <KeySelector class="select" v-model:value="sheetMeta.originalKey" />
               <div class="title">选调</div>
-              <KeySelector class="select" :value="editor.meta.sheetKey" @update:value="onChangeSheetKey" />
+              <KeySelector class="select" :value="sheetMeta.sheetKey" @update:value="onChangeSheetKey" />
               <div id="sheet_capo_block">
                 <div class="title">变调夹</div>
-                <CapoSelector id="capo_selector" class="select" v-model:value="player.capo" />
+                <CapoSelector id="capo_selector" class="select" v-model:value="playerInfo.capo" />
               </div>
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
             <div class="flex_hv_center">
-              <div id="edit_raw_sheet_button" class="button" @click="openRawSheetPanel">编辑原始曲谱</div>
+              <div id="edit_raw_editor_button" class="button" @click="openRawEditorPanel">编辑原始曲谱</div>
               <div class="button" @click="saveSheet(true)">保存</div>
-              <div class="button" @click="loadSheetFromFile">载入</div>
+              <div class="button" @click="editor.loadSheetFromFile">载入</div>
             </div>
-            <AntaresSheet id="sheet_box" :sheet-tree="editor.root" :events="nodeEventList" />
+            <AntaresSheet id="sheet_box" :sheet-tree="sheetRoot" :events="nodeEventList" />
             <div id="sheet_padding"></div>
           </div>
         </div>
@@ -63,499 +63,353 @@
 
     <input type="range" id="layout_slider" min="0" max="100" step="0.1" v-model="layout.toolWidthPercentage" />
 
-    <div id="editor_context" class="context" v-show="contextMenu.show" :style="contextMenu.style"
-      @click.stop="contextMenu.show = false">
-      <div id="editor_context_menu">
-        <div class="context_menu_item">
-          <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`"
-            class="context_icon context_menu_button" @click="insertNode(item.type, true)"
-            @mouseenter="onContextButtonMouseEnter('在左侧' + item.tip)" @mouseleave="onContextButtonMouseLeave()"></Svg>
-        </div>
-        <div class="context_menu_item">
-          <Svg v-for="item in contextMenu.insertMenu" :key="item.type" :src="`/icons/${item.svgName}.svg`"
-            class="context_icon context_menu_button" @click="insertNode(item.type, false)"
-            @mouseenter="onContextButtonMouseEnter('在右侧' + item.tip)" @mouseleave="onContextButtonMouseLeave()"></Svg>
-        </div>
-        <div class="context_menu_item" @click="editContent()" v-show="contextMenu.enableEditContent">
-          <Svg src="/icons/edit.svg" class="context_icon context_menu_button"
-            @mouseenter="onContextButtonMouseEnter('编辑内容')" @mouseleave="onContextButtonMouseLeave()"></Svg>
-        </div>
-        <div class="context_menu_item" @click="editRemove()">
-          <Svg src="/icons/trash.svg" class="context_icon context_menu_button"
-            @mouseenter="onContextButtonMouseEnter('删除')" @mouseleave="onContextButtonMouseLeave()"></Svg>
-        </div>
-        <div class="context_menu_item" v-show="contextMenu.enableAddUnderline || contextMenu.enableRemoveUnderline">
-          下划线
-          <Svg src="/icons/add.svg" class="context_icon context_menu_button" @click="editAddUnderline()"
-            v-show="contextMenu.enableAddUnderline" @mouseenter="onContextButtonMouseEnter('添加下划线')"
-            @mouseleave="onContextButtonMouseLeave()"></Svg>
-          <Svg src="/icons/trash.svg" class="context_icon context_menu_button" @click="editRemoveUnderline()"
-            v-show="contextMenu.enableRemoveUnderline" @mouseenter="onContextButtonMouseEnter('删除下划线')"
-            @mouseleave="onContextButtonMouseLeave()"></Svg>
-        </div>
-        <div class="context_menu_item" v-show="contextMenu.enableRecoverChord">
-          和弦
-          <Svg src="/icons/recover.svg" class="context_icon context_menu_button" @click="editRecoverChord()"
-            v-show="contextMenu.enableRecoverChord" @mouseenter="onContextButtonMouseEnter('将和弦恢复成文本')"
-            @mouseleave="onContextButtonMouseLeave()"></Svg>
-          <Svg src="/icons/switch.svg" class="context_icon context_menu_button" @click="editSwitchChordType()"
-            v-show="contextMenu.enableSwitchChordType" @mouseenter="onContextButtonMouseEnter('切换和弦类别')"
-            @mouseleave="onContextButtonMouseLeave()"></Svg>
-        </div>
-      </div>
-      <Transition name="trans_fade">
-        <div id="editor_context_tip" v-show="contextMenu.tip.show" key="editor_context_tipxxx">
-          {{ contextMenu.tip.content }}
-        </div>
-      </Transition>
-
-    </div>
+    <EditorContextMenu 
+      :show="contextMenu.show"
+      :pos="contextMenu.position"
+      :entries="contextMenu.entries"
+      @close="closeContext"
+      @insert="(type, insertBefore) =>  editor.insert(contextMenu.node, type, insertBefore)"
+      @edit="editor.editContent(contextMenu.node)"
+      @remove="editor.remove(contextMenu.node)"
+      @addUnderline="editor.addUnderline(contextMenu.node)"
+      @removeUnderline="editor.removeUnderline(contextMenu.node)"
+      @recoverChord="editor.recoverChord(contextMenu.node)"
+      @toggleChordType="editor.toggleChordType(contextMenu.node)"
+      />
 
     <div id="drag_mark" v-show="dragChord.isDragging" ref="dragMark">{{ dragChord.text }}</div>
-    <div id="raw_sheet_panel" class="panel" v-if="rawSheetPanel.show">
-      <div id="raw_sheet_container">
-        <div id="raw_sheet_title">在下方编辑原始曲谱，可以直接粘贴歌词~</div>
-        <textarea id="raw_sheet_textarea" v-model="rawSheetPanel.data"></textarea>
-        <div v-if="!rawSheetPanel.isValid" class="flex" style="color: red">
-          曲谱格式格式有误，请检查：「{{ rawSheetPanel.invalidReason }}」
-        </div>
-        <div class="flex">
-          <div v-if="rawSheetPanel.isValid" id="raw_sheet_button_confirm" class="button" @click="confirmRawSheet">确认</div>
-          <div id="raw_sheet_button_cancel" class="button" @click="rawSheetPanel.show = false">取消</div>
-        </div>
-      </div>
-    </div>
-    <PanelChordSelector id="chord_panel" class="panel" v-model:attachedChords="toolChord.attachedChords"
-      v-model:show="toolChord.showPanel" :tonic="editor.meta.sheetKey" />
+
+    <RawEditorPanel
+      :show="rawEditorPanel.show"
+      :sheet-text="rawEditorPanel.sheetText"
+      @confirm="onRawSheetConfirm"
+      @cancel="rawEditorPanel.show = false"
+    />
+    <PanelChordSelector id="chord_panel" class="panel" 
+      v-model:attachedChords="toolChord.attachedChords"
+      v-model:show="toolChord.showPanel" 
+      :tonic="sheetMeta.sheetKey" 
+    />
     <div id="drop_hint_panel">
       <div id="drop_hint_text">拖拽文件加载</div>
     </div>
 
-    <div id="help_panel" class="panel" v-if="helpPanel.show">
+    <div id="help_panel" class="panel" v-if="layout.showHelpPanel">
       曲谱编辑教程：<br />
       {{ editorMode.getTip() }}
-      <div class="button" @click="helpPanel.show = false">确认</div>
+      <div class="button" @click="layout.showHelpPanel = false">确认</div>
     </div>
 
     <DraggablePanel title="键盘" :initPos="{ left: 200, top: 200 }" v-model:isFocused="keyboard.isFocused"
       v-model:isFolded="keyboard.isFolded">
-      <InstrumentSimulatorKeyboard :mute-hot-key="muteKeyboardHotKey" />
+      <InstrumentSimulatorKeyboard :mute-hot-key="!keyboard.isFocused" />
     </DraggablePanel>
 
-    <TopCover :show="!loaded">{{ loadCoverMessage }}</TopCover> 
+    <TopCover :show="!isLoaded">{{ loadCoverMessage }}</TopCover> 
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { reactive, computed, ref, onMounted, watch } from "vue";
 import AntaresSheet from "@/components/antaresSheet/index.vue";
 import KeySelector from "@/components/keySelector.vue";
 import ToolChord from "./toolChord.vue";
 import PanelChordSelector from "./panelChordSelector.vue";
 import CapoSelector from "@/components/capoSelector.vue";
-import Svg from "@/components/svg.vue";
 import DraggablePanel from "@/components/draggablePanel.vue";
+import EditorContextMenu from "@/components/editorContextMenu.vue";
+import RawEditorPanel from "@/components/rawEditorPanel.vue";
 import InstrumentSimulatorKeyboard from "@/components/instrumentSimulator/keyboard.vue";
-import Focusable from "@/components/focusable.vue";
 import TopCover from "@/components/topCover.vue";
+import AudioPlayer from "./audioPlayer.vue"
 
-import { defineAsyncComponent } from "vue";
-import { DelayTrigger, ELoadState, getQueryVariable, startRepeatTimeout } from "@/utils/common";
+import { ELoadState, Position, getQueryVariable, startRepeatTimeout } from "@/utils/common";
 
-import { NodeUtils } from "@/utils/sheetNode";
+import { NodeUtils, SheetNode } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
-import SheetEditor from "./editor";
-import { EditorModeCombined } from './editorMode'
+import { useEditor } from "./editorInterface"
+import { EditorMode, EditorModeCombined } from './editorMode'
 import EditorModeBasic from './editorModeBasic'
 import { EditorModeDrag, DragChordInfo } from './editorModeDrag'
 import EditorModeProgression from './editorModeProgression'
 
-import { Ukulele, Oscillator, UkuleleSample } from "@/utils/instrument";
+import { Ukulele, Oscillator } from "@/utils/instrument";
 import FretChordManager from "@/utils/fretChordManager";
-import Storage from "@/utils/storage.js";
 import { gProjectManager } from "@/utils/project";
 import HotKey from "@/utils/hotKey";
 import { NodeEventList } from "@/utils/elementEvent";
 import { Key } from "@/utils/chord";
-import { toSheetFileString } from "@/utils/sheetWriter";
+import { generateSheetText } from "@/utils/sheetWriter";
 import addToast from "@/utils/toast";
+import SheetMeta from "@/utils/sheetMeta";
 
 function createUkulele(audioSource) {
   audioSource.load()
   return new Ukulele(audioSource)
 }
 
-export default {
-  name: "SheetEditorPc",
-  components: {
-    Svg,
-    ToolChord,
-    PanelChordSelector,
-    AntaresSheet,
-    KeySelector,
-    CapoSelector,
-    DraggablePanel,
-    InstrumentSimulatorKeyboard,
-    Focusable,
-    TopCover,
-    "AudioPlayer": defineAsyncComponent(() => import('./audioPlayer.vue'))
-  },
-  data() {
-    return {
-      globalCssVar: {
-        "--sheet-font-size": "var(--base-font-size)",
-        "--title-base-font-size": "calc(var(--base-font-size) * 1.8)",
-        "--title-scale": "1",
-        "--sheet-theme-color": "var(--theme-color)",
-        "--tip-text-background-color": "var(--theme-color)",
-        "--tip-button-background-color": "seagreen",
-      },
-      layout: {
-        toolWidthPercentage: 20,
-        audioPlayerHeight: 180,
-        showAudioPlayer: false
-      },
-      editor: new SheetEditor(),
-      project: {
-        loadState: ELoadState.Loading,
-        pid: null,
-      },
-      toolChord: {
-        showPanel: false,
-        attachedChords: [],
-      },
-      editorMode: null,
-      player: {
-        instrument: "Oscillator",
-        bpm: 120,
-        stum: true,
-        capo: 0
-      },
-      keyboard: {
-        isFocused: false,
-        isFolded: true,
-      },
-      contextMenu: {
-        show: false,
-        node: null,
-        style: {
-          left: 0,
-          top: 0,
-        },
-        enableEditContent: false,
-        enableAddUnderline: false,
-        enableRemoveUnderline: false,
-        enableRecoverChord: false,
-        enableSwitchChordType: false,
-        insertMenu: [
-          { svgName: "marker", type: "mark", tip: "插入标记" },
-          { svgName: "space", type: "space", tip: "插入空格" },
-          { svgName: "enter", type: "newline", tip: "插入换行" },
-          { svgName: "text", type: "text", tip: "插入文本" },
-        ],
-        tip: {
-          show: false,
-          content: ""
-        }
-      },
-      dragChord: new DragChordInfo(),
-      rawSheetPanel: {
-        show: false,
-        data: "",
-        isValid: true,
-        invalidReason: ""
-      },
-      helpPanel: {
-        show: false,
-      },
-      isTyping: false,
-      ukulelePlayer: createUkulele(new UkuleleSample(new AudioContext())),
-      oscillatorPlayer: createUkulele(new Oscillator(new AudioContext()))
-    };
-  },
-  computed: {
-    loaded() { return this.project.loadState == ELoadState.Loaded; },
-    loadCoverMessage() { 
-      switch(this.project.loadState) {
-        case ELoadState.Loaded: return "加载完成";
-        case ELoadState.Loading: return "加载中...";
-        case ELoadState.Failed: return "加载失败，项目不存在";
-        default: return "加载遇到未知问题"
-      }
-    },
-    nodeEventList() {
-      return this.editorMode ? this.editorMode.nodeEventList : new NodeEventList()
-    },
-    mutePlayerHotkey() {
-      return !this.layout.showAudioPlayer || this.rawSheetPanel.show || this.isTyping || this.toolChord.showPanel;
-    },
-    muteEditorModeHotkey() {
-      return this.rawSheetPanel.show || this.isTyping || this.toolChord.showPanel;
-    },
-    muteKeyboardHotKey() {
-      return this.rawSheetPanel.show || this.isTyping || !this.keyboard.isFocused || this.keyboard.isFolded || this.toolChord.showPanel;
+// layout and style
+const globalCssVar = ref({
+  "--sheet-font-size": "var(--base-font-size)",
+  "--title-base-font-size": "calc(var(--base-font-size) * 1.8)",
+  "--title-scale": "1",
+  "--sheet-theme-color": "var(--theme-color)",
+  "--tip-text-background-color": "var(--theme-color)",
+  "--tip-button-background-color": "seagreen",
+})
+
+const layout = ref({
+  toolWidthPercentage: 20,
+  audioPlayerHeight: 180,
+  showAudioPlayer: false,
+  showHelpPanel: false
+})
+
+const isLoaded = computed(() => project.value.loadState == ELoadState.Loaded)
+const loadCoverMessage = computed(() => { 
+  switch(project.value.loadState) {
+    case ELoadState.Loaded: return "加载完成";
+    case ELoadState.Loading: return "加载中...";
+    case ELoadState.Failed: return "加载失败，项目不存在";
+    default: return "加载遇到未知问题"
+  }
+})
+
+watch(() => layout.value.toolWidthPercentage, () => {
+  layout.value.toolWidthPercentage = Math.min(
+    70,
+    Math.max(10, layout.value.toolWidthPercentage)
+  )
+})
+
+// typeing state
+const isTyping = ref(false)
+function beginTyping() {
+  isTyping.value = true
+}
+function endTyping() {
+  isTyping.value = false
+}
+
+// project info
+const project = ref({
+  loadState: ELoadState.Loading,
+  pid: null,
+})
+
+const nodeEventList = computed(() => {
+  return editorMode.value ? editorMode.value.nodeEventList : new NodeEventList()
+})
+
+// player
+const playerInfo = ref({
+  instrument: "Oscillator",
+  bpm: 120,
+  stum: true,
+  capo: 0,
+  player: createUkulele(new Oscillator(new AudioContext())),
+})
+
+function playChord(chord) {
+  let volume = 0.3;
+  let duration = playerInfo.value.stum ? 0 : (1 / playerInfo.value.bpm) * 60 * 4;
+  const capo = playerInfo.value.capo
+  playerInfo.value.player.setCapo(capo);
+  playerInfo.value.player.playChord(chord, volume, duration);
+}
+
+const mutePlayerHotkey = computed(() => {
+  return !layout.value.showAudioPlayer || rawEditorPanel.value.show || isTyping.value || toolChord.value.showPanel;
+})
+
+// keyboard
+const keyboard = ref({
+  isFocused: false,
+  isFolded: true,
+})
+
+// const muteKeyboardHotKey = computed(() => {
+//   return rawEditorPanel.value.show || isTyping.value || !keyboard.value.isFocused || keyboard.value.isFolded || toolChord.value.showPanel;
+// })
+
+// editor
+const sheetMeta = reactive(new SheetMeta())
+const sheetRoot = reactive(NodeUtils.createRootNode())
+const {
+  toolChord,
+  editor
+} = useEditor(sheetMeta, sheetRoot)
+
+// -- drag chord and tool chord panel
+const dragChord = ref(new DragChordInfo())
+const dragMark = ref<Element>(null) // refs 
+
+function onToolChordDragStart(e, chord) {
+  if (editorMode.value) {
+    editorMode.value.toolChordEvents.trigger(e, chord)
+  }
+}  
+
+watch(() => toolChord.value.attachedChords, () => {
+  sheetMeta.chords = toolChord.value.attachedChords
+})
+
+// -- raw editor panel
+const rawEditorPanel = ref({
+  show: false,
+  sheetText: "",
+  isValid: true,
+  invalidReason: ""
+})
+
+function openRawEditorPanel() {
+  rawEditorPanel.value.sheetText = generateSheetText(sheetRoot)
+  rawEditorPanel.value.show = true
+}
+``
+function onRawSheetConfirm(root) {
+  editor.setSheet(sheetMeta, root)
+  rawEditorPanel.value.show = false
+}
+
+// -- editor mode
+const editorMode = ref<EditorMode>(null)
+const muteEditorHotkey = computed(() => {
+  return layout.value.showAudioPlayer || rawEditorPanel.value.show || isTyping.value || toolChord.value.showPanel;
+})
+watch(muteEditorHotkey, () => {
+  console.log("updated")
+  if (muteEditorHotkey.value) editorMode.value.disableHotkey()
+  else editorMode.value.enableHotkey()
+})
+
+// -- editing
+function saveSheet(showTip = false) {
+  gProjectManager.update(project.value.pid, sheetMeta, editor.getSheetString(toolChord.value.attachedChords))
+  if (showTip)
+    addToast("曲谱已保存~")
+}
+
+function clearSheet() {
+  if (!confirm("是否清空曲谱？"))
+      return
+  toolChord.value.attachedChords = []
+  editor.clearSheet()
+}
+
+function loadSheet(sheetData : string) {
+  editor.loadSheet(sheetData)
+  toolChord.value.attachedChords = editor.meta.chords ?? [];
+}
+
+function onChangeSheetKey(newKey) {
+  let oldKey = sheetMeta.sheetKey
+  if (Key.isEqual(newKey, oldKey)) return;
+  
+  let shiftChord = confirm("你修改了曲谱调式，是否将和弦一起转调？")
+  editor.setKey(newKey, shiftChord)
+
+  // shift tool chords
+  if (shiftChord) {
+    let offset = Key.getOffset(oldKey, newKey)
+    console.log(oldKey, newKey, offset)
+    for (let i in toolChord.value.attachedChords) {
+      let chord = toolChord.value.attachedChords[i]
+      chord = chord.shiftKey(offset);
+      toolChord.value.attachedChords[i] = chord
     }
-  },
-  created() {
-  },
-  mounted() {
+  }
+}
 
-    let modeBasic = new EditorModeBasic(this.editor)
-    let modeDrag = new EditorModeDrag(this.dragChord, this.$refs.dragMark, this.editor)
-    let modeProgression = new EditorModeProgression(this.editor)
-    let editorMode = new EditorModeCombined([modeBasic, modeDrag, modeProgression])
+// -- context menu
+const contextMenu = ref({
+  show: false,
+  node: null,
+  position: new Position(),
+  entries: Array<string>()
+})
 
-    // context
-    editorMode.nodeEventList.text.contentMenus.push(this.openContext.bind(this))
-    editorMode.nodeEventList.chord.contentMenus.push(this.openContext.bind(this))
-    editorMode.nodeEventList.mark.contentMenus.push(this.openContext.bind(this))
-    editorMode.nodeEventList.newline.contentMenus.push(this.openContext.bind(this))
-    
-    // play chord
-    editorMode.nodeEventList.chord.mouseDowns.push((e, node) => this.playChord(FretChordManager.getFretChord(node.chord)))
+function openContext(e : MouseEvent, node : SheetNode) {
+  e.preventDefault();
+  contextMenu.value.show = true;
+  contextMenu.value.node = node;
+  contextMenu.value.position.left = e.clientX;
+  contextMenu.value.position.top = e.clientY;
 
-    editorMode.hook()
-    if (editorMode.toolChordEvents)
-      this.toolChord.events = editorMode.toolChordEvents
+  let isChord = node && node.isChord();
+  let isNewLine = node && node.isNewLine();
 
-    this.editorMode = editorMode
-
-    let pid = getQueryVariable("pid");
-    let projectInfo = gProjectManager.get(pid)
-
-    if (!projectInfo) {
-      this.project.loadState = ELoadState.Failed;
-      return;
+  let entries : string[] = []
+  if (!isNewLine) { entries.push("editContent") }
+  if (isChord) { 
+    entries.push("addUnderline") 
+    if (NodeUtils.hasUnderlineToNextChord(node)) { 
+      entries.push("removeUnderline") 
     }
+    entries.push("toggleChordType")
+  }
+  contextMenu.value.entries = entries
+  console.log(contextMenu)
+}
 
-    this.project.loadState = ELoadState.Loaded
-    this.project.pid = pid
-    this.loadSheet(projectInfo.sheetData)
+function closeContext() {
+  contextMenu.value.show = false;
+}
 
-    startRepeatTimeout(() => {
-      this.saveSheet(false)
-    }, 5000)
+const AUTO_SAVE_INTERVAL = 5000
+onMounted(() => {
+  // editor mode
+  let modeBasic = new EditorModeBasic(editor)
+  let modeDrag = new EditorModeDrag(dragChord.value, dragMark.value, editor)
+  let modeProgression = new EditorModeProgression(editor)
+  let newEditorMode = new EditorModeCombined([modeBasic, modeDrag, modeProgression])
 
-    document.addEventListener("click", () => this.closeContext());
-    HotKey.addKeyDownListener("KeyS", (e) => {
-      this.saveSheet(true)
-      e.preventDefault()
-    }, true, false, false)
-  },
-  methods: {
-    clearSheet() {
-      if (!confirm("是否清空曲谱？"))
-        return
+  // context
+  newEditorMode.nodeEventList.text.contentMenus.push(openContext)
+  newEditorMode.nodeEventList.chord.contentMenus.push(openContext)
+  newEditorMode.nodeEventList.mark.contentMenus.push(openContext)
+  newEditorMode.nodeEventList.newline.contentMenus.push(openContext)
+  document.addEventListener("click", closeContext);
 
-      this.editor.meta.reset()
+  // play chord
+  newEditorMode.nodeEventList.chord.mouseDowns.push((e, node) => playChord(FretChordManager.
+  getFretChord(node.chord)))
 
-      this.editor.pauseHistory()
-      this.editor.clearSheet()
+  newEditorMode.hook()
 
-      // 初始文本
-      NodeUtils.append(this.editor.root, NodeUtils.createTextNodes("歌词"))
-      NodeUtils.append(this.editor.root, NodeUtils.createNewLineNode())
-      this.editor.resumeHistory(true)
+  // tool chord
+  if (newEditorMode.toolChordEvents)
+    toolChord.value.events = newEditorMode.toolChordEvents
 
-      this.toolChord.attachedChords = []
-    },
-    loadSheet(sheetText) {
-      let [meta, root] = parseSheet(sheetText)
-      NodeUtils.validateSheetTree(root)
-      NodeUtils.toEditingSheetTree(root);
-      if (!root) {
-        throw "曲谱解析失败！";
-      }
-      this.editor.meta = meta
-      this.editor.replaceSheet(root, true)
+  editorMode.value = newEditorMode
 
-      this.toolChord.attachedChords = this.editor.meta.chords ?? [];
-      console.log("已加载曲谱：", meta, root);
-    },
-    openPanelChord() {
-      this.showChordPanel = true;
-    },
-    openContext(e, node) {
-      this.closeContext()
-      e.preventDefault();
-      this.contextMenu.show = true;
-      this.contextMenu.node = node;
-      this.contextMenu.style.left = `${e.clientX}px`;
-      this.contextMenu.style.top = `${e.clientY}px`;
+  // project
+  let pid = getQueryVariable("pid");
+  let projectInfo = gProjectManager.get(pid)
 
-      let isChord = node && node.isChord();
-      let isNewLine = node && node.isNewLine();
-      this.contextMenu.enableEditContent = !isNewLine;
-      this.contextMenu.enableAddUnderline = isChord;
-      this.contextMenu.enableRemoveUnderline = isChord && NodeUtils.hasUnderlineToNextChord(node);
-      this.contextMenu.enableRecoverChord = isChord;
-      this.contextMenu.enableSwitchChordType = isChord;
-    },
-    closeContext() {
-      this.contextMenu.show = false;
-    },
-    beginTyping() {
-      this.isTyping = true
-    },
-    endTyping() {
-      this.isTyping = false
-    },
-    playChord(chord) {
-      let volume = 0.3;
-      let duration = this.player.stum ? 0 : (1 / this.player.bpm) * 60 * 4;
-      let player = null;
-      switch (this.player.instrument) {
-        case "Oscillator":
-          player = this.oscillatorPlayer;
-          break;
-        case "Ukulele":
-          player = this.ukulelePlayer;
-          break;
-        default:
-          throw "未知错误";
-      }
-      const capo = parseInt(this.player.capo) ?? 0
-      player.setCapo(capo);
-      player.playChord(chord, volume, duration);
-    },
-    editContent(node = null) {
-      node = node ?? this.contextMenu.node;
+  if (!projectInfo) {
+    project.value.loadState = ELoadState.Failed;
+    return;
+  }
 
-      if (!node) throw "节点为空"
+  project.value.loadState = ELoadState.Loaded
+  project.value.pid = pid
+  loadSheet(projectInfo.sheetData)
 
-      let newContent = prompt("编辑内容", node.content);
-      if (!newContent) return;
-      this.editor.updateContent(node, newContent)
-      NodeUtils.validateSheetTree(this.editor.root)
-    },
-    editRemove(node = null) {
-      node = node ?? this.contextMenu.node;
-      this.editor.remove(node);
-    },
-    editRemoveUnderline(node = null) {
-      node = node ?? this.contextMenu.node;
-      this.editor.removeUnderlineOnChord(node);
-      NodeUtils.validateSheetTree(this.editor.root)
-    },
-    editRecoverChord(node = null) {
-      node = node ?? this.contextMenu.node;
-      this.editor.convertChordToText(node);
-    },
-    editSwitchChordType(node = null) {
-      node = node ?? this.contextMenu.node;
-      this.editor.switchChordType(node)
-    },
-    editAddUnderline(node = null) {
-      node = node ?? this.contextMenu.node;
-      this.editor.addUnderlineForChord(node);
-    },
-    onChangeSheetKey(newKey) {
-      let oldKey = this.editor.meta.sheetKey
-      if (Key.isEqual(newKey, oldKey)) return;
-      
-      let shiftChord = confirm("你修改了曲谱调式，是否将和弦一起转调？")
-      this.editor.setKey(newKey, shiftChord)
+  // auto save
+  startRepeatTimeout(() => {
+    saveSheet(false)
+  }, AUTO_SAVE_INTERVAL)
 
-      if (shiftChord) {
-        let offset = Key.getOffset(oldKey, newKey)
-        console.log(oldKey, newKey, offset)
-        for (let i in this.toolChord.attachedChords) {
-          let chord = this.toolChord.attachedChords[i]
-          chord = chord.shiftKey(offset);
-          this.toolChord.attachedChords[i] = chord
-        }
-      }
-    },
-    onToolChordDragStart(e, chord) {
-      if (this.editorMode) {
-        this.editorMode.toolChordEvents.trigger(e, chord)
-      }
-    },  
-    openRawSheetPanel() {
-      this.rawSheetPanel.data = toSheetFileString(this.editor.root)
-      this.rawSheetPanel.show = true
-    },
-    confirmRawSheet() {
-      if (!confirm("是否确认修改？将会覆盖原本的曲谱")) return;
-
-      let [meta, root] = parseSheet(this.rawSheetPanel.data)
-      NodeUtils.toEditingSheetTree(root);
-      NodeUtils.validateSheetTree(root);
-      this.editor.replaceSheet(root)
-      this.rawSheetPanel.show = false
-    },
-    toSheetString() {
-      return toSheetFileString(this.editor.root, this.editor.meta, this.toolChord.attachedChords)
-    },
-    saveSheetToFile() {
-      // TODO: remove un used chord?
-      let fileData = this.toSheetString()
-      let time = new Date().toLocaleDateString().replace(/\//g, "_")
-
-      let blob = new Blob([fileData], { type: 'text/plain' })
-      let download = document.createElement("a");
-      download.href = window.URL.createObjectURL(blob)
-      download.setAttribute('download', `${this.editor.meta.title}-${this.editor.meta.singer}-${time}.atrs`)
-      download.click()
-      download.remove()
-    },
-    loadSheetFromFile() {
-      let input = document.createElement('input');
-      input.type = 'file';
-      input.accept = ".atrs"
-      input.onchange = e => {
-        let file = e.target.files[0];
-        let fileReader = new FileReader()
-        fileReader.onload = () => this.loadSheet(fileReader.result)
-        fileReader.readAsText(file)
-      }
-      input.click();
-      input.remove()
-    },
-    saveSheet(showTip = false) {
-      gProjectManager.update(this.project.pid, this.editor.meta, this.toSheetString())
-      if (showTip)
-        addToast("曲谱已保存~")
-    },
-    insertNode(type, insertBefore) {
-      this.editor.insert(this.contextMenu.node, type, insertBefore)
-    },
-    onContextButtonMouseEnter(tip) {
-      this.contextMenu.tip.show = true
-      this.contextMenu.tip.content = tip
-    },
-    onContextButtonMouseLeave() {
-      this.contextMenu.tip.show = false
-    },
-  },
-  watch: {
-    "layout.toolWidthPercentage": function () {
-      this.layout.toolWidthPercentage = Math.min(
-        70,
-        Math.max(10, this.layout.toolWidthPercentage)
-      );
-    },
-    "toolChord.attachedChords": function () {
-      this.editor.meta.chords = this.toolChord.attachedChords
-    },
-    "rawSheetPanel.data": function () {
-      console.log("changed", this.rawSheetPanel.data)
-      if (!this.rawSheetPanel.show) return;
-      this.rawSheetPanel.isValid = false
-      try {
-        let [meta, root] = parseSheet(this.rawSheetPanel.data)
-        NodeUtils.toEditingSheetTree(root);
-        NodeUtils.validateSheetTree(root);
-        this.rawSheetPanel.isValid = true
-      }
-      catch (e) { 
-        this.rawSheetPanel.invalidReason = e.toString()
-      }
-    },
-  },
-};
+  // hot key
+  HotKey.addKeyDownListener("KeyS", (e) => {
+    saveSheet(true)
+    e.preventDefault()
+  }, true, false, false)
+})
 </script>
 
-<style scoped src="./editorCommon.css" />
+<style scoped src="@/components/editorCommon.css" />
 
 <style scoped lang="scss">
 .title {
@@ -723,7 +577,7 @@ export default {
     color: rgb(156, 156, 156);
   }
 
-  #edit_raw_sheet_button {
+  #edit_raw_editor_button {
     background: var(--sheet-theme-color);
     color: white;
   }
@@ -740,75 +594,6 @@ export default {
   color: white;
 }
 
-.context {
-  position: fixed;
-  display: flex;
-  user-select: none;
-  z-index: 20;
-}
-
-#editor_context {
-  z-index: 21;
-  width: 140px;
-  flex-direction: column;
-
-  #editor_context_menu {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
-    background: rgb(49, 100, 88, 0.9);
-  }
-
-  #editor_context_tip {
-    left: 50%;
-    bottom: -40px;
-    transform: translateX(-50%);
-    position: absolute;
-    padding: 10px;
-    font-size: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    white-space: nowrap;
-
-    border-radius: 10px;
-    background: rgb(49, 100, 88, 0.9);
-  }
-}
-
-.context_menu_item {
-  position: relative;
-  color: white;
-  padding: 5%;
-  transition: all 0.2s ease-out;
-  border-radius: 10px;
-
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  white-space: nowrap;
-
-  .context_icon {
-    margin: 5px;
-    height: 20px;
-    width: 20px;
-    fill: white;
-    transition: fill 0.1s ease-out;
-  }
-}
-
-.context_menu_button {
-  cursor: pointer;
-
-  &:hover {
-    fill: var(--theme-color); // for svg icon
-    text-decoration: underline; // for text
-  }
-}
-
 .panel {
   z-index: 30;
 
@@ -817,42 +602,6 @@ export default {
   width: 100%;
   left: 0;
   top: 0;
-}
-
-#raw_sheet_panel {
-  #raw_sheet_container {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.8);
-  }
-
-  #raw_sheet_title {
-    font-size: 20px;
-    padding: 20px 0;
-    color: white;
-  }
-
-  #raw_sheet_textarea {
-    font-family: inherit;
-    color: black;
-    font-size: var(--base-font-size);
-    height: 60%;
-    width: 60%;
-  }
-
-  #raw_sheet_button_confirm {
-    background: var(--sheet-theme-color);
-    color: white;
-  }
-
-  #raw_sheet_button_cancel {
-    background: grey;
-    color: white;
-  }
 }
 
 #drag_mark {
@@ -1060,3 +809,4 @@ export default {
   opacity: 0;
 }
 </style>
+./editorx

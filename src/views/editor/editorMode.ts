@@ -20,7 +20,6 @@ export abstract class EditorMode {
 }
 
 export class EditorModeCombined extends EditorMode {
-    isHotkeyEnable: boolean = true
     editorModes: EditorMode[]
     tip: string = ''
 
@@ -32,6 +31,19 @@ export class EditorModeCombined extends EditorMode {
         for (let mode of editorModes) {
             this.nodeEventList.append(mode.nodeEventList)
             this.toolChordEvents.append(mode.toolChordEvents)
+        }
+    }
+
+    enableHotkey() {
+        this.isHotkeyEnable = true
+        for (let editorMode of this.editorModes) {
+            editorMode.isHotkeyEnable = true
+        }
+    }
+
+    disableHotkey() {
+        for (let editorMode of this.editorModes) {
+            editorMode.isHotkeyEnable = false
         }
     }
 

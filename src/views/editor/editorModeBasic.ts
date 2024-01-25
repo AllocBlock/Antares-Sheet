@@ -1,7 +1,7 @@
 import HotKey from "@/utils/hotKey";
 import { EditorMode } from "./editorMode";
 import { SheetNode, NodeUtils } from "@/utils/sheetNode";
-import SheetEditor from "./editor";
+import { SheetEditor } from "./editor";
 
 export default class EditorModeBasic extends EditorMode {
     editor : SheetEditor
@@ -18,16 +18,16 @@ export default class EditorModeBasic extends EditorMode {
         const onMouseEnterNode = (e, node) => this._cbMouseEnter(e, node)
         const onMouseLeaveNode = (e, node) => this._cbMouseLeave(e, node)
 
-        this.nodeEventList.text.doubleClicks.push( (e, node) => that.editor.editTextWithNeighbor(node) )
+        this.nodeEventList.text.doubleClicks.push( (e, node) => that.editor.core.editTextWithNeighbor(node) )
         this.nodeEventList.text.mouseEnters.push(onMouseEnterNode)
         this.nodeEventList.text.mouseLeaves.push(onMouseLeaveNode)
 
         this.nodeEventList.chord.doubleClicks.push( (e, node) => {
             if (!e.shiftKey) {
-                that.editor.addUnderlineForChord(node);
+                that.editor.addUnderline(node);
             }
             else if (NodeUtils.hasUnderlineToNextChord(node)) {
-                that.editor.removeUnderlineOnChord(node);
+                that.editor.removeUnderline(node);
             }
         })
         this.nodeEventList.chord.mouseEnters.push(onMouseEnterNode)
@@ -69,7 +69,7 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode) return
 
         let emptyNode = NodeUtils.createTextNode(" ")
-        this.editor.insertBefore(this.curNode, emptyNode)
+        this.editor.core.insertBefore(this.curNode, emptyNode)
     }
 
     _insertSpaceAfter(e) {
@@ -77,20 +77,20 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode) return
 
         let emptyNode = NodeUtils.createTextNode(" ")
-        this.editor.insertAfter(this.curNode, emptyNode)
+        this.editor.core.insertAfter(this.curNode, emptyNode)
     }
 
     _delete(e) {
         e.preventDefault()
         if (!this.curNode) return
-        this.editor.remove(this.curNode)
+        this.editor.core.remove(this.curNode)
         this.curNode = null
     }
 
     _recoverChordToText(e) {
         e.preventDefault()
         if (this.curNode.isChord()) {
-            this.curNode = this.editor.convertChordToText(this.curNode)[0]
+            this.curNode = this.editor.core.convertChordToText(this.curNode)[0]
         }
     }
 
@@ -99,14 +99,14 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode) return
 
         
-        this.editor.insertBefore(this.curNode, NodeUtils.createNewLineNode())
+        this.editor.core.insertBefore(this.curNode, NodeUtils.createNewLineNode())
     }
 
     _insertNewLineAfter(e) {
         e.preventDefault()
         if (!this.curNode) return
         
-        this.editor.insertAfter(this.curNode, NodeUtils.createNewLineNode())
+        this.editor.core.insertAfter(this.curNode, NodeUtils.createNewLineNode())
     }
 
     _addUnderline(e) {
@@ -114,7 +114,7 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode) return
         if (!this.curNode.isChord()) return
 
-        this.editor.addUnderlineForChord(this.curNode)
+        this.editor.core.addUnderlineForChord(this.curNode)
     }
 
     _removeUnderline(e) {
@@ -123,7 +123,7 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode.isChord()) return
         if (!NodeUtils.hasUnderlineToNextChord(this.curNode)) return
 
-        this.editor.removeUnderlineOnChord(this.curNode)
+        this.editor.core.removeUnderlineOnChord(this.curNode)
     }
 
     _switchChordType(e) {
@@ -131,7 +131,7 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode) return
         if (!this.curNode.isChord()) return
 
-        this.editor.switchChordType(this.curNode)
+        this.editor.toggleChordType(this.curNode)
     }
 
     hook() {

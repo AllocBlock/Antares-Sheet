@@ -19,18 +19,15 @@
 import { reactive, ref, onMounted } from 'vue'
 import { gProjectManager, ProjectInfo } from '@/utils/project';
 import { createDownloadTextFile } from '@/utils/common'
-import addToast from '@/utils/toast';
-import { parseSheet } from '@/utils/sheetParser';
 
 import ProjectCard from "@/components/projectCard.vue";
 import Button from "@/components/button.vue";
 
 const projectInfos = ref<Array<ProjectInfo>>([])
-
-console.log(projectInfos)
   
 onMounted(() => {
   projectInfos.value = gProjectManager.getAll()
+  console.log("projects ", projectInfos)
 })
 
 function addProject() {

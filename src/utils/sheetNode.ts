@@ -85,6 +85,26 @@ export class SheetNode {
     else return this.parent.children[index + 1];
   }
 
+  // by tree
+  nextNode() {
+    if (!this.parent) return null;
+
+    let nextSibling = this.nextSibling()
+    if (nextSibling) return nextSibling;
+    
+    return this.parent.nextNode()
+  }
+
+  // by tree
+  prevNode() {
+    if (!this.parent) return null;
+
+    let prevSibling = this.prevSibling()
+    if (prevSibling) return prevSibling;
+    
+    return this.parent.prevNode()
+  }
+
   isUnderline() {
     return this.type == ENodeType.Underline || this.type == ENodeType.UnderlinePure
   }

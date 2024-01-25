@@ -57,11 +57,13 @@ function normalizeIndex(index: number) {
 }
 
 export class Key {
-    private _base: EBaseNote
-    private _accidental: EAccidental
+    _base: EBaseNote
+    _accidental: EAccidental
 
     constructor(base: EBaseNote, accidental: EAccidental) {
-        this.set(base, accidental)
+        // TODO: add prefer chord alias, e.g. always use bB instead of #A
+        this._base = base
+        this._accidental = accidental
     }
 
     get base(): EBaseNote { return this._base; }
@@ -103,12 +105,6 @@ export class Key {
 
     static isEqual(key1: Key, key2: Key) {
         return key1.getIndex() == key2.getIndex()
-    }
-
-    set(base: EBaseNote, accidental: EAccidental) {
-        // TODO: add prefer chord alias, e.g. always use bB instead of #A
-        this._base = base
-        this._accidental = accidental
     }
 
     getPitchNames() { // 音名
