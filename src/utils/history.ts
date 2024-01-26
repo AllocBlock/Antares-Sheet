@@ -13,7 +13,7 @@ export default class Histroy<T> {
     }
 
     add(data : T) {
-        let exceeded = this.historys.length > this.maxHistoryNum
+        let exceeded = this.historys.length == this.maxHistoryNum
         this.historys = this.historys.slice(exceeded ? 1 : 0, this.index + 1)
         this.historys.push(data)
         this.index = this.historys.length - 1

@@ -98,7 +98,7 @@ export class SheetEditor {
     this.core.convertChordToText(node);
   }
   toggleChordType(node : SheetNode) {
-    this.core.switchChordType(node)
+    this.core.toggleChordType(node)
   }
   addUnderline(node : SheetNode) {
     this.core.addUnderlineForChord(node);
