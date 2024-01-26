@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { DelayTrigger } from "@/utils/common";
+import { DelayTrigger } from "@/utils/timer";
 import { NodeUtils } from "@/utils/sheetNode";
 import { parseSheet } from "@/utils/sheetParser";
 import { watch, ref, onMounted } from "vue";

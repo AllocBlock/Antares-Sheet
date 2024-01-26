@@ -117,73 +117,12 @@ export function startRepeatTimeout(func, timeout = 1000) {
 }
 
 export function createDownloadTextFile(textData, fileName) {
-    let time = new Date().toLocaleDateString().replace(/\//g, "_")
-  
     let blob = new Blob([textData], {type: 'text/plain'})
     let download = document.createElement("a");
     download.href = window.URL.createObjectURL(blob)
     download.setAttribute('download', fileName)
     download.click()
     download.remove()
-}
-
-export class Ticker {
-  intervalMs : number
-  callback : CallableFunction
-  timer : number
-
-  constructor(intervalMs : number, callback : CallableFunction) {
-    this.intervalMs = intervalMs
-    this.callback = callback
-    this.timer = null
-  }
-
-  tick() {
-    this.callback()
-    this.timer = window.requestAnimationFrame(() => this.tick())
-  }
-
-  start() {
-    this.stop()
-    this.timer = window.requestAnimationFrame(() => this.tick())
-  }
-
-  stop() {
-    if (this.timer) {
-      window.cancelAnimationFrame(this.timer)
-      this.timer = null
-    }
-  }
-}
-
-export class DelayTrigger {
-    isWaiting: boolean
-    lastTriggerTime: number
-    minIntervalMs: number
-    ticker: Ticker
-    callback : CallableFunction
-    
-    constructor(callback : CallableFunction, minIntervalMs : number) {
-        this.isWaiting = false
-        this.minIntervalMs = minIntervalMs
-        this.callback = callback
-        this.lastTriggerTime = 0
-        this.ticker = new Ticker(minIntervalMs, () => this.tick())
-        this.ticker.start()
-    }
-
-    tick() {
-      let curTime = new Date().getTime()
-      if (this.isWaiting && curTime > this.lastTriggerTime + this.minIntervalMs) {
-        this.callback()
-        this.isWaiting = false
-        this.lastTriggerTime = curTime
-      }
-    }
-
-    trigger() {
-      this.isWaiting = true
-    }
 }
 
 export class Position {

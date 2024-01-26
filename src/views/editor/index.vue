@@ -105,6 +105,11 @@
       <InstrumentSimulatorKeyboard :mute-hot-key="!keyboard.isFocused" />
     </DraggablePanel>
 
+    
+    <DraggablePanel title="曲谱播放" :initPos="{ left: 200, top: 250 }" :isFolded="false">
+      <SheetPlayer :player="playerInfo.player" :root="sheetRoot" />
+    </DraggablePanel>
+
     <TopCover :show="!isLoaded">{{ loadCoverMessage }}</TopCover> 
   </div>
 </template>
@@ -121,6 +126,7 @@ import EditorContextMenu from "@/components/editorContextMenu.vue";
 import RawEditorPanel from "@/components/rawEditorPanel.vue";
 import InstrumentSimulatorKeyboard from "@/components/instrumentSimulator/keyboard.vue";
 import TopCover from "@/components/topCover.vue";
+import SheetPlayer from "@/components/sheetPlayer.vue";
 import AudioPlayer from "./audioPlayer.vue"
 
 import { ELoadState, Position, getQueryVariable, startRepeatTimeout } from "@/utils/common";

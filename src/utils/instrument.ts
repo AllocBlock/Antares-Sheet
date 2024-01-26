@@ -1,6 +1,6 @@
 import { loadFileBuffer } from "@/utils/audio"
 import { assert } from "@/utils/assert";
-import { Key } from "./chord";
+import { FretChord, Key } from "./chord";
 import { LoadCallback } from "./common";
 
 const gStandardFrequencyA = 440
@@ -335,7 +335,7 @@ class StringInstrument {
         }
     }
 
-    playChord(chord, volume, duration) {
+    playChord(chord : FretChord, volume, duration) {
         assert(this.isReady(), "音源还未加载完成")
         let frets = this.getFretsOfChord(chord)
         this.playFingering(frets, volume, duration)
