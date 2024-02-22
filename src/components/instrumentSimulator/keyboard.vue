@@ -2,174 +2,191 @@
   <div class="instrument_keyboard_container" :style="boardSize">
     <div v-for="(key, index) in whiteKeys" :key="index" 
       class="instrument_keyboard_white_key" 
-      :style="key.style"
+      :style="getWhiteKeyStyle(key)"
       :pressed="key.pressed ? true : null"
       @mousedown="onPress(key)"
     />
     <div v-for="(key, index) in blackKeys" :key="index" 
       class="instrument_keyboard_black_key" 
-      :style="key.style" 
+      :style="getBlackKeyStyle(key)" 
       :pressed="key.pressed ? true : null"
       @mousedown="onPress(key)"
     />
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 import { Keyboard, Oscillator, Note } from "@/utils/instrument"
 import HotKey from "@/utils/hotKey";
-
-function calcKeyboardSize(whiteKeyWidth, length) {
-  return {
-    whiteKey: {
-      width: whiteKeyWidth,
-      length: length
-    },
-    blackKey: {
-      width: whiteKeyWidth * (StandardBlackKeyWidth / StandardWhiteKeyWidth),
-      length: length * (StandardBlackKeyLength / StandardWhiteKeyLength),
-    },
-  }
-}
-
-function toPx(num) {
-  return num + "px"
-}
-
-const octaveWhiteKey = ["C", "D", "E", "F", "G", "A", "B"]
-const blackKeyPoses = [0, 1, 3, 4, 5]
-const octaveBlackKey = ["#C", "#D", "#F", "#G", "#A"]
-function addOctave(keyboardSize, offset, octave, outWhiteKeys, outBlackKeys) {
-  let keyInterval = keyboardSize.whiteKey.width
-
-  for (let i = 0; i < 7; ++i) {
-    outWhiteKeys.push({
-      style: {
-        width: toPx(keyboardSize.whiteKey.width),
-        height: toPx(keyboardSize.whiteKey.length),
-        left: toPx(offset + i * keyInterval),
-      },
-      note: new Note(octaveWhiteKey[i], octave)
-    })
-  }
-
-  let blackKeyStart = keyboardSize.whiteKey.width - keyboardSize.blackKey.width * 0.5
-
-  for (let i = 0; i < 5; ++i) {
-    outBlackKeys.push({
-      style: {
-        width: toPx(keyboardSize.blackKey.width),
-        height: toPx(keyboardSize.blackKey.length),
-        left: toPx(offset + blackKeyStart + blackKeyPoses[i] * keyInterval),
-      },
-      note: new Note(octaveBlackKey[i], octave)
-    })
-  }
-}
+import { onMounted, reactive } from "vue";
 
 const ScaleRatio = 20.0; // cm to px
 const StandardWhiteKeyWidth = 2.2; // cm
 const StandardBlackKeyWidth = 1.1; // cm
 const StandardWhiteKeyLength = 15; // cm
 const StandardBlackKeyLength = 9.5; // cm
-const gKeyboardSize = calcKeyboardSize(StandardWhiteKeyWidth * ScaleRatio, StandardWhiteKeyLength * ScaleRatio)
 
-export default {
-  name: "InstrumentSimulatorKeyboard",
-  data(){
-    return {
-      boardSize: {
-        width: 0,
-        height: 0
-      },
-      whiteKeys: [],
-      blackKeys: [],
-      pressedKeys: new Map(),
-      keyboard: new Keyboard(new Oscillator(new AudioContext()).load()),
-    }
-  },
-  props: {
+class KeyLayout {
+  width : number
+  length : number
+  constructor(width : number, length : number) {
+    this.width = width
+    this.length = length
+  }
+}
+
+class KeyboardLayout {
+  whiteKeyLayout : KeyLayout
+  blackKeyLayout : KeyLayout
+  constructor(whiteKeyLayout : KeyLayout, blackKeyLayout : KeyLayout) {
+    this.whiteKeyLayout = whiteKeyLayout
+    this.blackKeyLayout = blackKeyLayout
+  }
+}
+
+function calcKeyboardSize(whiteKeyWidth : number, length : number) : KeyboardLayout {
+  return new KeyboardLayout(
+    new KeyLayout(whiteKeyWidth, length),
+    new KeyLayout(whiteKeyWidth * (StandardBlackKeyWidth / StandardWhiteKeyWidth), length * (StandardBlackKeyLength / StandardWhiteKeyLength)),
+  )
+}
+
+const KeyboardSize = calcKeyboardSize(StandardWhiteKeyWidth * ScaleRatio, StandardWhiteKeyLength * ScaleRatio)
+const OctaveWidth = KeyboardSize.whiteKeyLayout.width * 7
+const OctaveHeight = KeyboardSize.whiteKeyLayout.length
+const OctaveNum = 2
+const StartOctave = 4
+
+function toPx(num) : string {
+  return num + "px"
+}
+
+const OctaveWhiteKey = ["C", "D", "E", "F", "G", "A", "B"]
+const BlackKeyPoses = [0, 1, 3, 4, 5]
+const OctaveBlackKey = ["#C", "#D", "#F", "#G", "#A"]
+
+class KeyboardKey {
+  note : Note
+  pressed : boolean
+  constructor(note : Note) {
+    this.note = note
+    this.pressed = false
+  }
+}
+
+function getWhiteKeyStyle(key : KeyboardKey) {
+  let index = whiteKeys.indexOf(key)
+  let keyInterval = KeyboardSize.whiteKeyLayout.width
+  // let octaveWidth = KeyboardSize.whiteKeyLayout.width * 7
+  return {
+      width: toPx(KeyboardSize.whiteKeyLayout.width),
+      height: toPx(KeyboardSize.whiteKeyLayout.length),
+      left: toPx(index * keyInterval),
+  }
+}
+
+function getBlackKeyStyle(key : KeyboardKey) {
+  let index = blackKeys.indexOf(key)
+  let octaveIndex = Math.trunc(index / 5)
+  let localIndex = index % 5
+  let octaveWidth = KeyboardSize.whiteKeyLayout.width * 7
+  let startOffset = KeyboardSize.whiteKeyLayout.width - KeyboardSize.blackKeyLayout.width * 0.5
+  let keyInterval = KeyboardSize.whiteKeyLayout.width
+
+  return {
+      width: toPx(KeyboardSize.blackKeyLayout.width),
+      height: toPx(KeyboardSize.blackKeyLayout.length),
+      left: toPx(startOffset + octaveIndex * octaveWidth + BlackKeyPoses[localIndex] * keyInterval),
+  }
+}
+
+const boardSize = reactive({width: "0px", height: "0px"})
+const whiteKeys = reactive<Array<KeyboardKey>>([])
+const blackKeys = reactive<Array<KeyboardKey>>([])
+const pressedKeys = reactive(new Map())
+const keyboard = new Keyboard(new Oscillator(new AudioContext()).load())
+
+const props = defineProps({
     muteHotKey: {
       type: Boolean,
       default: false
     }
-  },
-  mounted() {
-    let octaveWidth = gKeyboardSize.whiteKey.width * 7
-    let octaveHeight = gKeyboardSize.whiteKey.length
+})
 
-    let octaveNum = 2
-    let startOctave = 4
-    
-    this.boardSize.width = toPx(octaveWidth * octaveNum)
-    this.boardSize.height = toPx(octaveHeight)
+function pressKey(key : KeyboardKey, isMouse) {
+  key.pressed = true
+  keyboard.playNote(key.note, 0.2)
+  pressedKeys.set(key, {isMouse})
+}
 
-    for (let i = 0; i < octaveNum; ++i)
-      addOctave(gKeyboardSize, i * octaveWidth, startOctave + i, this.whiteKeys, this.blackKeys)
+function releaseKey(key : KeyboardKey) {
+  key.pressed = false
+  if (!pressedKeys.has(key)) return
+  keyboard.stopNote(key.note)
+  pressedKeys.delete(key)
+}
 
-    document.addEventListener("mouseup", this.onMouseRelease)
-    this.bindHotKeys()
-  },
-  methods: {
-    onPress(key) {
-      this.pressKey(key, true)
-    },
-    onMouseRelease() {
-      this.pressedKeys.forEach((entry, key) =>{
-        if (entry.isMouse) {
-          this.releaseKey(key)
-        }
-      })
-    },
-    pressKey(key, isMouse) {
-      key.pressed = true
-      this.keyboard.playNote(key.note, 0.2)
-      this.pressedKeys.set(key, {
-        isMouse
-      })
-    },
-    releaseKey(key) {
-      key.pressed = false
-      if (!this.pressedKeys.has(key)) return
-      this.keyboard.stopNote(key.note)
-      this.pressedKeys.delete(key)
-    },
-    bindHotKeys() {
-      let that = this
-      function hotkeySwitcher(callback, preventDefault = false) {
-        return (e) => {
-          if (that.muteHotKey) return
-          if (preventDefault) e.preventDefault()
-          callback(e)
-        }
-      }
+function onPress(key : KeyboardKey) {
+  pressKey(key, true)
+}
 
-      const whiteKeyHotKeys = [
-        "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "ShiftRight"
-      ]
-      const blackKeyHotKeys = [
-        "KeyS", "KeyD", "KeyG", "KeyH", "KeyJ", "KeyL", "Semicolon", 
-      ]
+function onMouseRelease() {
+  pressedKeys.forEach((entry, key) =>{
+    if (entry.isMouse) {
+      releaseKey(key)
+    }
+  })
+}
 
-      for (let i = 0; i < whiteKeyHotKeys.length; ++i) {
-        HotKey.addKeyDownListener(whiteKeyHotKeys[i], hotkeySwitcher((e) => this.pressKey(this.whiteKeys[i])))
-        HotKey.addKeyUpListener(whiteKeyHotKeys[i], hotkeySwitcher((e) => this.releaseKey(this.whiteKeys[i])))
-      }
-
-      for (let i = 0; i < blackKeyHotKeys.length; ++i) {
-        HotKey.addKeyDownListener(blackKeyHotKeys[i], hotkeySwitcher((e) => this.pressKey(this.blackKeys[i])))
-        HotKey.addKeyUpListener(blackKeyHotKeys[i], hotkeySwitcher((e) => this.releaseKey(this.blackKeys[i])))
-      }
+function bindHotKeys() {
+  function hotkeySwitcher(callback, preventDefault = false) {
+    return (e) => {
+      if (props.muteHotKey) return
+      if (preventDefault) e.preventDefault()
+      callback(e)
     }
   }
-};
+
+  const whiteKeyHotKeys = [
+    "KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash", "ShiftRight"
+  ]
+  const blackKeyHotKeys = [
+    "KeyS", "KeyD", "KeyG", "KeyH", "KeyJ", "KeyL", "Semicolon", 
+  ]
+
+  for (let i = 0; i < whiteKeyHotKeys.length; ++i) {
+    HotKey.addKeyDownListener(whiteKeyHotKeys[i], hotkeySwitcher((e) => pressKey(whiteKeys[i], false)))
+    HotKey.addKeyUpListener(whiteKeyHotKeys[i], hotkeySwitcher((e) => releaseKey(whiteKeys[i])))
+  }
+
+  for (let i = 0; i < blackKeyHotKeys.length; ++i) {
+    HotKey.addKeyDownListener(blackKeyHotKeys[i], hotkeySwitcher((e) => pressKey(blackKeys[i], false)))
+    HotKey.addKeyUpListener(blackKeyHotKeys[i], hotkeySwitcher((e) => releaseKey(blackKeys[i])))
+  }
+}
+
+onMounted(() => {
+    boardSize.width = toPx(OctaveWidth * OctaveNum)
+    boardSize.height = toPx(OctaveHeight)
+
+    for (let octave = StartOctave; octave < StartOctave + OctaveNum; ++octave) {
+      for (let i = 0; i < 7; ++i) {
+        whiteKeys.push(new KeyboardKey(new Note(OctaveWhiteKey[i], octave)))
+      }
+      for (let i = 0; i < 5; ++i) {
+        blackKeys.push(new KeyboardKey(new Note(OctaveBlackKey[i], octave)))
+      }
+    }
+
+    document.addEventListener("mouseup", onMouseRelease)
+    bindHotKeys()
+})
 
 </script>
 
 <style scoped lang="scss">
 .instrument_keyboard_container {
   position: relative;
-  background: red;
   user-select: none;
 }
 
