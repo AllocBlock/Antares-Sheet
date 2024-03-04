@@ -221,7 +221,7 @@ export class UkuleleSample extends PitchedAudioSourceSample {
  * 弦乐器，如尤克里里、吉他
  * 提供各种弹奏接口，需要指定音源
  * */
-class StringInstrument {
+export class StringInstrument {
     audioSource : PitchedAudioSource
     stringBasicNotes : Note[]
     stringNum: number
@@ -351,7 +351,6 @@ class StringInstrument {
                 let beatVolume = volume / beat.stringNumbers.length
                 for (let stringNumber of beat.stringNumbers) {
                     this.playString(stringNumber, frets[stringNumber - 1], beatVolume, curTime)
-                    console.log(stringNumber, frets[stringNumber - 1], beatVolume, curTime)
                 }
 
                 curTime += beatDuration

@@ -3,7 +3,7 @@
     <div class="title">
       <slot></slot>
     </div>
-    <select title="选择变调夹位置" v-model.number="localValue" @change="onChange">
+    <select title="选择变调夹位置" :value="value" @change="onChange">
       <option value="0">无</option>
       <option value="1">1品</option>
       <option value="2">2品</option>
@@ -28,23 +28,15 @@
 <script lang="ts">
 export default {
   name: "CapoSelector",
-  data() {
-    return {
-      localValue: 0,
-    }
-  },
   props: {
     value: {
       type: Number,
       default: 0,
     }
   },
-  created() {
-    this.localValue = this.value
-  },
   methods: {
-    onChange() {
-      const v = Math.trunc(this.localValue)
+    onChange(e : InputEvent) {
+      const v = parseInt((e.target as HTMLInputElement).value)
       this.$emit("update:value", v)
     }
   }

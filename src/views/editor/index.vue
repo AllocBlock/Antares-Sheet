@@ -38,7 +38,7 @@
               <KeySelector class="select" :value="sheetMeta.sheetKey" @update:value="onChangeSheetKey" />
               <div id="sheet_capo_block">
                 <div class="title">变调夹</div>
-                <CapoSelector id="capo_selector" class="select" v-model:value="playerInfo.capo" />
+                <CapoSelector id="capo_selector" class="select" v-model:value="sheetMeta.capo" />
               </div>
             </div>
             <div id="sheet_by" class="title">制谱 锦瑟</div>
@@ -212,14 +212,13 @@ const playerInfo = ref({
   instrument: "Oscillator",
   bpm: 60,
   stum: true,
-  capo: 0,
   player: createUkulele(new Oscillator(new AudioContext())),
 })
 
 function playChord(chord) {
   let volume = 0.3;
   let duration = playerInfo.value.stum ? 0 : (1 / playerInfo.value.bpm) * 60 * 4;
-  const capo = playerInfo.value.capo
+  const capo = sheetMeta.capo
   playerInfo.value.player.setCapo(capo);
   playerInfo.value.player.playChord(chord, volume, duration);
 }

@@ -75,4 +75,28 @@ export class Rhythm {
     static createFromString(str : string) {   
         return new Rhythm(parseRhythmString(str))
     }
+
+    getString() : string {
+        let curSubdivide = 4
+        let rhythmString = ''
+        for (let beat of this.beats) {
+            while (beat.beatDivided > curSubdivide) {
+                curSubdivide *= 2
+                rhythmString += "{"
+            }
+            while (beat.beatDivided < curSubdivide) {
+                curSubdivide /= 2
+                rhythmString += "}"
+            }
+            if (beat.stringNumbers.length == 0)  rhythmString += "x"
+            else if (beat.stringNumbers.length == 1)  rhythmString += beat.stringNumbers[0]
+            else rhythmString += "(" + beat.stringNumbers.join("") + ")"
+        }
+        
+        while (4 < curSubdivide) {
+            curSubdivide /= 2
+            rhythmString += "}"
+        }
+        return rhythmString
+    }
 }

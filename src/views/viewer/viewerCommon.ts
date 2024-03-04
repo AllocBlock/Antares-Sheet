@@ -8,7 +8,9 @@ import AutoScroll from "./autoScroll.js"
 
 import SheetViewContext from "./sheetViewContext";
 import { Chord, FretChord, Key } from "@/utils/chord";
-import { assert } from "@/utils/assert.js";
+import { assert } from "@/utils/assert";
+import { StringInstrument } from "@/utils/instrument";
+import { Rhythm } from "@/utils/rhythm.js";
 
 export function useGlobalCss() {
     return reactive({
@@ -23,7 +25,7 @@ export function useGlobalCss() {
 }
 
 export function useIntrument() {
-    let instrument = null
+    let instrument : StringInstrument = null
     const audioContext = new AudioContext()
     const instrumentConfig = reactive({
         enable: true,
@@ -32,8 +34,6 @@ export function useIntrument() {
             audioSourceName: "Oscillator",
             needUpdate: true,
         },
-        capo: 0,
-        bpm: 120,
         loadState: ELoadState.Loading,
     })
 
@@ -80,17 +80,14 @@ export function useIntrument() {
         }
     }
 
-    function playChord(chord) {
-        const capo = Math.trunc(instrumentConfig.capo) ?? 0
-
-        const bpm = instrumentConfig.bpm;
+    function playChord(chord : FretChord, bpm : number, rhythm : Rhythm = null, capo : number = 0) {
         let volume = 1.0;
 
         // play chord
         let duration = (1 / bpm) * 60 * 4;
         if (instrument && instrument.audioSource.loaded) {
             instrument.setCapo(capo);
-            instrument.playChord(chord, volume, duration);
+            instrument.playChord(chord, volume, duration, rhythm);
         }
     }
 

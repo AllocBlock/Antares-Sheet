@@ -21,20 +21,33 @@
       :fretChordOrChord="tryFindFretChord(tipChord.chord)" />
 
     <div id="tools_player" class="tools_block" v-if="instrumentConfig.enable">
-      <transition name="trans_fade_out">
-        <div id="load_cover" v-show="showPlayerLoadCover">
-          <div>{{ intrumentLoadingText }}</div>
-        </div>
-      </transition>
-      <select id="instrument_combo" v-model="instrumentConfig.instrument.audioSourceName">
-        <option value="Oscillator">合成器音源</option>
-        <option value="Ukulele">尤克里里音源</option>
-      </select>
+      <div class="flex tool_entry">
+        bpm: 
+        <input type="number" id="bpm_input" :value="bpm" @change="onBpmInput"/>
+      </div>
+
+      <div class="flex tool_entry">
+        <transition name="trans_fade_out">
+          <div id="load_cover" v-show="showPlayerLoadCover">
+            <div>{{ intrumentLoadingText }}</div>
+          </div>
+        </transition>
+        和弦音源：
+        <select id="instrument_combo" v-model="instrumentConfig.instrument.audioSourceName">
+          <option value="Oscillator">合成器</option>
+          <option value="Ukulele">尤克里里</option>
+        </select>
+      </div>
+
+      <div class="flex tool_entry">
+        节奏型: 
+        <input type="text" id="rhythm_input" :class="isRhythmValid ? '' : 'rhythm_input_invalid' " :value="rhythm.getString()" @input="onRhythmInput"/>
+      </div>
     </div>
 
     <DraggablePanel id="metronome_panel" title="节拍器" v-if="metronomeConfig.enable" :initPos="{ left: -240, top: -200 }"
       v-model:isFocused="metronomeConfig.isFocused" v-model:isFolded="metronomeConfig.isFolded">
-      <Metronome ref="metronome" />
+      <Metronome ref="metronome" :bpm="bpm"/>
     </DraggablePanel>
 
     <div id="sheet">
@@ -49,7 +62,7 @@
             <div id="sheet_key_shift_down" @click="shiftKey(-1)">▼</div>
           </div>
         </div>
-        <CapoSelector id="sheet_capo_block" v-model:value="instrumentConfig.capo">变调夹</CapoSelector>
+        <CapoSelector id="sheet_capo_block" v-model:value="sheet.meta.capo">变调夹</CapoSelector>
       </div>
       <div id="sheet_by" class="title">{{ sheet.meta.by }}</div>
       <AntaresSheet id="sheet_body_block" :sheet-tree="sheet.root" :events="nodeEvents" />
@@ -105,9 +118,36 @@ import {
   useTipChord, 
   useSheet
 } from "./viewerCommon"
+import { Rhythm } from "@/utils/rhythm";
 
 const isPrinting = ref(false)
 const globalCssVar = useGlobalCss()
+
+// play config
+const bpm = ref(120)
+function setBpm(newBpm : number) {
+  newBpm = Math.max(30, Math.min(240, newBpm))
+  bpm.value = newBpm;
+}
+function onBpmInput(e : InputEvent) {
+  let newBpm = parseInt((e.target as HTMLInputElement).value)
+  newBpm = isNaN(newBpm) ? bpm.value : newBpm
+  setBpm(newBpm);
+}
+
+const rhythm = ref(Rhythm.createFromString("{(124)3231323}"))
+const isRhythmValid = ref(true)
+function onRhythmInput(e : InputEvent) {
+  let newRhythmText = (e.target as HTMLInputElement).value
+  try {
+    let newRhythm = Rhythm.createFromString(newRhythmText)
+    isRhythmValid.value = true
+    rhythm.value = newRhythm
+  }
+  catch {
+    isRhythmValid.value = false
+  }
+}
 
 // instrument
 const { 
@@ -173,7 +213,7 @@ const {
 } = useTipChord()
 
 let nodeEventList = new NodeEventList()
-nodeEventList.chord.mouseDowns.push((e, node) => playChord(FretChordManager.getFretChord(node.chord)))
+nodeEventList.chord.mouseDowns.push((e, node) => playChord(FretChordManager.getFretChord(node.chord), bpm.value, rhythm.value, sheet.meta.capo))
 nodeEventList.chord.mouseEnters.push((e, node) => {
   tipChord.show = true
   tipChord.chord = node.chord
@@ -247,6 +287,10 @@ onMounted(() => {
   z-index: 10;
 }
 
+.tool_entry {
+  width: 100%;
+}
+
 .tools_text {
   margin: 10px 0;
 }
@@ -274,6 +318,37 @@ onMounted(() => {
     color: white;
     font-size: 30px;
   }
+}
+
+#bpm_block {
+  display: flex;
+  justify-content: space-around;
+}
+#bpm_decrease,
+#bpm_increase {
+  height: 20px;
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+#bpm_input {
+  border: 0px;
+  border-bottom: 1px black solid;
+  background-color: transparent;
+  width: 50px;
+  text-align: center;
+}
+#rhythm_input {
+  border: 0px;
+  border-bottom: 1px black solid;
+  background-color: transparent;
+  width: 100px;
+  text-align: center;
+}
+.rhythm_input_invalid {
+  color: red;
 }
 </style>
 

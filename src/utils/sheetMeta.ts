@@ -6,6 +6,7 @@ export default class SheetMeta {
     by: string;
     originalKey: Key;
     sheetKey: Key;
+    capo: number;
     chords: Chord[];
     rhythms: string[];
     extras: Map<string, string>;
@@ -21,6 +22,7 @@ export default class SheetMeta {
             case "by": { this.by = value; break; }
             case "originalKey": { this.originalKey = Key.createFromString(value); break; }
             case "sheetKey": { this.sheetKey = Key.createFromString(value); break; }
+            case "capo": { this.capo = parseInt(value); break; }
             case "chords": {
                 if (!value) this.chords = []
                 else {
@@ -35,6 +37,7 @@ export default class SheetMeta {
             case "rhythms": { 
                 this.rhythms = []
                 // TODO: add rhythm support
+                break;
             }
             default: { this.extras.set(key, value); break; }
         }
@@ -47,6 +50,7 @@ export default class SheetMeta {
         this.by = meta.by
         this.originalKey = meta.originalKey
         this.sheetKey = meta.sheetKey
+        this.capo = meta.capo
         this.chords = meta.chords.map(c => c)
         this.rhythms = meta.rhythms.map(c => c)
         this.extras = new Map(meta.extras)
@@ -58,6 +62,7 @@ export default class SheetMeta {
       this.by = "锦瑟"
       this.originalKey = Key.createFromString("C")
       this.sheetKey = Key.createFromString("C")
+      this.capo = 0
       this.chords = []
       this.rhythms = []
       this.extras = new Map()

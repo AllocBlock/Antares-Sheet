@@ -49,6 +49,7 @@ export class SheetNode {
     background?: string
   }
   valid?: boolean
+  pluginType ?: EPluginType
 
   constructor(type, parent = null) {
     this.id = gNextId++

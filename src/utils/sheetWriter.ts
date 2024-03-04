@@ -45,6 +45,7 @@ export function generateSheetText(root: SheetNode, meta: SheetMeta = null, attac
         data += "$by " + meta.by + "\n"
         data += "$originalKey " + meta.originalKey + "\n"
         data += "$sheetKey " + meta.sheetKey + "\n"
+        data += "$capo " + meta.capo + "\n"
         if (attachedChords.length > 0)
             data += "$chords " + attachedChords.map(c => c.toString()).join(" ") + "\n"
         data += "$rhythms \n"

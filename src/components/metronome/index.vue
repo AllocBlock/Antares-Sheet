@@ -2,23 +2,6 @@
   <div id="metronome">
     <div class="flex_hv_center">节拍器</div>
     <div id="control" @click="togglePlay">{{ this.started ? "❚❚" : "▶" }}</div>
-    <div id="bpm_block">
-      <div
-        id="bpm_decrease"
-        @click="decreaseBpm()"
-        @mousedown="onLongPressStart(decreaseBpm)"
-      >
-        -
-      </div>
-      <input type="text" id="bpm_input" v-model="bpm" @change="updateBpm"/>
-      <div 
-        id="bpm_increase"
-        @click="increaseBpm()"
-        @mousedown="onLongPressStart(increaseBpm)"
-      >
-        +
-      </div>
-    </div>
   </div>
 </template>
 
@@ -28,11 +11,16 @@ import Metronome from "./metronome";
 
 export default {
   name: "Metronome",
+  props: {
+    bpm: {
+      type: Number,
+      default: 120,
+    }
+  },
   data() {
     return {
       metronome: null,
       started: false,
-      bpm: 120,
       longPressTimer: null,
       longPressing: false,
     };
@@ -42,7 +30,6 @@ export default {
   methods: {
     load(callbacks) {
       this.metronome = new Metronome(callbacks)
-      this.updateBpm()
     },
     togglePlay() {
       assert(this.metronome, "Call load before play")
@@ -56,53 +43,13 @@ export default {
       } else {
         this.metronome.stop();
       }
-    },
-    getBpm() {
-      return this.bpm;
-    },
-    setBpm(bpm) {
-      bpm = Math.max(30, Math.min(240, bpm))
-      this.metronome.bpm = bpm;
-      this.bpm = bpm;
-    },
-    updateBpm() {
-      let bpm = parseInt(this.bpm) ?? 60;
-      this.setBpm(bpm);
-    },
-    decreaseBpm() {
-      let bpm = (parseInt(this.bpm) ?? 60) - 1;
-      this.setBpm(bpm);
-    },
-    increaseBpm() {
-      let bpm = (parseInt(this.bpm) ?? 60) + 1;
-      this.setBpm(bpm);
-    },
-    onLongPressStart(callback) {
-      let that = this;
-      function longPress() {
-        if (that.longPressing) {
-          callback();
-          that.longPressTimer = setTimeout(longPress, 50);
-        }
-      }
-
-      this.longPressing = true;
-      this.longPressTimer = setTimeout(() => {
-        longPress();
-      }, 500);
-
-      let endPress = () => {
-        this.onLongPressEnd()
-        document.removeEventListener("mouseup", endPress)
-      }
-
-      document.addEventListener("mouseup", endPress)
-    },
-    onLongPressEnd() {
-      clearTimeout(this.longPressTimer);
-      this.longPressing = false;
-    },
+    }
   },
+  watch: {
+    bpm() {
+      this.metronome.bpm = this.bpm
+    }
+  }
 };
 </script>
 
@@ -132,25 +79,4 @@ export default {
   cursor: pointer;
 }
 
-#bpm_block {
-  display: flex;
-  justify-content: space-around;
-}
-#bpm_decrease,
-#bpm_increase {
-  height: 20px;
-  width: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-#bpm_input {
-  outline-style: none;
-  border: 0px;
-  border-bottom: 1px black solid;
-  background-color: transparent;
-  width: 50px;
-  text-align: center;
-}
 </style>
