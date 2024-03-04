@@ -419,8 +419,8 @@ export default class SheetEditorCore {
         })
     }
 
-    convertToChord(node, chord : Chord) {
-        this.performAtom(() => {
+    convertToChord(node, chord : Chord) : SheetNode {
+        return this.performAtom(() => {
             if (node.isChord()) {
                 this.updateChord(node, chord);
                 return node

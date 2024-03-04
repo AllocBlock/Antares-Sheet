@@ -2,6 +2,7 @@ import { loadFileBuffer } from "@/utils/audio"
 import { assert } from "@/utils/assert";
 import { FretChord, Key } from "./chord";
 import { LoadCallback } from "./common";
+import { Rhythm } from "./rhythm";
 
 const gStandardFrequencyA = 440
 export class Note {
@@ -225,13 +226,16 @@ class StringInstrument {
     stringBasicNotes : Note[]
     stringNum: number
     capo: number
-    playingIds: number[]
+    playingIds: Map<number, number[]>
 
     constructor(audioSource : PitchedAudioSource, stringBasicNotes : Note[]) {
         this.audioSource = audioSource
         this.stringBasicNotes = stringBasicNotes
         this.stringNum = stringBasicNotes.length
-        this.playingIds = []
+        this.playingIds = new Map<number, number[]>
+        for (let i = 1; i <= this.stringNum; ++i) {
+            this.playingIds[i] = []
+        }
         this.capo = 0
     }
 
@@ -255,7 +259,7 @@ class StringInstrument {
         return true
     }
 
-    getFretsOfChord(chord) {
+    getFretsOfChord(chord) : number[] {
         assert(this.doesChordMatch(chord), "和弦有误或与本乐器不匹配")
 
         let stringNum = chord.stringNum
@@ -305,12 +309,11 @@ class StringInstrument {
 
     playString(string, fret, volume, delay) {
         assert(this.isReady(), "音源还未加载完成")
-        this.stopString(string)
         let stringBasicNoteIndex = this.stringBasicNotes[string - 1].getIndex()
         let noteIndex = stringBasicNoteIndex + fret + this.capo
         let note = Note.createFromIndex(noteIndex)
 
-        this.playingIds[string - 1] = this.audioSource.playNote(note, volume / this.stringNum, delay)
+        this.playingIds[string].push(this.audioSource.playNote(note, volume / this.stringNum, delay))
     }
 
     stop() {
@@ -320,9 +323,10 @@ class StringInstrument {
     }
 
     stopString(string) {
-        if (!this.playingIds[string - 1]) return;
-        this.audioSource.stopNote(this.playingIds[string - 1])
-        this.playingIds[string - 1] = null;
+        for(let id of this.playingIds[string]) {
+            this.audioSource.stopNote(id)
+        }
+        this.playingIds[string] = []
     }
 
     playFingering(frets, volume, duration) {
@@ -335,10 +339,24 @@ class StringInstrument {
         }
     }
 
-    playChord(chord : FretChord, volume, duration) {
+    playChord(chord : FretChord, volume, duration : number, rhythm : Rhythm = null) {
         assert(this.isReady(), "音源还未加载完成")
         let frets = this.getFretsOfChord(chord)
-        this.playFingering(frets, volume, duration)
+        if (rhythm == null) {
+            this.playFingering(frets, volume, duration)
+        } else {
+            let curTime = 0
+            for (let beat of rhythm.beats) {
+                let beatDuration = (beat.duration / rhythm.duration) * duration
+                let beatVolume = volume / beat.stringNumbers.length
+                for (let stringNumber of beat.stringNumbers) {
+                    this.playString(stringNumber, frets[stringNumber - 1], beatVolume, curTime)
+                    console.log(stringNumber, frets[stringNumber - 1], beatVolume, curTime)
+                }
+
+                curTime += beatDuration
+            }
+        }
     }
 }
 

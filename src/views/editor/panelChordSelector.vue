@@ -171,9 +171,12 @@ export default {
     getEnv,
     tryFindFretChord(chord : Chord) : FretChord|Chord{
       if (!chord) return undefined;
-      let fretChord = FretChordManager.getFretChord(chord)
-      if (fretChord) return fretChord;
-      return chord;
+      try {
+        let fretChord = FretChordManager.getFretChord(chord)
+        return fretChord
+      } catch {
+        return chord;
+      }
     },
     close() {
       this.$emit("update:show", false);

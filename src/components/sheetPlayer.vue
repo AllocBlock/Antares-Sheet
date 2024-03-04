@@ -12,6 +12,7 @@ import { ENodeType, SheetNode } from "@/utils/sheetNode";
 import { Chord, FretChord } from "@/utils/chord";
 import { assert } from "@/utils/assert";
 import FretChordManager from "@/utils/fretChordManager";
+import { Rhythm } from "@/utils/rhythm";
 
 const props = defineProps({
   player: {
@@ -49,6 +50,8 @@ function unhighlightNode(node : SheetNode) {
   node.style.background = ''
 }
 
+const defaultRhythm = Rhythm.createFromString("{(124)3231323}")
+
 class SheetPlayer {
   ticker : IntervalTicker
   deltaTime : DeltaTimer
@@ -85,7 +88,7 @@ class SheetPlayer {
     while(this.curFrontIndex < this.points.length) {
       let point = this.points[this.curFrontIndex]
       if (this.curTime >= point.time) {
-        props.player.playChord(point.fretChord, .8, point.durationMs / 1000)
+        props.player.playChord(point.fretChord, .8, point.durationMs / 1000, defaultRhythm)
         highlightNode(point.node)
       } else {
         break;

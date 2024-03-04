@@ -66,9 +66,11 @@ const CHORD_ARRAY_LIST = [
     ["C7", 4, 1, 3, null, [], [[1, 1, 1, null]]],
     ["D7", 4, 1, 3, null, [], [[1, 2, 1, 4], [2, 3, 1, null]]],
     ["E7", 4, 1, 3, null, [], [[1, 1, 4, null], [2, 2, 3, null], [3, 2, 1, null]]],
+    ["Em7", 4, 1, 3, null, [], [[2, 2, 1, null], [3, 2, 3, null]]],
     ["F7", 4, 1, 3, null, [], [[1, 1, 2, null], [2, 2, 4, null], [3, 3, 3, null], [4, 3, 1, null]]],
     ["G7", 4, 1, 3, null, [], [[1, 1, 2, null], [2, 2, 3, null], [3, 2, 1, null]]],
     ["A7", 4, 1, 3, null, [], [[1, 1, 3, null]]],
+    ["Am7", 4, 1, 3, null, [], []],
     ["B7", 4, 1, 3, null, [], [[1, 2, 1, 4], [2, 3, 3, null]]],
 
     // 部分sus4
@@ -129,6 +131,7 @@ class FretChordManager {
             }
         }
 
+        throw RangeError(`chord ${name} not found`)
         return null
     }
 

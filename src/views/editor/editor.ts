@@ -117,6 +117,8 @@ export class SheetEditor {
   // other
   setKey(newKey : Key, shiftChord : boolean) { return this.core.setKey(newKey, shiftChord) }
   setSheet(meta : SheetMeta, root : SheetNode) {
+    NodeUtils.validateSheetTree(root)
+    NodeUtils.toEditingSheetTree(root);
     this.core.setMeta(meta)
     this.core.replaceSheet(root) 
   }

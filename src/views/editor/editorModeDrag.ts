@@ -228,8 +228,8 @@ class ShiftChordState {
     _shiftChordByStep(toLeft = true) {
         // TODO: 这会破坏下划线，如何保留？
         let isPlaceholder = NodeUtils.isPlaceholder(this.curNode.content)
-        // let nearbyNode = toLeft ? this.curNode.prevSibling() : this.curNode.nextSibling()
-        let nearbyNode = toLeft ? this.curNode.prevNode() : this.curNode.nextNode()
+        let nearbyNode = toLeft ? this.curNode.prevSibling() : this.curNode.nextSibling()
+        // let nearbyNode = toLeft ? this.curNode.prevNode() : this.curNode.nextNode()
         // 插入还是替换？
         // 如果当前是占位和弦，则替换
         // 否则，如果临近是文本，且是空文本，则替换

@@ -210,7 +210,7 @@ const nodeEventList = computed(() => {
 // player
 const playerInfo = ref({
   instrument: "Oscillator",
-  bpm: 120,
+  bpm: 60,
   stum: true,
   capo: 0,
   player: createUkulele(new Oscillator(new AudioContext())),
