@@ -46,6 +46,7 @@
               <div id="edit_raw_editor_button" class="button" @click="openRawEditorPanel">编辑原始曲谱</div>
               <div class="button" @click="saveSheet(true)">保存</div>
               <div class="button" @click="editor.loadSheetFromFile">载入</div>
+              <div class="button" @click="editor.exportSheetToFile(toolChord.attachedChords, `${sheetMeta.title}.atrs`)">导出</div>
             </div>
             <AntaresSheet id="sheet_box" :sheet-tree="sheetRoot" :events="nodeEventList" />
             <div id="sheet_padding"></div>

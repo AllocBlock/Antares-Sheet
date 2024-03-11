@@ -4,8 +4,9 @@ import SheetMeta from "@/utils/sheetMeta";
 import { NodeUtils, SheetNode } from "@/utils/sheetNode";
 import SheetEditorCore from "./editorCore";
 import { parseSheet } from "@/utils/sheetParser";
-import { Chord, Key } from "@/utils/chord";
+import { Chord, FretChord, Key } from "@/utils/chord";
 import { generateSheetText } from "@/utils/sheetWriter";
+import { createDownloadTextFile } from "@/utils/common";
 
 export class SheetEditor {
   core : SheetEditorCore
@@ -64,7 +65,6 @@ export class SheetEditor {
     download.remove()
   }
 
-  
   loadSheetFromFile() {
     let input = document.createElement('input');
     input.type = 'file';
@@ -77,6 +77,11 @@ export class SheetEditor {
     }
     input.click();
     input.remove()
+  }
+
+  exportSheetToFile(attachedChords : FretChord[], fileName : string) {
+    let sheetText = this.getSheetString(attachedChords)
+    createDownloadTextFile(sheetText, fileName)
   }
   
   editContent(node : SheetNode) {

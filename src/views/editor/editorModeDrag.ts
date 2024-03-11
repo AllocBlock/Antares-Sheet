@@ -234,11 +234,11 @@ class ShiftChordState {
         // 如果当前是占位和弦，则替换
         // 否则，如果临近是文本，且是空文本，则替换
         // 否则，插入
-        // /TODO: 如果是和弦怎么处理？
+        // TODO: 如果是和弦怎么处理？
 
-        if (nearbyNode.type != ENodeType.Text && isPlaceholder) return; // 如果已经是占位和弦，且临近也是和弦或其他标记，则不允许移动
+        if ((!nearbyNode || nearbyNode.type != ENodeType.Text) && isPlaceholder) return; // 如果已经是占位和弦，且没有临近、临近也是和弦或其他标记时，则不允许移动
 
-        let replace = nearbyNode.type == ENodeType.Text && (isPlaceholder || NodeUtils.isPlaceholder(nearbyNode.content))
+        let replace = nearbyNode && nearbyNode.type == ENodeType.Text && (isPlaceholder || NodeUtils.isPlaceholder(nearbyNode.content))
         let oldNode = this.curNode
         let isOldNodeTemp = this.isCurNodeTemp
 

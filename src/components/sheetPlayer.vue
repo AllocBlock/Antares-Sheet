@@ -50,7 +50,8 @@ function unhighlightNode(node : SheetNode) {
   node.style.background = ''
 }
 
-const defaultRhythm = Rhythm.createFromString("{(124)3231323}")
+// const defaultRhythm = Rhythm.createFromString("{(124)3231323}")
+const defaultRhythm = Rhythm.createFromString("(1234)xxx")
 
 class SheetPlayer {
   ticker : IntervalTicker
