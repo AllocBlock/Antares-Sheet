@@ -7,15 +7,14 @@
   </div>
 </template>
 
-<script>
-import Chord from "@/components/chord/index.vue"
+<script lang="ts">
 import SheetNodeRoot from "./root.vue"
-import { SheetNode } from "@/utils/sheetNode.js"
+import { SheetNode } from "@/utils/sheetNode"
 
 export default {
   name: "AntaresSheet",
   components: {
-    Chord, SheetNodeRoot
+    SheetNodeRoot
   },
   data() {
     return {

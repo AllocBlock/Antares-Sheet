@@ -37,7 +37,7 @@ export default {
       this.show = false
       if (this.callbackDestroy) {
         const fadeOutTime = 1.0;
-        setTimeout(this.callbackDestroy, fadeOutTime * 1000)
+        // setTimeout(this.callbackDestroy, fadeOutTime * 1000)
       }
     }
   }

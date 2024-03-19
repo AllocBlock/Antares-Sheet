@@ -5,7 +5,8 @@
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+import { NodeEventList } from '@/utils/elementEvent';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 // import SheetNodeGeneral from './general.vue';
 
 export default {
@@ -24,9 +25,9 @@ export default {
       }
     },
     events: {
-      type: Object,
+      type: NodeEventList,
       default: function() {
-        return {}
+        return new NodeEventList()
       }
     }
   },

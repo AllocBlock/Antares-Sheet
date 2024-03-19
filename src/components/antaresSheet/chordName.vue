@@ -6,26 +6,22 @@
 </template>
 
 <script>
-import ChordManager from "@/utils/chordManager.js";
+import { Chord } from "@/utils/chord";
 
 export default {
   name: "SheetChordName",
   props: {
-    chordName: {
-      type: String,
+    chord: {
+      type: Chord,
       required: true,
     },
   },
   computed: {
-    splitMainDecoration() {
-      if (ChordManager.isChord(this.chordName)) return ChordManager.splitChordDecoration(this.chordName)
-      else return [this.chordName, ""]
-    },
     main() {
-      return this.splitMainDecoration[0];
+      return this.chord.root.toString() + this.chord.quality;
     },
     decoration() {
-      return this.splitMainDecoration[1]
+      return this.chord.extension
     },
   },
 };

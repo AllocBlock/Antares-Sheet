@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "baseUrl": "",
+        "paths": {
+          "@/*": ["src/*"]
+        },
+        "target": "ES2021",
+        "allowJs": true,
+        "moduleResolution": "Node"
+    },
+    "exclude": [
+        "node_modules",
+        "dist",
+    ],
+}

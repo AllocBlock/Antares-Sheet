@@ -1,112 +1,102 @@
 <template>
-  <note-stum :direction="direction" :style="getStumStyle()">
-    <TabSymbol class="note_stum_arrow flex_center" :svg-name="svgArrowName" />
-    <TabSymbol class="note_stum_head flex_center" :svg-name="svgHeadName" />
-    <TabSymbol class="note_stum_body flex_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)" :key="i" />
-    <TabSymbol class="note_stum_tail flex_center" :svg-name="svgTailName" />
-  </note-stum>
+  <span class="note_stum" :direction="direction" :style="getStumStyle()">
+    <TabSymbol class="note_stum_arrow flex_hv_center" :svg-name="svgArrowName" />
+    <TabSymbol class="note_stum_head flex_hv_center" :svg-name="svgHeadName" />
+    <TabSymbol class="note_stum_body flex_hv_center" :svg-name="svgBodyName" v-for="i in (range.end - range.start)"
+      :key="i" />
+    <TabSymbol class="note_stum_tail flex_hv_center" :svg-name="svgTailName" />
+  </span>
 </template>
 
-<script>
+<script setup lang="ts">
+import { inject, Ref, ref } from 'vue';
 import TabSymbol from './symbol.vue'
+import { TabConfig, TabSingleNote } from './tabParser';
 
-export default {
-  name: "TabStum",
-  components: {
-    TabSymbol
-  },
-  data() {
-    return {
-      svgArrowName: "",
-      svgHeadName: "",
-      svgBodyName: "",
-      svgTailName: "",
-      range: {
-        start: 0,
-        end: 0,
-      },
-      direction: "up",
-    };
-  },
-  props: {
-    note: {
-      type: Object,
-      required: true,
-    },
-    globalConfig: {
-      type: Object,
-      required: true,
-    },
-  },
-  created() {
-    this.range = this.getRange();
+const tabConfig = inject<Ref<TabConfig>>("tabConfig")
 
-    this.svgArrowName = "StumArrow";
-    if (this.note.config.a) {
-      this.svgHeadName = "ArpeggioHead";
-      this.svgBodyName = "ArpeggioBody";
-      this.svgTailName = "ArpeggioTail";
-      this.direction = this.mapStumDirection(this.note.config.a);
-    } else if (this.note.config.s) {
-      this.svgHeadName = "StrokeHead";
-      this.svgBodyName = "StrokeBody";
-      this.svgTailName = "StrokeTail";
-      this.direction = this.mapStumDirection(this.note.config.s);
+const svgArrowName = ref("")
+const svgHeadName = ref("")
+const svgBodyName = ref("")
+const svgTailName = ref("")
+const range = ref({ start: 0, end: 0, })
+const direction = ref("up")
+
+const props = defineProps({
+  note: {
+    type: TabSingleNote,
+    required: true,
+  },
+})
+
+
+function mapStumDirection(configDirection) {
+  switch (configDirection) {
+    case "u":
+      return "up";
+    case "d":
+      return "down";
+    default:
+      throw "不支持的扫弦方向";
+  }
+}
+
+function getRange() {
+  let frets = props.note.frets;
+  let stumStartIndex = -1;
+  for (let i = 0; i < frets.length; ++i) {
+    if (frets[i] != "-" && i < frets.length - 1) {
+      if (stumStartIndex < 0) {
+        stumStartIndex = i;
+      }
     } else {
-      throw "不支持的扫弦类型";
+      if (stumStartIndex >= 0) {
+        let stumEndIndex = (frets[i] != "-" ? i : i - 1)
+        return {
+          start: stumStartIndex,
+          end: stumEndIndex,
+        };
+      }
     }
-  },
-  methods: {
-    mapStumDirection(configDirection) {
-      switch (configDirection) {
-        case "u":
-          return "up";
-        case "d":
-          return "down";
-        default:
-          throw "不支持的扫弦方向";
-      }
-    },
-    getRange() {
-      let frets = this.note.frets;
-      let stumStartIndex = -1;
-      for (let i = 0; i < frets.length; ++i) {
-        if (frets[i] != "-" && i < frets.length - 1) {
-          if (stumStartIndex < 0) {
-            stumStartIndex = i;
-          }
-        } else {
-          if (stumStartIndex >= 0) {
-            let stumEndIndex = (frets[i] != "-" ? i : i - 1)
-            return {
-              start: stumStartIndex,
-              end: stumEndIndex,
-            };
-          }
-        }
-      }
-    },
-    getStumStyle() {
-      let stringNum = this.globalConfig.getInt("stringNum")
-      let stumBodyNum = this.range.end - this.range.start
-      return {
-        top: `${(this.range.start / (stringNum - 1)) * 100}%`,
-        height: `${(stumBodyNum / (stringNum - 1)) * 100}%`,
-      };
-    },
-  },
-};
+  }
+}
+
+function getStumStyle() {
+  let stringNum = tabConfig.value.getInt("stringNum")
+  let stumBodyNum = range.value.end - range.value.start
+  return {
+    top: `${(range.value.start / (stringNum - 1)) * 100}%`,
+    height: `${(stumBodyNum / (stringNum - 1)) * 100}%`,
+  };
+}
+
+range.value = getRange();
+svgArrowName.value = "StumArrow";
+if (props.note.config.arpeggio) {
+  svgHeadName.value = "ArpeggioHead";
+  svgBodyName.value = "ArpeggioBody";
+  svgTailName.value = "ArpeggioTail";
+  direction.value = mapStumDirection(props.note.config.arpeggio);
+} else if (props.note.config.strum) {
+  svgHeadName.value = "StrokeHead";
+  svgBodyName.value = "StrokeBody";
+  svgTailName.value = "StrokeTail";
+  direction.value = mapStumDirection(props.note.config.strum);
+} else {
+  throw "不支持的扫弦类型";
+}
 </script>
 
 <style scoped>
-note-stum {
+.note_stum {
   position: absolute;
   width: 10px;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
-note-stum[direction="up"] {
+
+.note_stum[direction="up"] {
   transform: scaleY(-1);
 }
 

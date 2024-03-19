@@ -28,7 +28,7 @@ export default {
 }
 </script>
 
-<style src="./common.css"></style>
+<style src="@/common.css"></style>
 
 <style>
 /* top wrapper */

@@ -37,7 +37,7 @@ export default {
   },
   methods: {
     openSheet(sheetInfo) {
-      window.location.href = `./imgSheet?sheet=${sheetInfo.title}`
+      this.$router.push(`./imgSheet?sheet=${sheetInfo.title}`)
     },
     onSearch() {
       const searchText = this.searchText.toLowerCase()

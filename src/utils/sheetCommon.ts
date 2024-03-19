@@ -1,6 +1,6 @@
-import { getQueryVariable } from "@/utils/common.js";
+import { getQueryVariable } from "@/utils/common";
 import Request from "@/utils/request";
-import { Project } from "@/utils/project";
+import { ProjectInfo } from "@/utils/project";
 
 export enum ESheetSource {
     UNKNOWN,
@@ -8,8 +8,21 @@ export enum ESheetSource {
     PROJECT
 }
 
+async function loadLocalSheets() : Promise<ProjectInfo[]> {
+    let jsonInfos = await Request.get("global.json") as object[]
+    // json to class
+    let infos = []
+    for (let jsonInfo of jsonInfos) {
+        let info = new ProjectInfo(null, null)
+        Object.assign(info, jsonInfo)
+        infos.push(info)
+    }
+    return infos
+}
+
+
 // load sheet data by url, return source type, data and pid (if it's from project)
-export async function loadSheetFromUrlParam() : Promise<[ESheetSource, string, string]>{
+export async function loadSheetByUrlParam() : Promise<[ESheetSource, any, string]>{
     // load from file
     let sheetName = getQueryVariable("sheet");
     if (sheetName) {
@@ -18,17 +31,16 @@ export async function loadSheetFromUrlParam() : Promise<[ESheetSource, string, s
     }
     
     // load by pid
+    const localSheets = await loadLocalSheets()
     let pid = getQueryVariable("pid");
     if (pid) {
-        let projectInfo = Project.get(pid)
-        if (projectInfo) {
-            return [ESheetSource.PROJECT, projectInfo.sheetData, pid]
-        }
-        else {
-            console.warn(`未找到pid为${pid}的项目`)
+        for (let projectInfo of localSheets) {
+            if (projectInfo.pid == pid) {
+                return [ESheetSource.PROJECT, projectInfo.sheetData, pid]
+            }
         }
     }
 
-    // load default
+    console.warn(`未找到pid为${pid}的项目`)
     return [ESheetSource.UNKNOWN, "", null]
 }

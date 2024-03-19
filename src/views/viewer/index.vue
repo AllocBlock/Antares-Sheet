@@ -4,7 +4,7 @@
 
 <script type="module">
 import { defineAsyncComponent } from "vue";
-import { getEnv } from "@/utils/common.js";
+import { getEnv } from "@/utils/common";
 
 export default {
   name: "SheetViewer",

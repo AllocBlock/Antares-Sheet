@@ -7,7 +7,7 @@
         未找到任何曲谱...
       </div>
       <template v-else>
-        <div v-for="project in projectInfos" class="sheet_block button" @click="openProject(project)">
+        <div v-for="project in projectInfos" class="sheet_block button" @click="openProject(project)" :key="project.pid">
           <div class="sheet_name">{{ project.sheetMeta.title }}</div>
           <div class="sheet_singer">—— {{ project.sheetMeta.singer }}</div>
         </div>
@@ -17,7 +17,8 @@
 </template>
 
 <script>
-import Request from "@/utils/request.js"
+import Request from "@/utils/request"
+import { ELoadState } from "@/utils/common"
 
 export default {
   name: "UserSpace",
@@ -42,7 +43,7 @@ export default {
   },
   methods: {
     openProject(project) {
-      window.location.href = `/sheet?pid=${project.pid}`
+      this.$router.push(`/sheet?pid=${project.pid}`)
     },
     onSearch() {
       const searchText = this.searchText.toLowerCase()

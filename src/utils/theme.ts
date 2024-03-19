@@ -1,6 +1,6 @@
 import Color from 'color'
 
-function toRgbString(color) {
+function toRgbString(color : Color) : string {
     color = new Color(color)
     return `${color.red()}, ${color.green()}, ${color.blue()}`
 }
@@ -20,7 +20,6 @@ export class Theme {
         this.foregroundColorRgb = toRgbString(foregroundColor)
         this.themeColor = themeColor
         this.themeColorRgb = toRgbString(themeColor)
-        console.log(themeColor, this.themeColorRgb)
     }
 }
 

@@ -1,35 +1,22 @@
 <template>
-  <TabNoteBase 
-    v-if="note.type == 'single'" 
-    :note="note" 
-    :global-config="globalConfig"
-  />
-  <TabNoteConnect 
-    v-else 
-    :note="note" 
-    :global-config="globalConfig"
-  />
+  <TabNoteSingle v-if="isSingleNote" :note="(note as TabSingleNote)" />
+  <TabNoteConnect v-else :note="(note as TabConnectNote)" />
 </template>
 
-<script>
-import TabNoteBase from "./noteBase.vue";
+<script setup lang="ts">
+import { computed } from "vue";
+import TabNoteSingle from "./noteSingle.vue";
 import TabNoteConnect from "./noteConnect.vue";
+import { TabConnectNote, TabSingleNote } from "./tabParser";
 
-export default {
-  name: "TabNote",
-  components: {
-    TabNoteBase,
-    TabNoteConnect,
-  },
-  props: {
-    note: {
-      type: Object,
-      required: true,
-    },
-    globalConfig: {
-      type: Object,
-      required: true,
-    },
-  },
-};
+const props = defineProps({
+  note: {
+    type: [TabSingleNote, TabConnectNote],
+    required: true,
+  }
+})
+
+const isSingleNote = computed<boolean>(() => {
+  return props.note instanceof TabSingleNote
+})
 </script>

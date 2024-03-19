@@ -1,9 +1,17 @@
 <template>
-  <text v-on="localEvents" :style="node.style ?? {}">{{node.content}}</text>
+  <text :style="node.style ?? {}"
+    @mouseenter="events.text.triggerMouseEnter($event, node)"
+    @mouseleave="events.text.triggerMouseLeave($event, node)"
+    @mousedown="events.text.triggerMouseDown($event, node)"
+    @dblclick="events.text.triggerDoubleClick($event, node)"
+    @contextmenu="events.text.triggerContextMenu($event, node)"
+  >{{node.content}}</text>
 </template>
 
 <script>
-import { SheetNode } from '@/utils/sheetNode.js';
+import { SheetNode } from '@/utils/sheetNode';
+import { NodeEventList } from '@/utils/elementEvent';
+
 export default {
   name: "SheetNodeText",
   data() {
@@ -22,9 +30,9 @@ export default {
       }
     },
     events: {
-      type: Object,
+      type: NodeEventList,
       default: function() {
-        return {}
+        return new NodeEventList()
       }
     }
   },

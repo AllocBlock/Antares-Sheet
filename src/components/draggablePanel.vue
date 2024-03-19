@@ -16,8 +16,8 @@
 </template>
 
 <script>
-import { setPos, getOuterSize, getWindowSize } from '@/utils/common.js';
-import { MouseDelta } from '@/utils/mouse.js';
+import { setPos, getOuterSize, getWindowSize } from '@/utils/common';
+import { MouseDelta } from '@/utils/mouse';
 
 export default {
   name: "DraggablePanel",

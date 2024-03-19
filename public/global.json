@@ -186,5 +186,621 @@
             "extras": {}
         },
         "sheetData": "$title \"顽固\"\n$singer 五月天\n$by 锦瑟\n$originalKey G\n$sheetKey G\n$chords \n$rhythms \n$createTime 2023/6/6 23:14:21\n\n我身[G]在 当时你 幻想[Bm]的 未来里\r\n这个[C]狂热和冲动 早已[D]冷却的如今\r\n你顽{[C]固 的神[Am]情} 消失{[Bm]在 镜子[Em]里}\r\n只留[Am]下 时光消逝的痕[D]迹\r\n每颗[G]心 的相信 每个[Bm]人 的际遇\r\n每个[C]故事的自己 反覆[D]地问着自己\r\n这些{[C]年 让步[Am]的} 你是{[Bm]否 会叹[Em]息}\r\n有什[C]么 是你永远不放[D]弃\r\n\n一次[C]一次你 吞下[Bm]了泪滴\r\n[Am]_一次一次 拼回[D]破碎自己\r\n一天[C]一天你 是否{[Bm]还相[Em]_}信\r\n[Am]_活在你心深处 [D]那顽固自己\r\n\r\n你追[C]逐 你呼[Am]吸 你嚣[Bm]张 的任[Em]_性\r\n鼻青脸肿的哭过 若无其事的忘记\r\n如果你 能预知 这条路 的陷阱\r\n我想你 依然错得很过瘾\r\n走过的 叫足迹 走不到 叫憧憬\r\n学会收拾起叛逆 学会隐藏了表情\r\n卸下了 这面具 我想说 谢谢你\r\n谢谢你 一路陪我到这里\r\n一次[C]一次你 吞下[Bm]了泪滴\r\n[Am]_一次一次 拼回[D]破碎自己\r\n一天[C]一天你 是否[Bm]还相[Em]_信\r\n[Am]_活在你心深处 [D]那顽固的自己\r\n一次一次你 吞下了泪滴\r\n一次一次 拼回破碎自己\r\n一天一天你 是否还相信\r\n活在你心深处 那顽固的\r\n你当时相信 的那些事情\r\n会在如今 变成美丽风景\r\n每当我迟疑 从不曾忘记\r\n活在我心深处 那顽固的自己\r\n"
+    },
+    
+    {
+        "pid": "yhFnVnIW",
+        "createTime": "2023-06-06T14:37:01.111Z",
+        "updateTime": "2023-07-06T13:30:54.982Z",
+        "sheetMeta": {
+            "title": "夜夜夜夜",
+            "singer": "齐秦",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "D",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "C",
+                "_accidental": ""
+            },
+            "chords": [],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"夜夜夜夜\"\n$singer 齐秦\n$by 锦瑟\n$originalKey D\n$sheetKey C\n$rhythms \n$createTime 2023/7/6 21:30:54\n\n[F]想问天你[G]在哪里\r\n[Em]我想问问[Am]我自己\r\n一开始我聪明 结束我聪明\r\n聪明的几乎的毁掉了我自己\r\n[C]想问天[G]问大地\r\n[Am]或者是迷信[Em]问问宿命\r\n放弃所有 抛下所有\r\n让我飘流在安静的夜夜空里\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n想问天问大地\r\n或者是迷信问问宿命\r\n放弃所有 抛下所有\r\n让我飘流在安静的夜夜空里\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n你也不必牵强再说爱我\r\n反正我的灵魂已片片凋落\r\n慢慢的拼凑 慢慢的拼凑\r\n拼凑成一个完全不属于真正的我\r\n我不愿再放纵\r\n我不愿每天每夜每秒飘流\r\n也不愿再多问再多说再多求我的梦\r\n我不愿再放纵\r\n我不愿每天每夜每秒飘流\r\n也不愿 再多问再多说再多求\r\n我的梦\r\n",
+        "sync": false,
+        "isPublic": false,
+        "tags": [],
+        "description": "",
+        "title": "未命名项目"
+    },
+    {
+        "pid": "thsLwzk8",
+        "createTime": "2023-06-06T15:05:01.404Z",
+        "updateTime": "2024-01-25T18:07:53.896Z",
+        "sheetMeta": {
+            "title": "First Day",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "G",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "G",
+                "_accidental": ""
+            },
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"First Day\"\n$singer 五月天\n$by 锦瑟\n$originalKey G\n$sheetKey G\n$rhythms \n$createTime 2024/1/26 02:07:53\n\n!(前奏) ![C] ![C] ![C] ![C] ![C] ![C] ![C] ![C] ![G] ![G] ![D] ![D] \n[G]下过雨的夏[D]天傍晚 [Em]我都会期[Bm]待\n唱歌的[C]蝉 嘿 [G]把星星都吵醒 [A]月光晒了[D]很凉快\n[G]就是这样[D]回忆起来 [Em]第一次告[Bm]白\n尴尬的[C]我看 [G]爱装得很哲学[A]的你 其实[D]很可爱\n你说[Am]活在明天[B]活在期待 {[G]不如活得[D]今}天很自[A]在\n我说[C]我懂了会不[G]会太快 未[bE]来第一天要展[D]开 [D]_\n\n第一天[bB]_我存在[F]_ 第一次[Gm]_呼吸畅快[Dm]_\n站在[bE]地上的脚踝[bB]_ 因为你[Cm]而有真实感[F]_\n第一天[bB]_我存在[Cm]_ 第一次[Dm]_能飞起来[bE]_\n爱是[bE]腾空的魔幻[bB]_ 第一天[Cm]的纯真色[F]彩 它总是[bA]永远那么灿烂[bB]_\n\n!(间奏) ![bB] ![bB] ![bB] ![bB] ![G] ![G] ![D] ![D]\n嘿 [G]你很搞笑[D]你很奇怪 [Em]你头发很[Bm]乱\n有的时[C]候 你[G]又突然为我的[A]事情 变得[D]很勇敢\n[G]这么说来[D]很不单纯 [Em]你陪我看[Bm]海\n海那么[C]蓝 我[G]又好像 不应该[A]把你想得[D]有点坏\n坏的[Am]是我发现[B]不知不觉 {[G]不见到你[D]不}是很习[A]惯\n你的[C]眼神里好像[G]也期待 期[bE]待不一样的未[D]来 [D]_\n\n第一天[bB]_我存在[F]_ 第一次[Gm]_呼吸畅快[Dm]_\n站在[bE]地上的脚踝[bB]_ 因为你[Cm]而有真实感[F]_\n第一天[bB]_我存在[Cm]_ 第一次[Dm]_能飞起来[bE]_\n爱是[bE]腾空的魔幻[bB]_ 第一天[Cm]的纯真色[F]彩 它总是[bA]永远那么灿烂\n\n蓝色的[bA]海 [bA]_ 海上的[bE]_云[bE]_ 云的那[Cm]端  [Cm]_\n不转弯[bA]_ [bA]_ 到未来[F]_ [F]_ [F]_ [F]_\n\n!(间奏) ![G] ![D] ![Em] ![Bm] ![C] ![G] ![A] ![D]\n你说[Am]活在明天[B]活在期待 {[G]不如活得[D]今}天很自[A]在\n我说[C]我懂了会不[G]会太快 未[bE]来第一天要展[D]开 [D]_\n\n第一天[bB]_我存在[F]_ 第一次[Gm]_呼吸畅快[Dm]_\n站在[bE]地上的脚踝[bB]_ 因为你[Cm]而有真实感[F]_\n第一天[bB]_我存在[Cm]_ 第一次[Dm]_能飞起来[bE]_\n爱是[bE]腾空的魔幻[bB]_ 第一天[Cm]的纯真色[F]彩 它总是[bA]永远那么灿烂[bB]_\n[bA]永远那么灿烂[bB]_ [bA]永远那么灿烂[bB]_ [bB]_ \nFirst [bB]day  First [bB]day  First [bB]day  First [bB]day\nFirst [bB]day  To[bB]day      First [bB]day  First [bB]day\nFirst [bB]day  First [bB]day  First [bB]day  First [bB]day\nFirst [bB]day  To[bB]day      Every[bB]day   First [bB]day\n",
+        "sync": true,
+        "isPublic": false,
+        "tags": [],
+        "description": "",
+        "title": "未命名项目"
+    },
+    {
+        "pid": "QL66CcEk",
+        "createTime": "2023-06-06T15:05:46.053Z",
+        "updateTime": "2023-06-28T16:34:53.301Z",
+        "sheetMeta": {
+            "title": "爱情的模样",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "F",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "F",
+                "_accidental": ""
+            },
+            "chords": [],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"爱情的模样\"\n$singer 五月天\n$by 锦瑟\n$originalKey F\n$sheetKey F\n$rhythms \n$createTime 2023/6/29 00:34:53\n\n!(前奏) (按住一弦三品) ![F] ![C] ![Cm] ![D] ![bB] ![F] ![G] ![C] \n\n{[F]_你是巨大[C]_}的海洋 [Cm]_我是雨下[D]_在你身上\n我{[bB]失去了自己的形[F]_状 我看到远方[G]_ 爱情的模样[C]_}\n[F]_曾经孤单[C]_的彷徨 [Cm]_曾经相信[D]_曾经失望\n你[bB]穿过了重重的迷[F]_惘 那爱的慌张[G]_ 终于要解放[C]_ \n\n你是[F]谁 叫我狂恋[C]_ 叫我勇[Dm]敢地挑战全世界[Am]_\n在[bB]一样的身体里面[F]_ 一样有[Gm]爱与被爱的感觉[C]_\n我爱[F]谁 已无所谓[C]_ 没有谁[Dm]能将爱情划界限[Am]_\n在[bB]一样的身体里面[F]_ 迷样的{[Gm]魔力却是[C]更}强烈[F]_\n\n!(间奏) ![F] ![C] ![bE] ![D] ![Fm] ![C] ![Gm] ![C] \n\n[F]_星星在夜[C]_空中闪亮 [Cm]_星空下我[D]_不停流浪\n此[bB]生我无知的奔[F]_忙 因为你眼光[G]_ 都化成了光[C]_亮\n[F]_这世界全[C]_部的漂亮 [Cm]_不过你的[D]_可爱模样\n你[bB]让我举双手投[F]_降 跨出了城墙[G]_ 长出了翅膀[C]_\n\n你是[F]谁 叫我狂恋[C]_ 叫我勇[Dm]敢地挑战全世界[Am]_\n在[bB]一样的身体里面[F]_ 一样有[Gm]爱与被爱的感觉[C]_\n我爱[F]谁 已无所谓[C]_ 没有谁[Dm]能将爱情划界限[Am]_\n在[bB]一样的身体里面[F]_ 迷样的{[Gm]魔力却是[C]更}强烈[F]_ {[F]_ {[C]_ [bE]_}} [D]_\n\n[G]_你是巨大[D]_的海洋 [Dm]_我是雨下在你身上[E]_\n我[C]失去了自己的形[G]_状 我看到远方[A]_ [D]_\n爱情的[G]模样 [D]_ [Dm]_ [E]_ [bE]_ [G]_ [A]_ [D]_\n哦[G]噢…… [D]_ [Dm]_ [E]_ [bE]_ [G]_ [A]_ [D]_ [G]_\n",
+        "sync": false,
+        "isPublic": false,
+        "tags": [],
+        "description": "",
+        "title": "未命名项目"
+    },
+    {
+        "pid": "2x9IVm4b",
+        "createTime": "2023-06-06T15:06:13.231Z",
+        "updateTime": "2023-06-06T15:09:57.213Z",
+        "sheetMeta": {
+            "title": "年轻就要对味",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": "F",
+            "sheetKey": "F",
+            "chords": [
+                "F",
+                "Gm",
+                "Am",
+                "#A",
+                "C",
+                "Dm",
+                "bE"
+            ],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"年轻就要对味\"\n$singer 五月天\n$by 锦瑟\n$originalKey F\n$sheetKey F\n$chords F Gm Am #A C Dm bE\n$rhythms \n$createTime 2023/6/6 23:09:57\n\n[F]_ [F]_ [F]_ {[bE]_ [C]_} [F]_ [F]_ [F]_ {[bE]_ [C]_}\n[F]你就像麻辣锅 [C]有了你很快活\n[Dm]一天不吃就难[Am]过\n[#A]你就像黄金甲 [F]穿着你很暖和\n不[Gm]怕有人欺[C]负我\n[F]眼神可以交流 [C]心跳可以沟通\n[Dm]有钱可以借你[Am]用\n[#A]一点点的倔强 [F]一点点的幽默\n对[Gm]味就是有[C]你有我\n\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的[F]幸福更浓\n不[Gm]说你也能够[C]_懂\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的{[Am]快乐更[F]_}多\n对[Gm]味 [C]_是我的朋[F]友[F]_ [F]_ {[bE]_ [C]_}\n\n[F]你就像方便面 [C]只要热水一冲\n[Dm]友情马上香又[Am]浓\n[#A]水煮麻辣笑话 [F]红烧热情感动\n我[Gm]说年轻就[C]要对味 不[C]要理由\n\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的[F]幸福更浓\n不[Gm]说你也能够[C]_懂\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都[F]感[F]_动\n对味的[#A]人 对味的{[Am]快乐更[F]_}多\n对[Gm]味 [C]_是我的朋[#A]友  [Am]_  [bE]_ [C]_ [C]_\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的[F]幸福更浓\n不[Gm]说你也能够[C]_懂\n有[F]你陪我一起[C]疯\n天天放烟[#A]火分分都感[F]_动\n对味的[#A]人 对味的{[Am]快乐更[F]_}多\n对[Gm]味 [C]_是我的朋[F]友 [F]_\n[F]哦 {[bE]_ [C]_}  [F]哦 [F]_ [F]_ {[bE]_ [C]_} [F]_\n",
+        "sync": false,
+        "isPublic": false,
+        "tags": [],
+        "description": "",
+        "title": "未命名项目"
+    },
+    {
+        "pid": "LCGKTf6p",
+        "createTime": "2023-06-06T15:10:02.979Z",
+        "updateTime": "2023-06-28T16:37:20.650Z",
+        "sheetMeta": {
+            "title": "如烟",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "A",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "C",
+                "_accidental": ""
+            },
+            "chords": [
+                {
+                    "root": {
+                        "_base": "C",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "F",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "G",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "7"
+                }
+            ],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"如烟\"\n$singer 五月天\n$by 锦瑟\n$originalKey A\n$sheetKey C\n$chords C Dm Em F G E7\n$rhythms \n$createTime 2023/6/29 00:37:20\n\n!(前奏) ![C]\n我[Dm]坐在床前 望[F]着窗外回[C]忆满天[C]_\n生命是[Dm]华丽错觉 时[F]间是贼偷[C]走一切[C]_\n七岁的[Dm]那一年 抓住[F]那只蝉 以[C]为能抓住夏[Em]_天\n十七岁[Dm]的那年 吻过[F]他的脸 就[G]以为和他能永远[G]_\n\n有没有[C]那么一种永远 永[G]_远不改变\n[Em]拥抱过的美丽 都再[Am]_也不破碎\n[Dm]让险峻岁月不能 在[F]_脸上撒野\n[G]让生离和死别都遥远[G]_ 有谁[F]能听见 [F]_ [C]_  [C]\n\n我[Dm]坐在床前 转[F]过头看谁[C]在沉睡[C]_\n那一张[Dm]苍老的脸 好[F]像是我紧[C]闭双眼[C]_\n曾经是[Dm]爱我的 和我[F]深爱的 都[C]围绕在我身![Em]边\n带不走[Dm]的那些 遗憾[F]和眷恋 就[G]化成最后一滴泪[G]_\n\n有没有[C]那么一滴眼泪 能[G]_洗掉后悔\n[Em]化成大雨降落在 回[Am]_不去的街\n[Dm]再给我一次机会 将[F]_故事改写\n还[G]欠了他一生的 一[G]句抱歉\n有没有[C]那么一个世界 永[G]_远不天黑\n[Em]星星太阳万物都 听[Am]_我的指挥\n[Dm]月亮不忙着圆缺 春[F]_天不走远\n[G]树梢紧紧拥抱着树[G]_叶 有谁[C]能听见[C]\n\n\n耳[#G]际眼前此[#G]生重演 是我[Cm]来自漆黑 而又[Cm]回归漆黑\n人[#G]间瞬间天[#G]地之间 下次[F]我又是谁[G]\n\n\n有没有[C]那么一朵玫瑰 永[G]_远不凋谢\n[Em]永远骄傲和完美 永[Am]_远不妥协\n[Dm]为何人生最后会像[F]_ 一张纸屑\n还[G]不如一片花瓣 曾[G]经鲜艳\n有没有[C]那么一张书签 停[G]_止那一天\n[Em]最单纯的笑脸和 最[Am]_美那一年\n[Dm]书包里面装满了 蛋[F]_糕和汽水\n[G]双眼只有无猜和无[G]_邪 让我们[F]无法无[G]天\n有没有[C]那么一首诗篇 找[G]_不到句点\n[Em]青春永远定居在 我[Am]_们的岁月\n[Dm]男孩和女孩都有 吉[F]_他和舞鞋\n笑[G]忘人间的苦痛 只[G]有甜美\n有没有[C]那么一个明天 重[G]_头活一遍\n[Em]让我再次感受 曾挥[Am]_霍的昨天\n[Dm]无论生存或生活 我[F]_都不浪费\n[G]不让故事这么的后[G]_悔 有谁[F]能听见[F]_ 我不[F]要告别[F]_\n\n我[Dm]坐在床前 看[F]着指尖已[C]经如烟",
+        "sync": false,
+        "isPublic": false,
+        "tags": [],
+        "description": "",
+        "title": "未命名项目"
+    },
+    {
+        "pid": "DqLmd8EZ",
+        "createTime": "2023-06-06T15:12:44.108Z",
+        "updateTime": "2023-07-12T14:01:03.058Z",
+        "sheetMeta": {
+            "title": "听不到",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "A",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "F",
+                "_accidental": ""
+            },
+            "chords": [],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"听不到\"\n$singer 五月天\n$by 锦瑟\n$originalKey A\n$sheetKey F\n$rhythms \n$createTime 2023/7/12 22:01:03\n\n!(前奏) ![F] ![C] ![bB] ![C] ![bB] ![F] ![bB] ![C] \n\n[F]夜 黑夜 寂[C]寞的夜里 [Dm]气 生气 对[Am]自己生气\n[bB]软弱的[F]电话 [Gm]又打 [C]_给你\n[F]想 听你 那[C]边的空气 [Dm]有 什么 精[Am]采的话题\n[bB]你还是[F]温柔 [Gm]给我 婉转 [C]的距离\n\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么大 为何[Gm]我要忘你[C]无处逃\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么小 为何[Gm]我的真心 [C]_ 你听不到\n\n!(前奏) ![F] ![C] ![bB] ![C] ![bB] ![F] ![bB] ![C] \n\n[F]会 很会 伪[C]装我自己 [Dm]你 不该 背[Am]我的秘密\n[bB]沉重都[F]给我 [Gm]微笑 [C]_给你\n[F]奔 狂奔 空[C]旷的感情 [Dm]走 暴走 暴[Am]走的伤心\n[bB]透明的[F]叹息 [Gm]最后 还是 我[C]的秘密\n\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么大 为何[Gm]我要忘你[C]无处逃\n我的[F]声音在笑 [C]泪在飙 [Dm]电话那头的你[Am]可知道\n[bB]世界若是 那[F]_么小 为何[Gm]我的真心 [C]_ 你听不到\n[F]_ [C]_你听不到 [Dm]_  [Am]_ 你听不到 [bB]_ [F]_ {[Gm]_  [bB]_} [C]_\n\n[F]_ [F]_ [F]_ [F]_\n[C]_ 听不到听不[C]到我的执着 [bB]_扑通扑[bB]_通一直在跳\n[C]_ 直到你有一[C]天能够明了 我[bB]做得到 我[C]做得到 [C]_ [C]_\n\n我的[G]声音在笑 [D]泪在飙 [Em]电话那头的你{[Bm]可知道  {[Bm]_   [bBm]_}} \n[C]世界若是 那[G]_么大 为何{[Am]我要忘{[Em]_你[C]_}} [D]无处逃\n我的[G]声音在笑 [D]泪在飙 [Em]电话那头的你{[Bm]可知道  {[Bm]_   [bBm]_}} \n[C]世界若是 那[G]_么小 为何{[Am]我的真{[Em]_心[C]_}} [D]_ 你听不到\n\n[G]_ [D]_你听不到 [Em]_ [Bm]_ 你听不到 [C]_ [G]_ {[Am]_  {[Em]_  [C]_}} [D]_\n[G]啦啦啦啦啦…… [D]_ [Em]_  {[Bm]_  {[Bm]_   [bBm]_}}  [C]_ [G]_ {[Am]_  {[Em]_  [C]_}} [D]_ \n\n[G]_ [D]_ [Em]_  [Bm]_ [C]_ [G]_ [Am]_ [D]_ [G]_\n\n",
+        "sync": true,
+        "isPublic": true,
+        "tags": [],
+        "description": "",
+        "title": "未命名项目"
+    },
+    {
+        "pid": "TTBTaXfR",
+        "createTime": "2023-06-14T14:41:12.502Z",
+        "updateTime": "2023-07-11T16:01:28.875Z",
+        "sheetMeta": {
+            "title": "年轻就要对味",
+            "singer": "五月天",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "C",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "F",
+                "_accidental": ""
+            },
+            "chords": [],
+            "rhythms": "",
+            "extras": {}
+        },
+        "sheetData": "$title \"年轻就要对味\"\n$singer 五月天\n$by 锦瑟\n$originalKey C\n$sheetKey F\n$rhythms \n$createTime 2023/7/12 00:01:28\n\n",
+        "sync": false,
+        "isPublic": false,
+        "tags": [],
+        "description": ""
+    },
+    {
+        "pid": "cBiEEQtA",
+        "createTime": "2024-01-22T17:19:27.440Z",
+        "updateTime": "2024-02-28T12:03:55.401Z",
+        "sheetMeta": {
+            "title": "I'm OK",
+            "singer": "陶喆",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "E",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "C",
+                "_accidental": ""
+            },
+            "chords": [
+                {
+                    "root": {
+                        "_base": "C",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "F",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "G",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "A",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "F",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "F",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "7"
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "7"
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "7"
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": "7"
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": "b"
+                    },
+                    "quality": "",
+                    "extension": ""
+                }
+            ],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"I'm OK\"\n$singer 陶喆\n$by 锦瑟\n$originalKey E\n$sheetKey C\n$chords C Dm Em F G Am E Fm F7 E7 D7 Em7 bE\n$rhythms \n$createTime 2024/2/28 20:03:55\n\n!(黄专版开头，钢琴，电话失真)\n[C]Sorry我不在 请在哔[Em7]_声后留言 我正在[Am]_寂寞的超级市场 [Em]找着生力面\n你永远[Dm]_不会回来 我的日[Em7]_记变空白 希望有{[F7]_一天我会[E7]_}ok[Am]_ 希望有{[F7]_一天我会[E7]_}ok[Am]_\n\n!(前奏，口哨) ![C]![Em]![F]![Fm] ![C]![Em]![F]![Fm] \n[C]Sorry 我不在 请在哔[Em7]_声后留言 我在忙[Am]_着放空 请你允许[Em]我废在梦里\n他永远[Dm]_不再回来 回忆一[Em7]_大片空白 希望有{[F7]_一天我会[E7]_}ok[Am]_\n是谁忘记[C]_了初心 还是半[Em7]_途就放弃 现在只[Am]_能苦笑对着镜头[Em]傻傻比爱心\n或许不[Dm]_必再期待 直接 can[Em7]-cel 比较快 再多遗{[F7]_憾也不能 [E7]_}重来[Am]_希望那{[F7]_一天我还[E7]_}会ok[Am]_\n\n!(和弦前置)\n你靠进来{[C]_ [F]_} 我却{[Am]越走越[G]远} 说不出{[C]来 [F]_} 痛苦{[Am]藏在里[G]面}\n耐心等待{[C]_ [F]_} 无法{[Am]逆转时[G]间}  没有解[bE]套 追溯不到[D7]_ 现在有多{[F7]_少的爱[E7]_}也救不了[Am]_\n\n!(间奏)  ![C]![Em]![F]![Fm] \n\n再说 so[C]_rry 你还在 请把这[Em7]_当作流言 我要继[Am]_续放空 请你允许[Em]我废在过去\n过去的[Dm]_让它过去 只剩残[Em7]_留的回忆 希望有{[F7]_一天我真[E7]_}会ok[Am]_ 其实我{[F7]_现在非常[E7]_}不ok[Am]_\n\n你靠进来{[C]_ [F]_} 我就{[Am]越走越[G]远} 说不出{[C]来 [F]_} 痛苦{[Am]藏在里[G]面}\n耐心等待{[C]_ [F]_} 无法{[Am]逆转时[G]间}  没有解[bE]套 追溯不到[D7]_ 现在有多{[F7]_少的爱[E7]_}也救不了[Am]_\n\n!(导歌) \n还有很[F]_多事我还想跟你说[C]_ 这些秘[F]_密要从生命中感受[C]_\nCarpe diem[F]_活在当下我想说[C]_ 听了愿{[F7]_你将会比[E7]_}较ok[Am]_ 这个世{[F7]_界生病很[E7]_}不ok[Am]_\n\n你靠进来{[C]_ [F]_} 我就{[Am]越走越[G]远} 说不出来{[C]_ [F]_} 痛苦{[Am]藏在里[G]面}\n耐心等待{[C]_ [F]_} 无法{[Am]逆转时[G]间} 没有解[bE]套 追溯不到[D7]_\n现在有多{[F7]_少的爱[E7]_}也救不了[Am]_ 现在你给{[F7]_我的爱[E7]_} 我都不要[Am]_\n",
+        "sync": false,
+        "isPublic": false
+    },
+    {
+        "pid": "dp5cIyhg",
+        "createTime": "2024-01-24T15:46:37.929Z",
+        "updateTime": "2024-03-06T15:03:15.866Z",
+        "sheetMeta": {
+            "title": "寂寞的季节",
+            "singer": "陶喆",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "C",
+                "_accidental": "#"
+            },
+            "sheetKey": {
+                "_base": "C",
+                "_accidental": ""
+            },
+            "capo": 1,
+            "chords": [],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"寂寞的季节\"\n$singer 陶喆\n$by 锦瑟\n$originalKey #C\n$sheetKey C\n$capo 1\n$rhythms \n$createTime 2024/3/6 23:03:15\n\n{[C]_风吹[F]落}最后{[G]一片叶[C]_} {[Am]_我的[D]心}也{[G]飘着雪[C]_}\n{[C]_爱[F]只}能往回{[G]忆里堆叠{[C]_ [G]O}}h{[F]_给下[G]个}季节[C]_\n[Am]_忽然间树梢[Em]冒花蕊 我怎[F]么会都没有感{[G]_觉{[G]_ [E7]_}}\nOh [Am]_整条街都是恋[Em]爱的人 我独[F]自走在暖风的夜[G]_\n\n多{[C]想要向过[G]_}去告别[Am]_ 当{[F]季节不停[C]_}更迭{[Dm]_oh[G]_}\n却{[C]还是少一[G]_}点坚决[Am]_ 在这{[F]寂寞的季[G]_}节[C]_\n\n{[C]_艳阳[F]高}照在{[G]那海边[C]_} {[Am]_爱情[D]盛}开{[G]的世界[C]_}\n{[C]_远远[F]看}着热{[G]闹一切{[C]_ [G]O}}h{[F]_记得[G]那}狂烈[C]_\n\n[Am]_窗外是快枯[Em]黄的叶 感伤[F]在心中有一{[G]_些{[G]_ [E7]_}}\nOh [Am]_我了解那些爱[Em]过的人 心是[F]如何慢慢在凋谢[G]_\n\n多{[C]想要向过[G]_}去告别[Am]_ 当{[F]季节不停[C]_}更迭{[Dm]_oh[G]_}\n却{[C]还是少一[G]_}点坚决[Am]_ 在这{[F]寂寞的季[G]_}节[C]_\n\n{[C]_又走[F]过}风吹{[G]的冷冽[C]_} {[Am]_最后[D]一}盏{[G]灯熄灭[C]_}\n{[C]_从[F]回}忆我慢{[G]慢穿越{[C]_ [G]_}} 在这{[F]寂寞的季[G]_}节[C]_\n还是{[F]寂寞的季[G]_}节[C]_ 一样{[Dm]寂寞的季[G]_}节[C]_\n\n"
+    },
+    {
+        "pid": "WBICurRw",
+        "createTime": "2024-01-24T17:37:50.865Z",
+        "updateTime": "2024-03-06T15:09:47.424Z",
+        "sheetMeta": {
+            "title": "Runaway",
+            "singer": "陶喆",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "A",
+                "_accidental": ""
+            },
+            "sheetKey": {
+                "_base": "G",
+                "_accidental": ""
+            },
+            "capo": 0,
+            "chords": [
+                {
+                    "root": {
+                        "_base": "G",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "A",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "B",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "C",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "B",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "C",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "sus4"
+                },
+                {
+                    "root": {
+                        "_base": "G",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "sus4"
+                },
+                {
+                    "root": {
+                        "_base": "F",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "A",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                }
+            ],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"Runaway\"\n$singer 陶喆\n$by 锦瑟\n$originalKey A\n$sheetKey G\n$capo 0\n$chords G Am Bm C D Em B Csus4 Gsus4 F A Dm\n$rhythms \n$createTime 2024/3/6 23:09:47\n\n!(前奏)![G]![G]![Csus4]![C]  ![G]![Gsus4]![Csus4]![C]\n[G]无名的怒火[G]_有说不[C]出的无力想{[Csus4]_敲打[C]_}我自[G]_己[G]_   [Csus4]_  [C]_  \n[G]麻木的神经[G]_感觉自[C]己像个机器{[Csus4]_快不[C]_}能呼[G]_吸[G]_   [Csus4]_  [C]_ \n[F]火辣的太阳[C]_永远在[G]前方[G]_ [F]_无尽的公路[C]_无尽的[G]追求[G]_\n\n我想要 {[C]Run away [D]r}un away[G]_ 不想再{[C]怀疑自己[D]对}不对[G]_\n{[C]甩开一切[D]无}所谓{[Em]_ [G]_} {[C]Run away [D]r}un away[G]_ [G]_ {[G]_   {[Gsus4]_   [G]_}}\n\n[G]像困在雾里[G]_焦躁的[C]想从茫然的{[Csus4]_现实[C]_}中逃[G]_离[G]_  [Csus4]_  [C]_\n[G]淡掉的感情[G]_还坚持[C]下去又有什{[Csus4]_么样[C]_}的意[G]_义[G]_  [Csus4]_  [C]_\n[F]_风吹乱头发[C]_黑夜星[G]空下[G]_ [F]_无尽的公路[C]_无尽的[G]自由[G]_\n\n我想要 {[C]Run away [D]r}un away[G]_ 不想再{[C]怀疑自己[D]对}不对[G]_\n{[C]甩开一切[D]无}所谓{[Em]_ [G]_} {[C]Run away [D]r}un away[G]_ \n我想要 {[C]Run away [D]r}un away[G]_ 不想再{[C]怀疑自己[D]对}不对[G]_\n{[C]是为自己[D]不}为谁{[Em]_ [A]_} {[C]不在乎的 [D]r}un away[G]_ \n!(桥)\n[Dm]很多人再说不断的一直说\n必须[Dm]这样子做不能够那样做\n却又[C]没有办法在自己的生命中突破[C]_Oh ya\n[Dm]如果再不走就永远不会走\n别让[Dm]自己再回头\n没挣扎怎能够有自[C]_由 快[D]_走\n\n我想要 {[C]Run away [D]r}un away[G]_ 不想再{[C]怀疑自己[D]对}不对[G]_\n{[C]甩开一切[D]无}所谓{[Em]_ [G]_} {[C]Run away [D]r}un away[G]_ \n快点去 {[C]Run away [D]r}un away[G]_ 不想再{[C]怀疑自己[D]对}不对[G]_\n{[C]是为自己[D]不}为谁{[Em]_ [A]_} {[C]不在乎的 [D]r}un away[G]_ \n现在要 {[C]Run away [D]r}un away[G]_\n今天要 {[C]Run away [D]r}un away[G]_\n现在要 {[C]Run away [D]r}un away[G]_\n今天要 {[C]Run away [D]r}un away[G]_\n"
+    },
+    {
+        "pid": "ApPbsxTv",
+        "createTime": "2024-03-06T14:43:22.469Z",
+        "updateTime": "2024-03-07T14:55:33.455Z",
+        "sheetMeta": {
+            "title": "蝴蝶",
+            "singer": "陶喆",
+            "by": "锦瑟",
+            "originalKey": {
+                "_base": "A",
+                "_accidental": "#"
+            },
+            "sheetKey": {
+                "_base": "G",
+                "_accidental": ""
+            },
+            "capo": 3,
+            "chords": [
+                {
+                    "root": {
+                        "_base": "G",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "A",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "B",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "C",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "E",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "B",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "C",
+                        "_accidental": ""
+                    },
+                    "quality": "m",
+                    "extension": ""
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": ""
+                    },
+                    "quality": "",
+                    "extension": "sus4"
+                },
+                {
+                    "root": {
+                        "_base": "D",
+                        "_accidental": "#"
+                    },
+                    "quality": "",
+                    "extension": ""
+                }
+            ],
+            "rhythms": [],
+            "extras": {}
+        },
+        "sheetData": "$title \"蝴蝶\"\n$singer 陶喆\n$by 锦瑟\n$originalKey #A\n$sheetKey G\n$capo 3\n$chords G Am Bm C D Em B Cm Dsus4 #D\n$rhythms \n$createTime 2024/3/7 22:55:33\n\n!(前奏)![G]![Cm]![G]![Cm]\n[G]_当这世界已经准[D]_备将我遗弃\n像一个{[Em]伤兵被留在[G]孤}独荒野里[C]_\n[G]_开始怀疑我存在[D]_有没有意义\n在别人{[Em]眼里我似乎[G]变}成了隐形[C]_\n[B]_难道失败就永{[Em]远翻不了身[G]_}\n谁来{[C]挽救[G]_}坠落的灵魂[Dsus4]_  [D]_\n\n每次一见[G]到你 心里好平[D]_静\n就像一只[Em]蝴蝶飞过废墟[G]_\n我又能活[C]下去 我又找回[G]勇气\n你的爱像[Am]氧气帮忙我呼{[Cm]_吸[D]_}\n我又能呼[G]_吸[Cm]_\n我又能呼[G]_吸\n你就是不[Cm]愿意放弃\n\n[G]_生命中充满乱七[D]_八糟的问题\n像走在没{[Em]有出口[G]的}那个迷宫里[C]_\nOh no[G]_一次又一次 只会[D]_用借口逃避\n怎么你{[Em]从来没对我[G]彻}底的死心[C]_ yeah\n[B]_我有何德何能值{[Em]_得你珍惜[G]_}\n为何{[C]你对我[G]_}有求必应[D]_\n\n每次一[G]想到你 像雨过天[D]_晴\n看见一只[Em]蝴蝶飞过废墟[G]_\n是那么的[C]美丽 就像一个[G]奇迹\n让我从倒[Am]下的地方站起 [D]_\nWoo 只要一靠[G]近你 就觉得安[D]_心\n你看着我[Em]的眼没有怀疑[G]_\n你对我的[C]相信 让我又能[G]重生\n不管世界[Am]多冷我还有你[D]_我有你\n\n[C]_爱我这样的人[Am]对你来说不容易\n{[Bm]_我的痛[B]_}苦你也{[Em]经历\n你[G]是}唯一{[C]_陪[Bm]我}到天[Cm]_堂与地[D]狱\n!(升1key)![D]\n每次一想[G]到你 像雨过天[D]_晴\n看见一只[Em]蝴蝶飞过了废墟[G]_\n我能撑得[C]下去 我会忘了[G]过去\n是你让我[#D]找回新的生命[D]_\nYeah 每次一见[G]到你 就心存感[D]_激\n现在我能[Em]坦然面对自己[G]_\n我会永远[C]珍惜 我会永远[G]爱你\n在我心底[Am]的你位置没有[D]_人能代替[G]_\n你就[C]是那唯{[D]一 [G]_}\n"
     }
 ]

@@ -1,9 +1,17 @@
 <template>
-  <mark v-on="localEvents">{{node.content}}</mark>
+  <mark 
+    @mouseenter="events.mark.triggerMouseEnter($event, node)"
+    @mouseleave="events.mark.triggerMouseLeave($event, node)"
+    @mousedown="events.mark.triggerMouseDown($event, node)"
+    @dblclick="events.mark.triggerDoubleClick($event, node)"
+    @contextmenu="events.mark.triggerContextMenu($event, node)"
+  >{{node.content}}</mark>
 </template>
 
 <script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
+import { NodeEventList } from '@/utils/elementEvent';
+
 export default {
   name: "SheetNodeMark",
   data() {
@@ -17,9 +25,9 @@ export default {
       required: true,
     },
     events: {
-      type: Object,
+      type: NodeEventList,
       default: function() {
-        return {}
+        return new NodeEventList()
       }
     }
   },

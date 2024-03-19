@@ -1,26 +1,33 @@
 <template>
-  <component :is="getTag()" ref="main" v-on="localEvents" :style="node.style ?? {}">
+  <component :is="getTag()" ref="main" :style="node.style ?? {}"
+    @mouseenter="events.chord.triggerMouseEnter($event, node)"
+    @mouseleave="events.chord.triggerMouseLeave($event, node)"
+    @mousedown="events.chord.triggerMouseDown($event, node)"
+    @dblclick="events.chord.triggerDoubleClick($event, node)"
+    @contextmenu="events.chord.triggerContextMenu($event, node)"
+  >
     <template v-if="isMarkChord">
       <chord-body>
-        <Placeholder v-if="isPlaceholder()"/>
+        <Placeholder v-if="isPlaceholder"/>
         <template v-else>
           {{node.content}}
         </template>
       </chord-body>
       <chord-ruby>
-        <ChordName :chord-name="node.chord" />
+        <ChordName :chord="node.chord" />
       </chord-ruby>
     </template>
     <chord-body v-else>
-      <ChordName :chord-name="node.chord" />
+      <ChordName :chord="node.chord" />
     </chord-body>
   </component>
 </template>
 
-<script>
-import { SheetNode, ENodeType } from '@/utils/sheetNode.js';
+<script lang="ts">
+import { SheetNode, ENodeType } from '@/utils/sheetNode';
 import ChordName from './chordName.vue';
 import Placeholder from './placeholder.vue';
+import { NodeEventList } from '@/utils/elementEvent';
 
 export default {
   name: "SheetNodeChord",
@@ -41,9 +48,9 @@ export default {
       }
     },
     events: {
-      type: Object,
+      type: NodeEventList,
       default: function() {
-        return {}
+        return new NodeEventList()
       }
     }
   },
@@ -58,14 +65,14 @@ export default {
   computed: {
     isMarkChord: function() {
       return this.node.type == ENodeType.Chord
-    }
+    },
+    isPlaceholder() {
+      return !this.node.content || this.node.content == '_' || this.node.content == ' ';
+    },
   },
   methods: {
     getTag() {
       return this.node.type == ENodeType.Chord ? "chord" : "chord-pure"
-    },
-    isPlaceholder() {
-      return !this.node.content || this.node.content == '_' || this.node.content == ' ';
     },
   },
 };
