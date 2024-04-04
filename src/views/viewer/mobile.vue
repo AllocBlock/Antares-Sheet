@@ -5,7 +5,7 @@
     <div id="tools_sheet_control" v-if="sheetLayoutConfig.enable">
       <div id="scale_block">
         <div class="tools_text">缩放</div>
-        <input id="scale_slider" type="range" step="0.01" min="0.8" max="2.0" v-model.number="sheetLayoutConfig.scale"
+        <input id="scale_slider" type="range" step="0.01" min="0.5" max="2.0" v-model.number="sheetLayoutConfig.scale"
           @input="updateScale()" />
         <div id="scale_text" class="tools_text">{{ sheetLayoutConfig.scale.toFixed(1) }}</div>
       </div>

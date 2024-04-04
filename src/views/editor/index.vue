@@ -306,6 +306,7 @@ function clearSheet() {
 function loadSheet(sheetData : string) {
   editor.loadSheet(sheetData)
   toolChord.value.attachedChords = editor.meta.chords ?? [];
+  playerInfo.value.player.setCapo(editor.meta.capo)
 }
 
 function onChangeSheetKey(newKey) {
