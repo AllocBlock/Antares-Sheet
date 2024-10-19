@@ -13,28 +13,27 @@ export default class EditorModeBasic extends EditorMode {
         this.editor = editor
         this.curNode = null
         this.hookIds = []
-        const that = this
 
         const onMouseEnterNode = (e, node) => this._cbMouseEnter(e, node)
         const onMouseLeaveNode = (e, node) => this._cbMouseLeave(e, node)
 
-        this.nodeEventList.text.doubleClicks.push( (e, node) => that.editor.core.editTextWithNeighbor(node) )
+        this.nodeEventList.text.doubleClicks.push( (e, node) => this.editor.core.editTextWithNeighbor(node) )
         this.nodeEventList.text.mouseEnters.push(onMouseEnterNode)
         this.nodeEventList.text.mouseLeaves.push(onMouseLeaveNode)
 
         this.nodeEventList.chord.doubleClicks.push( (e, node) => {
             if (!e.shiftKey) {
-                that.editor.addUnderline(node);
+                this.editor.addUnderline(node);
             }
             else if (NodeUtils.hasUnderlineToNextChord(node)) {
-                that.editor.removeUnderline(node);
+                this.editor.removeUnderline(node);
             }
         })
         this.nodeEventList.chord.mouseEnters.push(onMouseEnterNode)
         this.nodeEventList.chord.mouseLeaves.push(onMouseLeaveNode)
 
         this.nodeEventList.mark.doubleClicks.push( (e, node) => {
-            that.editor.editContent(node);
+            this.editor.editContent(node);
         } )
         this.nodeEventList.mark.mouseEnters.push(onMouseEnterNode)
         this.nodeEventList.mark.mouseLeaves.push(onMouseLeaveNode)
@@ -123,7 +122,7 @@ export default class EditorModeBasic extends EditorMode {
         if (!this.curNode.isChord()) return
         if (!NodeUtils.hasUnderlineToNextChord(this.curNode)) return
 
-        this.editor.core.removeUnderlineOnChord(this.curNode)
+        this.editor.core.removeUnderlineFromChordToNext(this.curNode)
     }
 
     _switchChordType(e) {

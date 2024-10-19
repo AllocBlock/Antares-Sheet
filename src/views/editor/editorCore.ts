@@ -1,3 +1,4 @@
+// editorCore 核心编辑功能，包含了撤销功能
 import { ENodeType, SheetNode, NodeUtils } from "@/utils/sheetNode"
 import { assert } from "@/utils/assert"
 import History from "@/utils/history"
@@ -6,78 +7,163 @@ import { Chord, Key } from "@/utils/chord"
 
 const MAX_UNDO_TIMES = 100
 
-export default class SheetEditorCore {
-    meta: SheetMeta
-    root: SheetNode
-    history: History<SheetNode>
-    historyPauseCount: number
+export class AsyncAtomEditOperation
+{
+    onEnd: () => void
+    onFailed: () => void
 
-    constructor(meta: SheetMeta, root: SheetNode) {
-        this.meta = meta
-        this.root = root
-        this.history = new History<SheetNode>(MAX_UNDO_TIMES, this.root.clone())
-        this.historyPauseCount = 0
+    private disposed: boolean = false
+
+    constructor(onEnd: () => void, onFailed: () => void) { 
+        this.onEnd = onEnd; 
+        this.onFailed = onFailed;
     }
 
-    private __replaceSheet(root: SheetNode) {
-        this.root.children = []
-        NodeUtils.append(this.root, root.children)
+    end() { 
+        if (!this.disposed)
+        {
+            this.disposed = true;
+            return this.onEnd();
+        }
+    }
+
+    fail() {
+        if (!this.disposed)
+        {
+            this.disposed = true;
+            return this.onFailed();
+        }
+    }
+
+    run(func : () => void) {
+        if (this.disposed) return;
+        try {
+            func()
+        }
+        catch (e) {
+            this.fail();
+            throw e;
+        }
+    }
+}
+
+class AtomEditOperation
+{
+    count : number
+    onDone : () => void
+    onFailed : () => void
+
+    constructor(onDone : () => void, onFailed : () => void)
+    {
+        this.count = 0
+        this.onDone = onDone
+        this.onFailed = onFailed
+    }
+
+    private beginOperation() {
+        this.count++
+    }
+
+    private endOperation(failed : boolean) {
+        this.count--
+        assert(this.count >= 0, "should not resume more than pause")
+        if (this.count == 0 && !failed) {
+            this.onDone()
+        }
+        if (failed)
+            this.onFailed();
+    }
+
+    run<T>(func : () => T) : T {
+        this.beginOperation()
+        
+        let failed = false;
+        try {
+            return func()
+        }
+        catch (e) {
+            failed = true;
+            throw e;
+        }
+        finally {
+            this.endOperation(failed)
+        }
+    }
+
+    runAsync() : AsyncAtomEditOperation {
+        this.beginOperation()
+        return new AsyncAtomEditOperation(
+            () => this.endOperation(false),
+            () => this.endOperation(true)
+        );
+    }
+}
+
+abstract class UndoableEditor<T>
+{
+    private history: History<T>
+
+    constructor(maxUndoTimes: number, initialValue: T) {
+        this.history = new History<T>(maxUndoTimes, initialValue)
     }
 
     canUndo(): boolean { return this.history.hasPrev() }
     canRedo(): boolean { return this.history.hasNext() }
+    
     undo(): void {
         assert(this.canUndo(), "no more histroy for undo")
-        let historyRoot = this.history.goPrev().clone()
-        this.__replaceSheet(historyRoot)
-        console.log("undo", this.root)
+        this.setFromHistory(this.history.goPrev())
     }
+
     redo(): void {
         assert(this.canRedo(), "no more histroy for redo")
-        let historyRoot = this.history.goNext().clone()
-        this.__replaceSheet(historyRoot)
-        console.log("redo", this.root)
+        this.setFromHistory(this.history.goNext())
     }
 
-    pauseHistory() {
-        this.historyPauseCount++
+    protected addHistory() {
+        this.history.add(this.getToHistory())
     }
 
-    resumeHistory(addCurrentToHistory = false) {
-        this.historyPauseCount--
-        assert(this.historyPauseCount >= 0, "should not resume more than pause")
-        if (this.historyPauseCount == 0 && addCurrentToHistory) {
-            this.addHistory()
-        }
+    protected retoreNewestHistory() {
+        this.setFromHistory(this.history.getCurrent())
     }
 
-    performAtom<T>(func : () => T) {
-        this.pauseHistory()
-
-        try {
-            return func()
-        }
-        finally {
-            this.resumeHistory(true)
-        }
+    protected clearHistory() {
+        this.history.clear(this.getToHistory())
     }
 
-    addHistory() {
-        if (this.historyPauseCount > 0) return;
-        let clonedRoot = this.root.clone()
-        this.history.add(clonedRoot)
+    abstract getToHistory() : T;
+    abstract setFromHistory(history : T);
+}
+
+export class SheetEditorCore extends UndoableEditor<SheetNode>{
+    meta: SheetMeta
+    root: SheetNode
+    atomOperation: AtomEditOperation
+
+    constructor(meta: SheetMeta, root: SheetNode) {
+        super(MAX_UNDO_TIMES, root.clone())
+
+        this.meta = meta
+        this.root = root
+        this.atomOperation = new AtomEditOperation(() => this.addHistory(), () => this.retoreNewestHistory())
     }
 
-    clearHistory() {
-        this.history.clear(this.root.clone())
+    override getToHistory() : SheetNode { return this.root.clone(); }
+    override setFromHistory(history : SheetNode) { this.__replaceSheet(history, true); }
+
+    private __replaceSheet(root: SheetNode, clone : boolean) {
+        this.root.children = []
+        if (clone) root = root.clone();
+        NodeUtils.append(this.root, root.children)
     }
 
     setMeta(meta: SheetMeta) {
         this.meta.assign(meta)
     }
 
-    replaceSheet(root: SheetNode, clearHistory: boolean = false) {
-        this.__replaceSheet(root)
+    replaceSheet(root: SheetNode, clone : boolean, clearHistory: boolean = false) {
+        this.__replaceSheet(root, clone)
         if (clearHistory)
             this.clearHistory()
         else
@@ -89,13 +175,23 @@ export default class SheetEditorCore {
         this.addHistory()
     }
 
+    runAtomOperation<T>(func : () => T) : T
+    {
+        return this.atomOperation.run(func);
+    }
+
+    runAtomOperationAsync() : AsyncAtomEditOperation
+    {
+        return this.atomOperation.runAsync();
+    }
+    
     /** 在目标后方插入节点，可以是数组 */
-    insertAfter(node: SheetNode, data) {
-        this.performAtom(() => {
+    insertAfter(node: SheetNode, data : SheetNode | SheetNode[]) {
+        this.runAtomOperation(() => {
             // constrain: underline node should have chord node at both begin and end
             // to void this, these inserted node will be inserted after the underline
             let targetNode = node
-            while (targetNode.nextSibling() == null && targetNode.parent.isUnderline()) {
+            while (targetNode.isLastChild() && targetNode.parent.isUnderline()) {
                 targetNode = targetNode.parent
             }
 
@@ -110,11 +206,11 @@ export default class SheetEditorCore {
 
     /** 在目标前方插入节点，可以是数组 */
     insertBefore(node: SheetNode, data) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             // constrain: underline node should have chord node at both begin and end
             // to void this, these inserted node will be inserted before the underline
             let targetNode = node
-            while (targetNode.prevSibling() == null && targetNode.parent.isUnderline()) {
+            while (targetNode.isFirstChild() && targetNode.parent.isUnderline()) {
                 targetNode = targetNode.parent
             }
 
@@ -129,7 +225,7 @@ export default class SheetEditorCore {
 
     /** 更新节点的内容 */
     updateContent(node: SheetNode, content: string) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             assert([ENodeType.Text, ENodeType.Chord, ENodeType.Mark].includes(node.type), `不能编辑${node.type}节点的内容`)
 
             assert(content.length > 0, "新内容不能为空")
@@ -160,14 +256,14 @@ export default class SheetEditorCore {
     }
 
     replace(node: SheetNode, newNode: SheetNode) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             // TODO: make this safe
             NodeUtils.replace(node, newNode)
         })
     }
 
     remove(node: SheetNode) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             if (node.isChord()) {
                 this.removeAllUnderlineOfChord(node)
             }
@@ -179,7 +275,7 @@ export default class SheetEditorCore {
      * 具体来说，输入是和弦节点，功能是在输入节点到下一个和弦节点之间，增加一条下划线
      */
     addUnderlineForChord(chordNode: SheetNode) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             /** 算法分为两个步骤：
              * 首先找到下一个和弦节点
              * 然后是连接的方法，共有四种情况，三种处理方法：添加、扩展和合并
@@ -212,8 +308,8 @@ export default class SheetEditorCore {
 
                     if (n === endChordNode) return true;
                 })
-
                 assert(!(hasChord && hasPureChord), "下划线内不能同时包含标注和弦和纯和弦")
+
                 let underlineNode = NodeUtils.createUnderlineNode(hasPureChord)
 
                 NodeUtils.insertBefore(betweenNodes[0], underlineNode)
@@ -229,8 +325,6 @@ export default class SheetEditorCore {
                 assert(startUnderlineNode.parent === endChordNode.parent, "要扩展到下划线的节点需要位于同一层级")
                 // constrain: underline must has chord at both begin and end
                 assert(endChordNode.isChord(), "扩展下划线时，首/尾部的元素必须是和弦")
-
-                let isAfterUnderline = startUnderlineNode.getSelfIndex() < endChordNode.getSelfIndex()
 
                 let betweenNodes = NodeUtils.getSiblingBetween(startUnderlineNode, endChordNode, false, true);
 
@@ -287,10 +381,11 @@ export default class SheetEditorCore {
     /** 删除和弦的一层下划线
      * 具体来说，输入是和弦节点，功能是在输入节点到下一个和弦节点之间，删除已有的一条下划线
      */
-    removeUnderlineOnChord(chordNode: SheetNode) {
-        this.performAtom(() => {
+    removeUnderlineFromChordToNext(chordNode: SheetNode) {
+        this.runAtomOperation(() => {
             assert(chordNode.isChord(), "要移除下划线的必须是和弦节点")
             assert(chordNode.parent.isUnderline(), "和弦不在下划线下，无需删除")
+            assert(!chordNode.isLastChild(), "和弦和下一个和弦之间无下划线连接")
 
             let chordType = chordNode.type;
             let nextChordNode = NodeUtils.findNextNodeByType(chordNode, chordType);
@@ -381,18 +476,36 @@ export default class SheetEditorCore {
         })
     }
 
+    
+    removeUnderlineFromPrevToThisChord(chordNode: SheetNode) {
+        this.runAtomOperation(() => {
+            assert(chordNode.isChord(), "要移除下划线的必须是和弦节点")
+            assert(chordNode.parent.isUnderline(), "和弦不在下划线下，无需删除")
+            
+            // 获取前一个和弦（有效的树中必定存在）
+            let prevChordNode = NodeUtils.findPrevNodeByType(chordNode, chordNode.type);
+
+            while (chordNode.parent.isUnderline()) {
+                this.removeUnderlineFromChordToNext(prevChordNode)
+            }
+        })
+    }
+
     removeAllUnderlineOfChord(node: SheetNode) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             assert(node.isChord(), "输入应该是和弦节点")
             while (node.parent.isUnderline()) {
-                this.removeUnderlineOnChord(node)
+                if (node.isLastChild())
+                    this.removeUnderlineFromPrevToThisChord(node)
+                else
+                    this.removeUnderlineFromChordToNext(node)
             }
         })
     }
 
     // 返回转换后的文本节点
     convertToText(node: SheetNode, removeEmptyNode: boolean): SheetNode {
-        return this.performAtom(() => {
+        return this.runAtomOperation(() => {
             assert(node.isChord(), "仅和弦可以转换为文本")
             this.removeAllUnderlineOfChord(node) // 删除和弦下划线
 
@@ -414,13 +527,13 @@ export default class SheetEditorCore {
     }
 
     updateChord(node, chord : Chord) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             node.chord = chord
         })
     }
 
     convertToChord(node, chord : Chord) : SheetNode {
-        return this.performAtom(() => {
+        return this.runAtomOperation(() => {
             if (node.isChord()) {
                 this.updateChord(node, chord);
                 return node
@@ -456,7 +569,7 @@ export default class SheetEditorCore {
     }
 
     toggleChordType(node) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             if (node.type == ENodeType.Chord) { // 标注和弦转纯和弦
                 // 如果没有下划线，直接转换
                 if (!NodeUtils.isInUnderline(node)) node.type = ENodeType.ChordPure
@@ -533,42 +646,44 @@ export default class SheetEditorCore {
     }
 
     insert(node, type, insertBefore) {
-        let newNodes = null
-        switch (type) {
-            case "text": {
-                let text = prompt("插入文本", "请输入文本")
-                if (!text) return;
-                newNodes = NodeUtils.createTextNodes(text)
-                break
+        this.runAtomOperation(() => {
+            let newNodes = null
+            switch (type) {
+                case "text": {
+                    let text = prompt("插入文本", "请输入文本")
+                    if (!text) return;
+                    newNodes = NodeUtils.createTextNodes(text)
+                    break
+                }
+                case "space": {
+                    newNodes = NodeUtils.createTextNodes(" ")
+                    break
+                }
+                case "mark": {
+                    let text = prompt("插入标记", "请输入标记内容")
+                    if (!text) return;
+                    newNodes = NodeUtils.createMarkNode(text)
+                    break
+                }
+                case "newline": {
+                    newNodes = NodeUtils.createNewLineNode()
+                    break
+                }
+                default: {
+                    throw "插入节点类型有误：" + type
+                }
             }
-            case "space": {
-                newNodes = NodeUtils.createTextNodes(" ")
-                break
-            }
-            case "mark": {
-                let text = prompt("插入标记", "请输入标记内容")
-                if (!text) return;
-                newNodes = NodeUtils.createMarkNode(text)
-                break
-            }
-            case "newline": {
-                newNodes = NodeUtils.createNewLineNode()
-                break
-            }
-            default: {
-                throw "插入节点类型有误：" + type
-            }
-        }
 
-        // insert
-        if (insertBefore)
-            this.insertBefore(node, newNodes)
-        else
-            this.insertAfter(node, newNodes)
+            // insert
+            if (insertBefore)
+                this.insertBefore(node, newNodes)
+            else
+                this.insertAfter(node, newNodes)
+        })
     }
 
     convertChordToText(node, removeEmptyNode = true): SheetNode[] {
-        return this.performAtom(() => {
+        return this.runAtomOperation(() => {
             assert(node.isChord(), "node should be chord to convert to text")
             this.removeAllUnderlineOfChord(node) // 删除和弦下划线
 
@@ -591,7 +706,7 @@ export default class SheetEditorCore {
 
     /** 对连接的文本节点统一编辑输入 */
     editTextWithNeighbor(node) {
-        this.performAtom(() => {
+        this.runAtomOperation(() => {
             if (!node) throw "节点为空"
 
             let text = node.content

@@ -61,6 +61,8 @@ export class SheetNode {
     this.style = {}
   }
 
+  hasParent() : boolean { return this.parent != null; }
+
   getSelfIndex() {
     if (!this.parent) throw "节点没有父节点，不能获取索引";
     let index = this.parent.children.indexOf(this)
@@ -85,6 +87,9 @@ export class SheetNode {
     if (index == this.parent.children.length - 1) return null;
     else return this.parent.children[index + 1];
   }
+
+  isFirstChild() : boolean { return this.prevSibling() == null; }
+  isLastChild() : boolean { return this.nextSibling() == null; }
 
   // by tree
   nextNode() {
@@ -438,7 +443,7 @@ export const NodeUtils = {
   toEditingSheetTree(node) {
     this.traverseDFS(node, (n) => {
       // 文本拆分
-      if (n.type == ENodeType.Text && n.content.length > 1) {
+      if (n.type == ENodeType.Text && n.content.length > 0) {
         this.replace(n, this.createTextNodes(n.content));
       }
     });

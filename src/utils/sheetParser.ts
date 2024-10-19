@@ -73,6 +73,7 @@ const splitMethods = [
           depth--
           if (depth == 0) {
             let match = []
+            // TODO: match需要额外返回值，这里需要wrap一下
             match.index = index
             match[0] = content.substr(index, i - index + 1)
             match.content = match[0].substr(isPure ? 2 : 1, match[0].length - (isPure ? 3 : 2))
@@ -213,7 +214,7 @@ export function parseSheet(sheetData) : [SheetMeta, SheetNode] {
     else {
       reader.reverse();
       break;
-    };
+    }
   }
 
   let sheetBody = reader.pop_all_remaining() as string

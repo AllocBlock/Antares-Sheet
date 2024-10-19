@@ -45,7 +45,7 @@
             <div class="flex_hv_center">
               <div id="edit_raw_editor_button" class="button" @click="openRawEditorPanel">编辑原始曲谱</div>
               <div class="button" @click="saveSheet(true)">保存</div>
-              <div class="button" @click="editor.loadSheetFromFile">载入</div>
+              <div class="button" @click="editor.loadSheetFromFile(false)">载入</div>
               <div class="button" @click="editor.exportSheetToFile(toolChord.attachedChords, `${sheetMeta.title}.atrs`)">导出</div>
             </div>
             <AntaresSheet id="sheet_box" :sheet-tree="sheetRoot" :events="nodeEventList" />
@@ -303,8 +303,8 @@ function clearSheet() {
   editor.clearSheet()
 }
 
-function loadSheet(sheetData : string) {
-  editor.loadSheet(sheetData)
+function loadSheet(sheetData : string, clearHistory : boolean) {
+  editor.loadSheet(sheetData, clearHistory)
   toolChord.value.attachedChords = editor.meta.chords ?? [];
   playerInfo.value.player.setCapo(editor.meta.capo)
 }
@@ -401,7 +401,7 @@ onMounted(() => {
 
   project.value.loadState = ELoadState.Loaded
   project.value.pid = pid
-  loadSheet(projectInfo.sheetData)
+  loadSheet(projectInfo.sheetData, true)
 
   // auto save
   startRepeatTimeout(() => {

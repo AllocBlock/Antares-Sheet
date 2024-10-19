@@ -7,6 +7,7 @@ import { MouseDelta } from '@/utils/mouse';
 import { assert } from "@/utils/assert";
 import { Chord } from "@/utils/chord";
 import { highlightNode, unhighlightNode } from "./editorModeCommon";
+import { AsyncAtomEditOperation } from "./editorCore";
 
 export class DragChordInfo {
     isDragging: boolean
@@ -47,6 +48,7 @@ class DragUIInfo {
 }
 
 class DragChordState {
+    atomOpAsync : AsyncAtomEditOperation | null = null
     info: DragChordInfo
     toUpdateNode: SheetNode
     toInsertNode: SheetNode
@@ -60,7 +62,13 @@ class DragChordState {
         this.reset()
     }
 
+    finish() {
+        this.atomOpAsync?.end();
+        this.reset();
+    }
+
     reset() {
+        this.atomOpAsync = null;
         this.info.reset()
         this.toUpdateNode = null
         this.toInsertNode = null
@@ -68,11 +76,14 @@ class DragChordState {
 
     startDrag(e, chord : Chord) {
         this.info.isDragging = true
-        this.info.text = chord.toString()
-        console.log(chord, chord.toString())
-        this.toInsertNode = NodeUtils.createChordNode('', chord)
-        this.toUpdateNode = null
-        this.onCursorMove(e)
+        this.atomOpAsync = this.editor.core.runAtomOperationAsync();
+        this.atomOpAsync.run(() => {
+            this.info.text = chord.toString()
+            console.log(chord, chord.toString())
+            this.toInsertNode = NodeUtils.createChordNode('', chord)
+            this.toUpdateNode = null
+            this.onCursorMove(e)
+        })
     }
 
     onCursorDownNode(e, node) {
@@ -81,53 +92,59 @@ class DragChordState {
 
         if (!startDrag) return;
         this.startDrag(e, node.chord)
-
-        if (e.shiftKey) { // move chord
-            this.editor.core.convertToText(node, false)
-        }
+        this.atomOpAsync?.run(() => {
+            if (e.shiftKey) { // move chord
+                this.editor.core.convertToText(node, false)
+            }
+        })
     }
     onCursorEnterNode(e, node : SheetNode) {
-        assert(node.isText() || node.isChord(), "node must be text or chord")
-        if (!this.info.isDragging) return;
-        if (node == this.toInsertNode) return;
+        this.atomOpAsync?.run(() => {
+            assert(node.isText() || node.isChord(), "node must be text or chord")
+            if (node == this.toInsertNode) return;
 
-        this.editor.core.pauseHistory()
-
-        // mark this node
-        if (this.toUpdateNode) // unhighlight prev node
+            // mark this node
+            if (this.toUpdateNode) // unhighlight prev node
             unhighlightNode(this.toUpdateNode);
-        highlightNode(node)
-        this.toUpdateNode = node
+            highlightNode(node)
+            this.toUpdateNode = node
+        })
     }
     onCursorLeaveNode(e, node) {
-        // unmark this node
-        if (this.info.isDragging && node == this.toUpdateNode) { // unhighlight node
-            unhighlightNode(this.toUpdateNode)
-            this.toUpdateNode = null
-        }
+        this.atomOpAsync?.run(() => {
+            // unmark this node
+            if (this.info.isDragging && node == this.toUpdateNode) { // unhighlight node
+                unhighlightNode(this.toUpdateNode)
+                this.toUpdateNode = null
+            }
+        })
     }
     onCursorMove(e) {
-        if (!this.info.isDragging) return;
-        let [x, y] = getCursorClientPos(e);
-        this.ui.setDragMarkPosNextFrame(x, y)
+        this.atomOpAsync?.run(() => {
+            let [x, y] = getCursorClientPos(e);
+            this.ui.setDragMarkPosNextFrame(x, y)
+        })
     }
+
     onCursorUp(e) {
-        if (!this.info.isDragging) return;
-        if (this.toUpdateNode) {
-            // 判断插入纯和弦还是标注和弦
-            if (this._doesPreferPureChord()) {
-                this.toInsertNode.type = ENodeType.ChordPure
-                this.toInsertNode.content = ''
-            } else {
-                this.toInsertNode.type = ENodeType.Chord
-                this.toInsertNode.content = this.toUpdateNode.content
+        this.atomOpAsync?.run(() => {
+            if (this.toUpdateNode) {
+                // 判断插入纯和弦还是标注和弦
+                if (this._doesPreferPureChord()) {
+                    this.toInsertNode.type = ENodeType.ChordPure
+                    this.toInsertNode.content = ''
+                } else {
+                    this.toInsertNode.type = ENodeType.Chord
+                    this.toInsertNode.content = this.toUpdateNode.content
+                }
+                // TODO: 检查是否能够替换，有没有不能直接替换的情况？
+                unhighlightNode(this.toUpdateNode)
+                this.editor.core.replace(this.toUpdateNode, this.toInsertNode)
             }
-            // TODO: 检查是否能够替换，有没有不能直接替换的情况？
-            unhighlightNode(this.toUpdateNode)
-            this.editor.core.replace(this.toUpdateNode, this.toInsertNode)
-        }
-        this.editor.core.resumeHistory(true)
-        this.reset()
+            this.finish()
+        })
+        this.atomOpAsync?.end();
+        this.atomOpAsync = null;
     }
 
     _doesPreferPureChord() {
@@ -157,7 +174,7 @@ class DragChordState {
 }
 
 class ShiftChordState {
-    isShifting: boolean
+    atomOpAsync : AsyncAtomEditOperation | null = null // 
     chord: Chord
     mouseDelta: MouseDelta
     curNode: SheetNode
@@ -183,8 +200,14 @@ class ShiftChordState {
 
         this.curNode = n;
     }
+
+    finish() {
+        this.atomOpAsync?.end();
+        this.reset();
+    }
+
     reset() {
-        this.isShifting = false
+        this.atomOpAsync = null
         this.setCurShiftNode(null, false)
         this.chord = null,
         this.shiftThreshold = 50
@@ -192,41 +215,44 @@ class ShiftChordState {
     }
 
     onCursorDownNode(e, node) {
-        if (this.isShifting) return;
+        if (this.atomOpAsync != null) return;
 
-        this.isShifting = e.altKey ? true : false
-        if (this.isShifting) {
-            this.editor.core.pauseHistory()
-            this.mouseDelta.start(e)
-            this.chord = node.chord
-            this.setCurShiftNode(node, false)
+        if (e.altKey) {
+            this.atomOpAsync = this.editor.core.runAtomOperationAsync()
+            this.atomOpAsync.run(() => {
+                this.mouseDelta.start(e)
+                this.chord = node.chord
+                this.setCurShiftNode(node, false)
+            })
         }
     }
     onCursorMove(e) {
-        if (!this.isShifting) return;
-        let [dx, dy] = this.mouseDelta.tick(e)
+        this.atomOpAsync?.run(() => {
+            let [dx, dy] = this.mouseDelta.tick(e)
 
-        if (dx * this.curShiftDistance >= 0) { // move on same direction
-            this.curShiftDistance += dx
+            if (dx * this.curShiftDistance >= 0) { // move on same direction
+                this.curShiftDistance += dx
 
-            let shiftStep = Math.trunc(this.curShiftDistance / this.shiftThreshold);
-            if (Math.abs(shiftStep) >= 1) {
-                this._shiftChord(shiftStep)
-                this.curShiftDistance -= shiftStep * this.shiftThreshold
+                let shiftStep = Math.trunc(this.curShiftDistance / this.shiftThreshold);
+                if (Math.abs(shiftStep) >= 1) {
+                    this._shiftChord(shiftStep)
+                    this.curShiftDistance -= shiftStep * this.shiftThreshold
+                }
+            } else { // if move on diffrent direction, restart counting
+                this.curShiftDistance = dx
             }
-        } else { // if move on diffrent direction, restart counting
-            this.curShiftDistance = dx
-        }
+        })
     }
     onCursorUp(e) {
-        if (!this.isShifting) return;
-
-        this.reset()
-        this.editor.core.resumeHistory(true)
+        this.atomOpAsync?.run(() => {
+            this.finish()
+        })
+        this.atomOpAsync?.end();
     }
 
     _shiftChordByStep(toLeft = true) {
         // TODO: 这会破坏下划线，如何保留？
+        this.editor.core.removeAllUnderlineOfChord(this.curNode);
         let isPlaceholder = NodeUtils.isPlaceholder(this.curNode.content)
         let nearbyNode = toLeft ? this.curNode.prevSibling() : this.curNode.nextSibling()
         // let nearbyNode = toLeft ? this.curNode.prevNode() : this.curNode.nextNode()
@@ -236,7 +262,9 @@ class ShiftChordState {
         // 否则，插入
         // TODO: 如果是和弦怎么处理？
 
-        if ((!nearbyNode || nearbyNode.type != ENodeType.Text) && isPlaceholder) return; // 如果已经是占位和弦，且没有临近、临近也是和弦或其他标记时，则不允许移动
+        // 仅前方为文本节点，或前方为其他节点，但当前不是占位符的时候，才能进行偏移如果已经是占位和弦，且没有临近、临近也是和弦或其他标记时，则不允许移动
+        if (!(nearbyNode && (nearbyNode.type == ENodeType.Text || !isPlaceholder)))
+            return;
 
         let replace = nearbyNode && nearbyNode.type == ENodeType.Text && (isPlaceholder || NodeUtils.isPlaceholder(nearbyNode.content))
         let oldNode = this.curNode
@@ -295,28 +323,26 @@ export class EditorModeDrag extends EditorMode {
         this.dragChordState = new DragChordState(dragChordInfo, dragMarkElement, this.editor)
         this.shiftChordState = new ShiftChordState(this.editor)
 
-        const that = this
-
         this.nodeEventList.text.mouseEnters.push((e, node) => {
-            that.dragChordState.onCursorEnterNode(e, node)
+            this.dragChordState.onCursorEnterNode(e, node)
         })
         this.nodeEventList.text.mouseLeaves.push((e, node) => {
-            that.dragChordState.onCursorLeaveNode(e, node)
+            this.dragChordState.onCursorLeaveNode(e, node)
         })
 
         this.nodeEventList.chord.mouseEnters.push((e, node) => {
-            that.dragChordState.onCursorEnterNode(e, node)
+            this.dragChordState.onCursorEnterNode(e, node)
         })
         this.nodeEventList.chord.mouseLeaves.push((e, node) => {
-            that.dragChordState.onCursorLeaveNode(e, node)
+            this.dragChordState.onCursorLeaveNode(e, node)
         })
         this.nodeEventList.chord.mouseDowns.push((e, node) => {
-            that.dragChordState.onCursorDownNode(e, node)
-            that.shiftChordState.onCursorDownNode(e, node)
+            this.dragChordState.onCursorDownNode(e, node)
+            this.shiftChordState.onCursorDownNode(e, node)
         })
 
         this.toolChordEvents.dragStarts.push( (e, chord : Chord) => {
-            that.dragChordState.startDrag(e, chord);
+            this.dragChordState.startDrag(e, chord);
             // e.preventDefault()
         })
     }
@@ -326,15 +352,13 @@ export class EditorModeDrag extends EditorMode {
     }  
 
     hook() {
-        let that = this
-        document.addEventListener("mousemove", (e) => this._onCursorMove.call(that, e));
-        document.addEventListener("mouseup", (e) => this._onCursorUp.call(that, e));
+        document.addEventListener("mousemove", (e) => this._onCursorMove(e));
+        document.addEventListener("mouseup", (e) => this._onCursorUp(e));
     }
 
     release() {
-        let that = this
-        document.removeEventListener("mousemove", (e) => this._onCursorMove.call(that, e));
-        document.removeEventListener("mouseup", (e) => this._onCursorUp.call(that, e));
+        document.removeEventListener("mousemove", (e) => this._onCursorMove(e));
+        document.removeEventListener("mouseup", (e) => this._onCursorUp(e));
     }
 
     _onCursorMove(e) {

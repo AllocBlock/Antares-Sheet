@@ -38,4 +38,7 @@ export default class Histroy<T> {
         assert(this.hasNext(), "no more next history")
         return this.historys[++this.index]
     }
+    getCurrent() : T {
+        return this.historys[this.index]
+    }
 }
